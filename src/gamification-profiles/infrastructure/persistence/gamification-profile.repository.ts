@@ -1,0 +1,31 @@
+import { DeepPartial } from '../../../utils/types/deep-partial.type';
+import { NullableType } from '../../../utils/types/nullable.type';
+import { IPaginationOptions } from '../../../utils/types/pagination-options';
+import { GamificationProfile } from '../../domain/gamification-profile';
+
+export abstract class GamificationProfileRepository {
+  abstract create(
+    data: Omit<GamificationProfile, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<GamificationProfile>;
+
+  abstract findAllWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }): Promise<GamificationProfile[]>;
+
+  abstract findById(
+    id: GamificationProfile['id'],
+  ): Promise<NullableType<GamificationProfile>>;
+
+  abstract findByIds(
+    ids: GamificationProfile['id'][],
+  ): Promise<GamificationProfile[]>;
+
+  abstract update(
+    id: GamificationProfile['id'],
+    payload: DeepPartial<GamificationProfile>,
+  ): Promise<GamificationProfile | null>;
+
+  abstract remove(id: GamificationProfile['id']): Promise<void>;
+}

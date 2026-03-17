@@ -1,35 +1,42 @@
-# Design de API (Proposta Inicial MVP)
+# Design de API (MVP)
 
 A modelagem RESTful dos endpoints principais que a aplicação do frontend vai consumir.
-*(As rotas autênticas irão exigir JWT nos headers utilizando os controllers padrão do NestJS já embutidos na arquitetura).*
+*(As rotas autênticas exigirão o Bearer JWT nos headers utilizando o fluxo base do NestJS/Passport).*
 
 ## 1. Perfil e Painel
-Rotas focadas no visual do "Meu Perfil" e do Perfil Público.
-- `GET /api/v1/gamification-profiles/me` - Retorna os dados do próprio usuário logado (nível, progresso, saldo de tokens).
-- `GET /api/v1/gamification-profiles/:username` - Retorna o perfil público (Status do rank, badges, etc).
+Focado nas estatísticas de níveis, conquistas e dashboard do membro.
+
+- `GET /api/v1/gamification-profiles/me` - Retorna os dados do próprio usuário logado (saldo de tokens de gratidão, XP mensal/anual/histórico e Level).
+- `GET /api/v1/gamification-profiles/:username` - Retorna o perfil público formatado (Status do rank, badges desbloqueados).
 
 ## 2. Atividades (Catálogo Core)
-Rotas listando onde o Dev pode engajar.
-- `GET /api/v1/activities` - Retorna apenas atividades catalogadas não-ocultas.
-- `POST /api/v1/activities` **[ROLES: ADMIN/MODERATOR]** - Cadastro de nova regra/atividade.
+Rotas listando onde o Dev pode engajar para ganhar XP.
 
-## 3. Submissão (Gamificação Ativa)
-O ciclo completo do usuário validando uma tarefa.
-- `POST /api/v1/submissions` - Body: `{ activityId, proofUrl }`. Cria status PENDING.
-- `GET /api/v1/submissions/me` - Listagem do status e histórico de submissões minhas (aba "Minhas Validações").
+- `GET /api/v1/activities` - Retorna o catálogo paginado de atividades não-ocultas (`isHidden: false`).
+- `GET /api/v1/activities/hidden/:secretCode` - Rota usada por QR Codes para desbloquear/iniciar atividades ocultas de eventos no app.
+- `POST /api/v1/activities` **[ROLES: ADMIN]** - Cadastro de nova regra/missão fixa.
 
-## 4. Fila da Auditoria (Gamificação Administrativa)
-Para os moderadores gerenciarem e ganharem XP automático por validação.
-- `GET /api/v1/submissions/pending` **[ROLES: MODERATOR]** - Fila de auditoria com paginação.
-- `POST /api/v1/submissions/:id/review` **[ROLES: MODERATOR]** - Body: `{ status: 'APPROVED'|'REJECTED', awardedXp: number, feedback?: string }`.
+## 3. Submissão (Ação do Usuário)
+O ciclo do usuário solicitando a validação de uma tarefa ou check-in.
 
-## 5. Extrato e Economia
-Rotas para o extrato de pontos e envio de tokens P2P.
-- `GET /api/v1/transactions/me` - Retorna o log de como o usuário ganhou seus pontos.
-- `POST /api/v1/tokens/transfer` - Body: `{ toProfileId, amount, feedbackMessage }`. Envia os "Tokens de Gratidão" peer-to-peer.
+- `POST /api/v1/submissions` - Body: `{ activityId, proofUrl? }`. Cria status `PENDING`. Se a atividade de check-in for imediata (sem prova), pode ser aprovada de forma síncrona/imediata.
+- `GET /api/v1/submissions/me` - Listagem e histórico de submissões do usuário atual (aba "Minhas Solicitações").
 
-## 6. Rankings Completos
-Leituras otimizadas para montar o painel competitivo e hall da fama.
-- `GET /api/v1/rankings/monthly` (Filtra pelo currentMonthlyXp)
-- `GET /api/v1/rankings/yearly` (Filtra pelo currentYearlyXp)
-- `GET /api/v1/rankings/global` (Top Histórico usando totalXp)
+## 4. Auditoria (Painel da Moderação)
+Fluxo administrativo onde moderadores garantem a qualidade e ganham XP automático por auditar.
+
+- `GET /api/v1/submissions/pending` **[ROLES: MODERATOR]** - Fila de auditoria global com paginação, omitindo requisições do próprio moderador logado.
+- `POST /api/v1/submissions/:id/review` **[ROLES: MODERATOR]** - Body: `{ status: 'APPROVED'|'REJECTED', awardedXp: number, feedback?: string }`. Muda o status, credita os pontos ao dev, e credita pontos automáticos ao moderador.
+
+## 5. Economia P2P e Extrato
+Gestão dos "Tokens de Gratidão" e histórico de pontos (prova real de tudo o que aconteceu).
+
+- `GET /api/v1/transactions/me` - Retorna o log de movimentações (Extrato do que ganhou e do que doou no mês).
+- `POST /api/v1/tokens/transfer` - Body: `{ toUsername, amount, feedbackMessage }`. Envia "Tokens de Gratidão" transferindo parte da cota mensal do usuário A para virar XP real no usuário B.
+
+## 6. Rankings Competitivos
+Consultas rápidas e cacheáveis para a Gamificação pública.
+
+- `GET /api/v1/rankings/monthly` (Filtra ordenando por `currentMonthlyXp`)
+- `GET /api/v1/rankings/yearly` (Filtra ordenando por `currentYearlyXp`)
+- `GET /api/v1/rankings/global` (Top Histórico usando `totalXp` e o `Level` correspondente)

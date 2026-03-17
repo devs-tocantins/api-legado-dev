@@ -1,49 +1,132 @@
-# Modelagem de Dados (Proposta Inicial - Gamificação)
+# Modelagem de Dados (Engajamento & Gamificação)
 
-Para sustentar a arquitetura descrita no PRD, separando os dados de autenticação dos dados da sub-aplicação de gamificação.
+Esta modelagem reflete o ecossistema do MVP para suportar a gamificação via TypeORM sem sujar a tabela global de autenticação `User`.
 
-## Entidades Principais
+## Diagrama ER (Mermaid)
 
-### `User` (Autenticação Base - Já Existente no Boilerplate)
-- `id` (UUID/Integer)
-- `email` (String, Unique)
-- `password` (Hash)
-- `firstName`, `lastName` (String)
-- `role` (Relacionamento Roles/Admin/User)
+```mermaid
+erDiagram
+    User ||--o| GamificationProfile : has
+    GamificationProfile ||--o{ Submission : makes
+    GamificationProfile ||--o{ Transaction : logs
+    GamificationProfile ||--o{ GamificationProfileBadge : unlocks
+    Activity ||--o{ Submission : targets
+    Badge ||--o{ GamificationProfileBadge : owned_by
+    User ||--o{ Submission : "reviews (Moderator)"
+
+    User {
+        int id PK
+        string email
+        string password
+        string firstName
+        string lastName
+    }
+
+    GamificationProfile {
+        uuid id PK
+        int userId FK "Unique"
+        string username "Unique (@handle)"
+        int totalXp
+        int currentMonthlyXp
+        int currentYearlyXp
+        int gratitudeTokens
+        string currentLevel "Computed/Linked Status"
+    }
+
+    Activity {
+        uuid id PK
+        string title
+        string description
+        int fixedReward
+        boolean isHidden
+        string secretCode "Nullable (para eventos offline)"
+        boolean requiresProof
+        int cooldownHours
+    }
+
+    Submission {
+        uuid id PK
+        uuid profileId FK
+        uuid activityId FK
+        string proofUrl "Nullable"
+        string status "PENDING, APPROVED, REJECTED"
+        string feedback "Nullable"
+        int awardedXp
+        int reviewerId FK "Nullable"
+        datetime reviewedAt "Nullable"
+    }
+
+    Transaction {
+        uuid id PK
+        uuid profileId FK
+        int amount
+        string type "Enums: SUBMISSION_APPROVED, GRATITUDE_RECEIVED..."
+        uuid referenceId "Nullable (Polymorphic ID)"
+        datetime createdAt
+    }
+
+    Badge {
+        uuid id PK
+        string name
+        string description
+        string imageUrl
+        string criteriaType "Enum: MANUAL, AUTOMATIC"
+    }
+
+    GamificationProfileBadge {
+        uuid profileId FK
+        uuid badgeId FK
+        datetime unlockedAt
+    }
+```
+
+## Dicionário de Entidades
+
+### `User` (Autenticação Base - Já Existente)
+Focado estritamente na identidade digital do membro dentro da plataforma.
 
 ### `GamificationProfile` (Perfil e Carteira do Usuário)
+A representação gamificada do membro da comunidade Devs Tocantins.
 - `id` (UUID)
-- `userId` (FK -> User, Unique)
-- `username` (String, Unique) - _@handle_ do usuário para facilitar a busca e menções.
-- `totalXp` (Int) - Pontuação histórica global (nunca decai, "Hall da Fama").
-- `currentMonthlyXp` (Int) - Pontos válidos para o ranking do mês atual.
-- `currentYearlyXp` (Int) - Pontos válidos para o ranking do ano atual.
-- `gratitudeTokens` (Int) - Saldo de tokens do mês para doar a outros membros (reseta todo mês).
+- `userId` (Int, FK -> User, Unique)
+- `username` (String, Unique) - _@handle_ do usuário para facilitar a busca, menções e transferência de tokens.
+- `totalXp` (Int) - XP histórico (Rank Global).
+- `currentMonthlyXp` (Int) - XP acumulado no ciclo atual (Rank Mensal).
+- `currentYearlyXp` (Int) - XP acumulado no ano (Rank Anual).
+- `gratitudeTokens` (Int) - Cota de moedas disponíveis para parabenizar outros colegas na "Economia P2P". (Reseta no dia 1 de cada mês).
+- `currentLevel` (String) - Mapeamento em tempo real (ex: Newbie, Junior, Lenda) baseado na progressão do `totalXp`.
 
-### `Activity` (O Catálogo de Pontos)
+### `Activity` (Catalogo Core de Pontuação)
+Atividades predefinidas para as quais a comunidade incentiva a realização.
 - `id` (UUID)
-- `title` (String) - Ex: _"Aplicar Mentoria"_, _"Corrigir PR no GitHub"_.
-- `description` (String) - Descrição clara do que compõe a atividade.
-- `fixedReward` (Int) - Quantidade padrão de pontos fornecidos.
-- `isHidden` (Boolean) - Se `true`, não aparece na lista pública (pontuação oculta via URL secreta/QR Code).
-- `requiresProof` (Boolean) - Se o sistema vai exigir preenchimento do campo `proofUrl`.
-- `cooldownHours` (Int) - Define o intervalo de horas mínimo antes que o usuário possa refazer esta atividade (Evita bot/spam no catálogo).
+- `title` (String) - Ex: _"Artigo Publicado"_, _"Ajuda no Discord"_.
+- `description` (String)
+- `fixedReward` (Int)
+- `isHidden` (Boolean) - Permite submissão apenas através de QRCodes secretamente em eventos se setado como `true`.
+- `secretCode` (String) - Slug para acesso oculto.
+- `requiresProof` (Boolean) - Exige preenchimento obrigatório da `proofUrl` na submissão.
+- `cooldownHours` (Int) - Sistema _Anti-Farming_ para o mesmo usuário na mesma atividade.
 
-### `Submission` (A Solicitação / Prova do Usuário)
+### `Submission` (A Solicitação / Check-in do Usuário)
+Quando o usuário executa uma `Activity` e pede seus pontos.
 - `id` (UUID)
-- `userId` (FK -> User)
-- `activityId` (FK -> Activity)
-- `proofUrl` (String, Nullable) - Link (do GitHub, Linkedin) ou anexo no S3 (imagem/certificado).
+- `profileId` (FK) - Relacionado com `GamificationProfile`.
+- `activityId` (FK)
+- `proofUrl` (String, Nullable) - Link apontando para a evidência do esforço.
 - `status` (Enum: `PENDING`, `APPROVED`, `REJECTED`)
-- `reviewerId` (FK -> User) - Quem foi o auditor que analisou o caso.
+- `feedback` (String, Nullable) - Explicação do moderador para a decisão da auditoria.
+- `awardedXp` (Int) - Pontos fornecidos (geralmente herda de `Activity.fixedReward`, mas atende missões tipo "curinga").
+- `reviewerId` (FK -> User)
 - `reviewedAt` (Date)
-- `feedback` (String, Nullable) - Motivo da rejeição ou explicação do ajuste.
-- `awardedXp` (Int, Nullable) - Os pontos efetivamente dados (o moderador pode decidir dar uma pontuação menor/maior dependendo da qualidade do que foi feito se a atividade for coringa).
 
-### `Transaction` (Extrato e Auditoria)
-Esta tabela é o **Log Imutável** do sistema. O saldo final do `GamificationProfile` sempre tem que bater com a soma das transactions dele.
+### `Transaction` (Extrato de Logs Imutáveis)
+Motor Financeiro dos Pontos. Todas as mutações no `GamificationProfile` vêm daqui.
 - `id` (UUID)
-- `profileId` (FK -> GamificationProfile)
-- `amount` (Int) - Positivo (ganho) ou Negativo (penalidade/remoção).
-- `type` (Enum: `SUBMISSION_APPROVED`, `GRATITUDE_RECEIVED`, `GRATITUDE_SENT`, `AUDIT_REWARD`, `PENALTY`)
-- `referenceId` (UUID, Nullable) - PK da Tabela onde o evento se originou (Submission, Token Transfer, etc).
+- `profileId` (FK)
+- `amount` (Int) - Valores Positivos ou Negativos.
+- `type` (Enum: `SUBMISSION_APPROVED`, `GRATITUDE_RECEIVED`, `GRATITUDE_SENT`, `AUDIT_REWARD`, `PENALTY`, `MONTHLY_RESET`)
+- `referenceId` (UUID) - Chave estrangeira coringa documentando do que se trata (qual foi a Submission ou a Transaction de quem doou).
+
+### `Badge` e `GamificationProfileBadge` (Conquistas - Adicional MVP)
+- `Badge`: Cataloga as medalhas de arte (Nome, Imagem, Descrição Ex: "Corujão do Código").
+- `GamificationProfileBadge`: A Tabela associativa Many-To-Many registrando *quando* o usuário destravar as Conquistas Estáticas dele.

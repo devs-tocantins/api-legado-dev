@@ -1,0 +1,88 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
+import { GamificationProfileEntity } from '../entities/gamification-profile.entity';
+import { NullableType } from '../../../../../utils/types/nullable.type';
+import { GamificationProfile } from '../../../../domain/gamification-profile';
+import { GamificationProfileRepository } from '../../gamification-profile.repository';
+import { GamificationProfileMapper } from '../mappers/gamification-profile.mapper';
+import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+
+@Injectable()
+export class GamificationProfileRelationalRepository
+  implements GamificationProfileRepository
+{
+  constructor(
+    @InjectRepository(GamificationProfileEntity)
+    private readonly gamificationProfileRepository: Repository<GamificationProfileEntity>,
+  ) {}
+
+  async create(data: GamificationProfile): Promise<GamificationProfile> {
+    const persistenceModel = GamificationProfileMapper.toPersistence(data);
+    const newEntity = await this.gamificationProfileRepository.save(
+      this.gamificationProfileRepository.create(persistenceModel),
+    );
+    return GamificationProfileMapper.toDomain(newEntity);
+  }
+
+  async findAllWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }): Promise<GamificationProfile[]> {
+    const entities = await this.gamificationProfileRepository.find({
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+    });
+
+    return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
+  }
+
+  async findById(
+    id: GamificationProfile['id'],
+  ): Promise<NullableType<GamificationProfile>> {
+    const entity = await this.gamificationProfileRepository.findOne({
+      where: { id },
+    });
+
+    return entity ? GamificationProfileMapper.toDomain(entity) : null;
+  }
+
+  async findByIds(
+    ids: GamificationProfile['id'][],
+  ): Promise<GamificationProfile[]> {
+    const entities = await this.gamificationProfileRepository.find({
+      where: { id: In(ids) },
+    });
+
+    return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
+  }
+
+  async update(
+    id: GamificationProfile['id'],
+    payload: Partial<GamificationProfile>,
+  ): Promise<GamificationProfile> {
+    const entity = await this.gamificationProfileRepository.findOne({
+      where: { id },
+    });
+
+    if (!entity) {
+      throw new Error('Record not found');
+    }
+
+    const updatedEntity = await this.gamificationProfileRepository.save(
+      this.gamificationProfileRepository.create(
+        GamificationProfileMapper.toPersistence({
+          ...GamificationProfileMapper.toDomain(entity),
+          ...payload,
+        }),
+      ),
+    );
+
+    return GamificationProfileMapper.toDomain(updatedEntity);
+  }
+
+  async remove(id: GamificationProfile['id']): Promise<void> {
+    await this.gamificationProfileRepository.delete(id);
+  }
+}
