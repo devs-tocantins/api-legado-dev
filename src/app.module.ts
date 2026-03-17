@@ -30,8 +30,14 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
 
 import { GamificationProfilesModule } from './gamification-profiles/gamification-profiles.module';
 
+import { ActivitiesModule } from './activities/activities.module';
+
+import { SubmissionsModule } from './submissions/submissions.module';
+
 @Module({
   imports: [
+    SubmissionsModule,
+    ActivitiesModule,
     GamificationProfilesModule,
     ConfigModule.forRoot({
       isGlobal: true,
