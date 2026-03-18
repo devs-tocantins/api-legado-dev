@@ -18,7 +18,7 @@ export class Transaction {
   amount: number;
 
   @ApiProperty({ required: false, nullable: true })
-  description?: string | null;
+  description?: string;
 
   @ApiProperty()
   createdAt: Date;

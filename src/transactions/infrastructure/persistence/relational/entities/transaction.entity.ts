@@ -29,7 +29,7 @@ export class TransactionEntity extends EntityRelationalHelper {
   amount: number;
 
   @Column({ type: 'varchar', nullable: true })
-  description: string | null;
+  description?: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -30,7 +30,7 @@ export class TransactionMapper {
     }
     persistenceEntity.category = domainEntity.category;
     persistenceEntity.amount = domainEntity.amount;
-    persistenceEntity.description = domainEntity.description ?? null;
+    persistenceEntity.description = domainEntity.description;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 
