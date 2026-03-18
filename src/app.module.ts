@@ -34,8 +34,11 @@ import { ActivitiesModule } from './activities/activities.module';
 
 import { SubmissionsModule } from './submissions/submissions.module';
 
+import { TransactionsModule } from './transactions/transactions.module';
+
 @Module({
   imports: [
+    TransactionsModule,
     SubmissionsModule,
     ActivitiesModule,
     GamificationProfilesModule,
