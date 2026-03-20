@@ -9,9 +9,9 @@ import {
 } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
 import { SubmissionStatus } from '../../../../domain/submission-status.enum';
-import { ActivityEntity } from '../../../../../../activities/infrastructure/persistence/relational/entities/activity.entity';
-import { GamificationProfileEntity } from '../../../../../../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
-import { UserEntity } from '../../../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { GamificationProfileEntity } from '../../../../../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
+import { ActivityEntity } from '../../../../../activities/infrastructure/persistence/relational/entities/activity.entity';
+import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
 
 @Entity({
   name: 'submission',
