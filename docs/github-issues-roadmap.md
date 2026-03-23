@@ -38,54 +38,55 @@ As **Labels** utilizadas aqui foram corrigidas para utilizar estritamente o padr
 
 ---
 
-## 📍 Milestone 1: Fundações e Banco de Dados (v0.1.0)
+## ✅ Milestone 1: Fundações e Banco de Dados (v0.1.0) — CONCLUÍDA
 *Foco: Limpeza atômica, modelagem estrutural (TypeORM) e massa de dados da API.*
 
-### [ ] Limpar Módulos Não Utilizados
+### [x] Limpar Módulos Não Utilizados
 **Labels:** `good first issue`, `enhancement`
 *Remover do Boilerplate Módulos de Banco de Dados de Documento.*
-- [ ] Remover dependências relacionadas ao `"mongoose"` no `package.json`.
-- [ ] Excluir pastas de configuração (`document`) em `src/database/`.
-- [ ] Atualizar `app.module.ts` removendo imports do Mongoose.
-- [ ] Atualizar o `docker-compose.yml` base para remover contêineres do Mongo.
+- [x] Remover dependências relacionadas ao `"mongoose"` no `package.json`.
+- [x] Excluir pastas de configuração (`document`) em `src/database/`.
+- [x] Atualizar `app.module.ts` removendo imports do Mongoose.
+- [x] Atualizar o `docker-compose.yml` base para remover contêineres do Mongo.
 
-### [ ] Configurar Simulador de AWS S3 (MinIO) no Docker
+### [x] Configurar Simulador de AWS S3 (MinIO) no Docker
 **Labels:** `enhancement`, `documentation`
 *Zerar a dependência de internet da equipe. O desenvolvedor local fará upload de arquivos localmente fingindo ser a Amazon.*
-- [ ] Adicionar um `service` de **MinIO** no arquivo `docker-compose.yaml`.
-- [ ] Configurar as credenciais padrões e locais do MinIO nas portas estáticas (ex: 9000).
-- [ ] Atualizar o `.env-example-relational` com as chaves fictícias do Minio e explicar no `docs/file-uploading.md` como os devs usam a interface gráfica do Minio local.
+- [x] Adicionar um `service` de **MinIO** no arquivo `docker-compose.yaml` (portas 9000/API e 9001/Console).
+- [x] Configurar as credenciais padrões e locais do MinIO nas portas estáticas (ex: 9000).
+- [x] Atualizar o `.env-example-relational` com as chaves fictícias do Minio e explicar no `docs/file-uploading.md` como os devs usam a interface gráfica do Minio local.
+- [x] Adicionar suporte a `AWS_S3_ENDPOINT` no config de arquivos para S3-compatible endpoints (`forcePathStyle`).
 
-### [ ] Criar Migrations e Módulo: `GamificationProfile`
+### [x] Criar Migrations e Módulo: `GamificationProfile`
 **Labels:** `enhancement`, `database`
 *Relacionamento 1:1 com a entidade `User` já existente, isolando a economia de pontos.*
-- [ ] Executar o gerador via CLI: `npm run generate:resource:relational -- --name GamificationProfile`
-- [ ] Na Entidade gerada, definir colunas: `userId` (Relacionamento 1:1), `username` (único), `totalXp`, `currentMonthlyXp`, `currentYearlyXp`, `gratitudeTokens`.
-- [ ] Gerar a migration oficial executando `npm run migration:generate -- src/database/migrations/CreateGamificationProfile`.
+- [x] Executar o gerador via CLI: `npm run generate:resource:relational -- --name GamificationProfile`
+- [x] Na Entidade gerada, definir colunas: `userId` (Relacionamento 1:1), `username` (único), `totalXp`, `currentMonthlyXp`, `currentYearlyXp`, `gratitudeTokens`.
+- [x] Gerar a migration oficial executando `npm run migration:generate -- src/database/migrations/CreateGamificationProfile`.
 - [ ] Escrever Testes Unitários básicos para o Service do Gerador.
 
-### [ ] Criar Migrations e Módulos do Sistema de Atividades
+### [x] Criar Migrations e Módulos do Sistema de Atividades
 **Labels:** `enhancement`, `database`
 *Estruturar as regras do core de interação (`Activity` e `Submission`).*
-- [ ] Executar o gerador CLI: `npm run generate:resource:relational -- --name Activity` e definir suas colunas de regra (`fixedReward`, `cooldownHours`, `isHidden`).
-- [ ] Executar o gerador CLI: `npm run generate:resource:relational -- --name Submission` ligando FK com User e Activity.
-- [ ] Gerar as respectivas migrations.
+- [x] Executar o gerador CLI: `npm run generate:resource:relational -- --name Activity` e definir suas colunas de regra (`fixedReward`, `cooldownHours`, `isHidden`).
+- [x] Executar o gerador CLI: `npm run generate:resource:relational -- --name Submission` ligando FK com User e Activity.
+- [x] Gerar as respectivas migrations.
 - [ ] Escrever Testes Unitários cobrindo as Controllers geradas.
 
-### [ ] Criar Migration e Módulo de Log: `Transaction`
+### [x] Criar Migration e Módulo de Log: `Transaction`
 **Labels:** `enhancement`, `database`
 *O Extrato/Ledger imutável de XP e Tokens.*
-- [ ] Executar o gerador CLI: `npm run generate:resource:relational -- --name Transaction`
-- [ ] Configurar relacionamento ManyToOne com `GamificationProfile` e estipular as Enum's de categorias financeiras.
-- [ ] Gerar a a respectiva migration.
-- [ ] Escrever Testes Unitários de criação de transação simples.
+- [x] Executar o gerador CLI: `npm run generate:resource:relational -- --name Transaction`
+- [x] Configurar relacionamento ManyToOne com `GamificationProfile` e estipular as Enum's de categorias financeiras.
+- [x] Gerar a respectiva migration.
+- [x] Escrever Testes Unitários de criação de transação simples.
 
-### [ ] Criar Seeders Iniciais da Plataforma
+### [x] Criar Seeders Iniciais da Plataforma
 **Labels:** `good first issue`, `enhancement`, `database`
 *Massa de dados padrão para as pessoas testarem a API sem estarem vazias.*
-- [ ] Criar semente conectada em `src/database/seeds` para criar 1 Admin e 2 Moderadores (usando relacionamentos de Roles).
-- [ ] Injetar via seeder 5 Perfils preenchidos aleatoriamente com o módulo FakerJS já integrado no projeto.
-- [ ] Injetar 5 Atividades padrão no Catálogo inicial.
+- [x] Criar semente conectada em `src/database/seeds` para criar 1 Admin e 2 Moderadores (usando relacionamentos de Roles). Role `moderator` adicionada ao `RoleEnum`.
+- [x] Injetar via seeder 5 Perfis preenchidos com dados representativos da comunidade (`GamificationProfileSeedService`).
+- [x] Injetar 5 Atividades padrão no Catálogo inicial (`ActivitySeedService`).
 
 ---
 
