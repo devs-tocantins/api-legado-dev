@@ -45,6 +45,50 @@ export class UserSeedService {
       );
     }
 
+    const countModerator = await this.repository.count({
+      where: {
+        role: {
+          id: RoleEnum.moderator,
+        },
+      },
+    });
+
+    if (!countModerator) {
+      const salt = await bcrypt.genSalt();
+      const password = await bcrypt.hash('secret', salt);
+
+      await this.repository.save([
+        this.repository.create({
+          firstName: 'Ana',
+          lastName: 'Moderadora',
+          email: 'ana.mod@example.com',
+          password,
+          role: {
+            id: RoleEnum.moderator,
+            name: 'Moderator',
+          },
+          status: {
+            id: StatusEnum.active,
+            name: 'Active',
+          },
+        }),
+        this.repository.create({
+          firstName: 'Carlos',
+          lastName: 'Moderador',
+          email: 'carlos.mod@example.com',
+          password,
+          role: {
+            id: RoleEnum.moderator,
+            name: 'Moderator',
+          },
+          status: {
+            id: StatusEnum.active,
+            name: 'Active',
+          },
+        }),
+      ]);
+    }
+
     const countUser = await this.repository.count({
       where: {
         role: {
@@ -57,22 +101,36 @@ export class UserSeedService {
       const salt = await bcrypt.genSalt();
       const password = await bcrypt.hash('secret', salt);
 
-      await this.repository.save(
+      await this.repository.save([
         this.repository.create({
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john.doe@example.com',
+          firstName: 'João',
+          lastName: 'Silva',
+          email: 'joao.silva@example.com',
           password,
           role: {
             id: RoleEnum.user,
-            name: 'Admin',
+            name: 'User',
           },
           status: {
             id: StatusEnum.active,
             name: 'Active',
           },
         }),
-      );
+        this.repository.create({
+          firstName: 'Maria',
+          lastName: 'Souza',
+          email: 'maria.souza@example.com',
+          password,
+          role: {
+            id: RoleEnum.user,
+            name: 'User',
+          },
+          status: {
+            id: StatusEnum.active,
+            name: 'Active',
+          },
+        }),
+      ]);
     }
   }
 }
