@@ -23,6 +23,45 @@ Você pode escolher um na variável `FILE_DRIVER` do seu `.env`.
 
 ---
 
+## MinIO: Simulador Local do S3 (Desenvolvimento)
+
+O **MinIO** é um servidor S3-compatível que roda localmente via Docker, eliminando qualquer dependência de internet para uploads durante o desenvolvimento. Ao ativá-lo, o desenvolvedor faz uploads de arquivos localmente como se estivesse usando a Amazon S3.
+
+### Iniciando o MinIO com Docker
+
+O serviço `minio` já está configurado no `docker-compose.yaml`. Ao subir os containers, o MinIO estará disponível em:
+
+- **API S3 (endpoint):** `http://localhost:9000`
+- **Console Web (UI):** `http://localhost:9001`
+
+```bash
+docker compose up -d minio
+```
+
+### Acessando o Console do MinIO
+
+1. Acesse `http://localhost:9001` no navegador.
+2. Faça login com as credenciais padrão: **usuário** `minioadmin` / **senha** `minioadmin`.
+3. Crie um **Bucket** com o nome `engajamento-local` (ou o nome definido em `AWS_DEFAULT_S3_BUCKET`).
+4. Defina a política do bucket como **Public** para que as URLs de arquivos sejam acessíveis.
+
+### Configuração do `.env` para usar o MinIO
+
+Copie as seguintes variáveis para o seu `.env`:
+
+```dotenv
+FILE_DRIVER=s3
+ACCESS_KEY_ID=minioadmin
+SECRET_ACCESS_KEY=minioadmin
+AWS_S3_REGION=us-east-1
+AWS_DEFAULT_S3_BUCKET=engajamento-local
+AWS_S3_ENDPOINT=http://minio:9000
+```
+
+> **Atenção:** Dentro da rede Docker, o hostname é `minio`. Para acesso direto do host (fora do Docker), use `http://localhost:9000`.
+
+---
+
 ## Fluxo de Upload `local`
 
 O recurso `/api/v1/files/upload` aceita Multipart Form. Ele te devolve um Modelo `File` base contendo o ID e Path (`caminho`) para você atrelar a qualquer outra entidade.

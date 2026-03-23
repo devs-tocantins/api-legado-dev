@@ -22,7 +22,19 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8080:8080
+      - 8888:8080
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - ${MINIO_PORT:-9000}:9000
+      - ${MINIO_CONSOLE_PORT:-9001}:9001
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: server /data --console-address ":9001"
 
   # Uncomment to use redis
   # redis:
@@ -39,3 +51,4 @@ services:
 
 volumes:
   boilerplate-db:
+  minio-data:
