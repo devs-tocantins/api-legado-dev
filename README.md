@@ -1,4 +1,4 @@
-# Motor de Engajamento e Gamificação - Devs Tocantins 🚀
+# Engajamento e Gamificação - Devs Tocantins 🚀
 
 **Tudo o que for feito em prol da comunidade e que gere um impacto real vale pontos e será reconhecido. O objetivo deste sistema é capturar, registrar e eternizar esse esforço.**
 

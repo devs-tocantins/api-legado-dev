@@ -13,7 +13,7 @@ services:
   maildev:
     build:
       context: .
-      dockerfile: maildev.Dockerfile
+      dockerfile: .docker/maildev.Dockerfile
     ports:
       - ${MAIL_CLIENT_PORT}:1080
       - ${MAIL_PORT}:1025
@@ -48,6 +48,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - ${APP_PORT}:${APP_PORT}
+    depends_on:
+      - postgres
 
 volumes:
   boilerplate-db:
