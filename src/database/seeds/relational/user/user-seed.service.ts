@@ -103,9 +103,9 @@ export class UserSeedService {
 
       await this.repository.save([
         this.repository.create({
-          firstName: 'João',
-          lastName: 'Silva',
-          email: 'joao.silva@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john.doe@example.com',
           password,
           role: {
             id: RoleEnum.user,

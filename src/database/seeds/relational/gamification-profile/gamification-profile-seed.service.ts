@@ -30,8 +30,8 @@ const SEED_PROFILES = [
     gratitudeTokens: 3,
   },
   {
-    email: 'joao.silva@example.com',
-    username: 'joao-silva',
+    email: 'john.doe@example.com',
+    username: 'john-doe',
     totalXp: 320,
     currentMonthlyXp: 80,
     currentYearlyXp: 320,
