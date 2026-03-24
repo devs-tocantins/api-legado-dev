@@ -23,6 +23,9 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService<AllConfigType>) => {
+        const endpoint = configService.get('file.awsS3Endpoint', {
+          infer: true,
+        });
         const s3 = new S3Client({
           region: configService.get('file.awsS3Region', { infer: true }),
           credentials: {
@@ -33,6 +36,7 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
               infer: true,
             }),
           },
+          ...(endpoint && { endpoint, forcePathStyle: true }),
         });
 
         return {

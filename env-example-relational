@@ -23,11 +23,20 @@ DATABASE_CERT=
 DATABASE_URL=
 
 # Support "local", "s3", "s3-presigned"
+# For local development with MinIO, use FILE_DRIVER=s3 with the vars below
 FILE_DRIVER=local
-ACCESS_KEY_ID=
-SECRET_ACCESS_KEY=
-AWS_S3_REGION=
-AWS_DEFAULT_S3_BUCKET=
+ACCESS_KEY_ID=minioadmin
+SECRET_ACCESS_KEY=minioadmin
+AWS_S3_REGION=us-east-1
+AWS_DEFAULT_S3_BUCKET=engajamento-local
+# Custom S3-compatible endpoint (use for MinIO local dev, leave empty for real AWS)
+AWS_S3_ENDPOINT=http://localhost:9000
+
+# MinIO local S3 simulator (see docs/file-uploading.md for setup instructions)
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+MINIO_PORT=9000
+MINIO_CONSOLE_PORT=9001
 
 MAIL_HOST=maildev
 MAIL_PORT=1025
