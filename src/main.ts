@@ -14,15 +14,8 @@ import { AllConfigType } from './config/config.type';
 import { ResolvePromisesInterceptor } from './utils/serializer.interceptor';
 
 async function bootstrap() {
-  console.log('[BOOT] ===== STARTING APPLICATION =====');
-  console.log('[BOOT] NODE_ENV:', process.env.NODE_ENV);
-  console.log('[BOOT] APP_PORT:', process.env.APP_PORT);
-  console.log('[BOOT] PORT:', process.env.PORT);
-
   try {
-    console.log('[BOOT] Creating NestFactory...');
     const app = await NestFactory.create(AppModule, { cors: true });
-    console.log('[BOOT] NestFactory created successfully');
 
     useContainer(app.select(AppModule), { fallbackOnErrors: true });
     const configService = app.get(ConfigService<AllConfigType>);
@@ -31,7 +24,7 @@ async function bootstrap() {
     app.setGlobalPrefix(
       configService.getOrThrow('app.apiPrefix', { infer: true }),
       {
-        exclude: ['/'],
+        exclude: ['/', 'healthz'],
       },
     );
     app.enableVersioning({
@@ -39,8 +32,6 @@ async function bootstrap() {
     });
     app.useGlobalPipes(new ValidationPipe(validationOptions));
     app.useGlobalInterceptors(
-      // ResolvePromisesInterceptor is used to resolve promises in responses because class-transformer can't do it
-      // https://github.com/typestack/class-transformer/issues/549
       new ResolvePromisesInterceptor(),
       new ClassSerializerInterceptor(app.get(Reflector)),
     );
@@ -66,16 +57,8 @@ async function bootstrap() {
     SwaggerModule.setup(swaggerPath, app, document);
 
     const port = configService.getOrThrow('app.port', { infer: true });
-    console.log(`[BOOT] Attempting to listen on port ${port}...`);
     await app.listen(port, '0.0.0.0');
-
-    const backendDomain =
-      process.env.BACKEND_DOMAIN ?? `http://localhost:${port}`;
-
-    console.log(`🚀 Application is running on: ${backendDomain}`);
-    console.log(`📚 Swagger available at: ${backendDomain}/${swaggerPath}`);
   } catch (error) {
-    console.error('[BOOT] FATAL ERROR during bootstrap:');
     console.error(error);
     process.exit(1);
   }
