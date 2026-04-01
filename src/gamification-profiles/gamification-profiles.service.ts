@@ -1,17 +1,26 @@
 import {
-  // common
+  BadRequestException,
   Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { CreateGamificationProfileDto } from './dto/create-gamification-profile.dto';
 import { UpdateGamificationProfileDto } from './dto/update-gamification-profile.dto';
+import { TransferTokensDto } from './dto/transfer-tokens.dto';
 import { GamificationProfileRepository } from './infrastructure/persistence/gamification-profile.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { GamificationProfile } from './domain/gamification-profile';
+import { GamificationProfileEntity } from './infrastructure/persistence/relational/entities/gamification-profile.entity';
+import { TransactionEntity } from '../transactions/infrastructure/persistence/relational/entities/transaction.entity';
+import { TransactionCategoryEnum } from '../transactions/domain/transaction-category.enum';
 
 @Injectable()
 export class GamificationProfilesService {
   constructor(
     private readonly gamificationProfileRepository: GamificationProfileRepository,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   async create(createGamificationProfileDto: CreateGamificationProfileDto) {
@@ -59,5 +68,107 @@ export class GamificationProfilesService {
 
   remove(id: GamificationProfile['id']) {
     return this.gamificationProfileRepository.remove(id);
+  }
+
+  findByUserId(userId: GamificationProfile['userId']) {
+    return this.gamificationProfileRepository.findByUserId(userId);
+  }
+
+  findByUsername(username: GamificationProfile['username']) {
+    return this.gamificationProfileRepository.findByUsername(username);
+  }
+
+  resetMonthlyXpAndTokens(defaultTokens: number) {
+    return this.gamificationProfileRepository.resetMonthlyXpAndTokens(
+      defaultTokens,
+    );
+  }
+
+  async transferTokens(senderUserId: number, dto: TransferTokensDto) {
+    const senderProfile =
+      await this.gamificationProfileRepository.findByUserId(senderUserId);
+    if (!senderProfile) {
+      throw new UnprocessableEntityException(
+        'Perfil de gamificação do remetente não encontrado.',
+      );
+    }
+
+    if (senderProfile.id === dto.recipientProfileId) {
+      throw new BadRequestException(
+        'Você não pode transferir tokens para si mesmo.',
+      );
+    }
+
+    if (senderProfile.gratitudeTokens < dto.amount) {
+      throw new BadRequestException(
+        `Saldo insuficiente. Você possui apenas ${senderProfile.gratitudeTokens} Token(s) de Gratidão.`,
+      );
+    }
+
+    const recipientProfile = await this.gamificationProfileRepository.findById(
+      dto.recipientProfileId,
+    );
+    if (!recipientProfile) {
+      throw new NotFoundException('Perfil destinatário não encontrado.');
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      await queryRunner.manager.decrement(
+        GamificationProfileEntity,
+        { id: senderProfile.id },
+        'gratitudeTokens',
+        dto.amount,
+      );
+
+      await queryRunner.manager.increment(
+        GamificationProfileEntity,
+        { id: recipientProfile.id },
+        'totalXp',
+        dto.amount,
+      );
+      await queryRunner.manager.increment(
+        GamificationProfileEntity,
+        { id: recipientProfile.id },
+        'currentMonthlyXp',
+        dto.amount,
+      );
+      await queryRunner.manager.increment(
+        GamificationProfileEntity,
+        { id: recipientProfile.id },
+        'currentYearlyXp',
+        dto.amount,
+      );
+
+      await queryRunner.manager.save(TransactionEntity, {
+        profile: { id: senderProfile.id },
+        category: TransactionCategoryEnum.TOKEN_TRANSFER,
+        amount: -dto.amount,
+        description:
+          dto.message ??
+          `Tokens de Gratidão enviados para @${recipientProfile.username}`,
+      });
+
+      await queryRunner.manager.save(TransactionEntity, {
+        profile: { id: recipientProfile.id },
+        category: TransactionCategoryEnum.TOKEN_REWARD,
+        amount: dto.amount,
+        description:
+          dto.message ??
+          `Tokens de Gratidão recebidos de @${senderProfile.username}`,
+      });
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return this.gamificationProfileRepository.findById(senderProfile.id);
   }
 }

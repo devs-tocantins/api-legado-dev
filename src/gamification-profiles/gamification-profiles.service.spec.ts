@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getDataSourceToken } from '@nestjs/typeorm';
 import { GamificationProfilesService } from './gamification-profiles.service';
 import { GamificationProfileRepository } from './infrastructure/persistence/gamification-profile.repository';
 import { GamificationProfile } from './domain/gamification-profile';
@@ -26,6 +27,24 @@ const mockRepository: Partial<
   findAllWithPagination: jest.fn().mockResolvedValue([mockGamificationProfile]),
   update: jest.fn().mockResolvedValue(mockGamificationProfile),
   remove: jest.fn().mockResolvedValue(undefined),
+  findByUserId: jest.fn().mockResolvedValue(mockGamificationProfile),
+  findByUsername: jest.fn().mockResolvedValue(mockGamificationProfile),
+  resetMonthlyXpAndTokens: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockDataSource = {
+  createQueryRunner: jest.fn().mockReturnValue({
+    connect: jest.fn(),
+    startTransaction: jest.fn(),
+    commitTransaction: jest.fn(),
+    rollbackTransaction: jest.fn(),
+    release: jest.fn(),
+    manager: {
+      decrement: jest.fn(),
+      increment: jest.fn(),
+      save: jest.fn(),
+    },
+  }),
 };
 
 describe('GamificationProfilesService', () => {
@@ -39,6 +58,10 @@ describe('GamificationProfilesService', () => {
         {
           provide: GamificationProfileRepository,
           useValue: mockRepository,
+        },
+        {
+          provide: getDataSourceToken(),
+          useValue: mockDataSource,
         },
       ],
     }).compile();

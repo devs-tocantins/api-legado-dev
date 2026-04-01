@@ -8,10 +8,14 @@ import {
   Delete,
   UseGuards,
   Query,
+  Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { GamificationProfilesService } from './gamification-profiles.service';
 import { CreateGamificationProfileDto } from './dto/create-gamification-profile.dto';
 import { UpdateGamificationProfileDto } from './dto/update-gamification-profile.dto';
+import { TransferTokensDto } from './dto/transfer-tokens.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -21,6 +25,9 @@ import {
 } from '@nestjs/swagger';
 import { GamificationProfile } from './domain/gamification-profile';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
@@ -28,7 +35,7 @@ import {
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllGamificationProfilesDto } from './dto/find-all-gamification-profiles.dto';
 
-@ApiTags('Gamificationprofiles')
+@ApiTags('Gamification Profiles')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller({
@@ -41,6 +48,8 @@ export class GamificationProfilesController {
   ) {}
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiCreatedResponse({
     type: GamificationProfile,
   })
@@ -48,6 +57,17 @@ export class GamificationProfilesController {
     return this.gamificationProfilesService.create(
       createGamificationProfileDto,
     );
+  }
+
+  @Post('transfer')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    type: GamificationProfile,
+    description:
+      'Retorna o perfil atualizado do remetente após a transferência',
+  })
+  transfer(@Body() dto: TransferTokensDto, @Request() req) {
+    return this.gamificationProfilesService.transferTokens(req.user.id, dto);
   }
 
   @Get()
@@ -107,6 +127,8 @@ export class GamificationProfilesController {
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,
