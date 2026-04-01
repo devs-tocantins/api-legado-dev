@@ -14,55 +14,53 @@ import { AllConfigType } from './config/config.type';
 import { ResolvePromisesInterceptor } from './utils/serializer.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
-  useContainer(app.select(AppModule), { fallbackOnErrors: true });
-  const configService = app.get(ConfigService<AllConfigType>);
+  try {
+    const app = await NestFactory.create(AppModule, { cors: true });
 
-  app.enableShutdownHooks();
-  app.setGlobalPrefix(
-    configService.getOrThrow('app.apiPrefix', { infer: true }),
-    {
-      exclude: ['/'],
-    },
-  );
-  app.enableVersioning({
-    type: VersioningType.URI,
-  });
-  app.useGlobalPipes(new ValidationPipe(validationOptions));
-  app.useGlobalInterceptors(
-    // ResolvePromisesInterceptor is used to resolve promises in responses because class-transformer can't do it
-    // https://github.com/typestack/class-transformer/issues/549
-    new ResolvePromisesInterceptor(),
-    new ClassSerializerInterceptor(app.get(Reflector)),
-  );
+    useContainer(app.select(AppModule), { fallbackOnErrors: true });
+    const configService = app.get(ConfigService<AllConfigType>);
 
-  const options = new DocumentBuilder()
-    .setTitle('API')
-    .setDescription('API docs')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addGlobalParameters({
-      in: 'header',
-      required: false,
-      name: process.env.APP_HEADER_LANGUAGE || 'x-custom-lang',
-      schema: {
-        example: 'en',
+    app.enableShutdownHooks();
+    app.setGlobalPrefix(
+      configService.getOrThrow('app.apiPrefix', { infer: true }),
+      {
+        exclude: ['/', 'healthz'],
       },
-    })
-    .build();
+    );
+    app.enableVersioning({
+      type: VersioningType.URI,
+    });
+    app.useGlobalPipes(new ValidationPipe(validationOptions));
+    app.useGlobalInterceptors(
+      new ResolvePromisesInterceptor(),
+      new ClassSerializerInterceptor(app.get(Reflector)),
+    );
 
-  const document = SwaggerModule.createDocument(app, options);
+    const options = new DocumentBuilder()
+      .setTitle('API')
+      .setDescription('API docs')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .addGlobalParameters({
+        in: 'header',
+        required: false,
+        name: process.env.APP_HEADER_LANGUAGE || 'x-custom-lang',
+        schema: {
+          example: 'en',
+        },
+      })
+      .build();
 
-  const swaggerPath = 'swagger';
-  SwaggerModule.setup(swaggerPath, app, document);
+    const document = SwaggerModule.createDocument(app, options);
 
-  const port = configService.getOrThrow('app.port', { infer: true });
-  await app.listen(port);
+    const swaggerPath = 'swagger';
+    SwaggerModule.setup(swaggerPath, app, document);
 
-  const backendDomain =
-    process.env.BACKEND_DOMAIN ?? `http://localhost:${port}`;
-
-  console.log(`🚀 Application is running on: ${backendDomain}`);
-  console.log(`📚 Swagger available at: ${backendDomain}/${swaggerPath}`);
+    const port = configService.getOrThrow('app.port', { infer: true });
+    await app.listen(port, '0.0.0.0');
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
 }
 void bootstrap();

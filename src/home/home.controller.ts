@@ -12,4 +12,9 @@ export class HomeController {
   appInfo() {
     return this.service.appInfo();
   }
+
+  @Get('healthz')
+  healthCheck() {
+    return { status: 'ok' };
+  }
 }

@@ -22,9 +22,10 @@ DATABASE_KEY=
 DATABASE_CERT=
 DATABASE_URL=
 
-# Support "local", "s3", "s3-presigned"
+# Support "local", "s3", "s3-presigned", "mock"
+# For testing without storage: use FILE_DRIVER=mock
 # For local development with MinIO, use FILE_DRIVER=s3 with the vars below
-FILE_DRIVER=local
+FILE_DRIVER=mock
 ACCESS_KEY_ID=minioadmin
 SECRET_ACCESS_KEY=minioadmin
 AWS_S3_REGION=us-east-1
