@@ -1,18 +1,14 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateSubmissionDto {
-  @ApiProperty({ example: 'uuid-do-gamification-profile' })
-  @IsUUID()
-  profileId: string;
-
   @ApiProperty({ example: 'uuid-da-activity' })
   @IsUUID()
   activityId: string;
 
-  @ApiProperty({
-    example: 'https://s3.amazonaws.com/bucket/comprovante.png',
-    required: false,
+  @ApiPropertyOptional({
+    example: 'https://bucket.s3.amazonaws.com/comprovante.png',
+    description: 'URL do comprovante. Obrigatório se a atividade exigir prova.',
   })
   @IsOptional()
   @IsString()
