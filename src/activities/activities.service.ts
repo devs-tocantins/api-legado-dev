@@ -87,4 +87,21 @@ export class ActivitiesService {
   remove(id: Activity['id']) {
     return this.activityRepository.remove(id);
   }
+
+  findPublicWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }) {
+    return this.activityRepository.findPublicWithPagination({
+      paginationOptions: {
+        page: paginationOptions.page,
+        limit: paginationOptions.limit,
+      },
+    });
+  }
+
+  findBySecretCode(secretCode: Activity['secretCode']) {
+    return this.activityRepository.findBySecretCode(secretCode);
+  }
 }

@@ -79,4 +79,30 @@ export class ActivityRelationalRepository implements ActivityRepository {
   async remove(id: Activity['id']): Promise<void> {
     await this.activityRepository.delete(id);
   }
+
+  async findPublicWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }): Promise<Activity[]> {
+    const entities = await this.activityRepository.find({
+      where: { isHidden: false },
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+    });
+
+    return entities.map((entity) => ActivityMapper.toDomain(entity));
+  }
+
+  async findBySecretCode(
+    secretCode: Activity['secretCode'],
+  ): Promise<NullableType<Activity>> {
+    if (!secretCode) return null;
+
+    const entity = await this.activityRepository.findOne({
+      where: { secretCode, isHidden: true },
+    });
+
+    return entity ? ActivityMapper.toDomain(entity) : null;
+  }
 }

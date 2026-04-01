@@ -24,4 +24,14 @@ export abstract class ActivityRepository {
   ): Promise<Activity | null>;
 
   abstract remove(id: Activity['id']): Promise<void>;
+
+  abstract findPublicWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }): Promise<Activity[]>;
+
+  abstract findBySecretCode(
+    secretCode: Activity['secretCode'],
+  ): Promise<NullableType<Activity>>;
 }

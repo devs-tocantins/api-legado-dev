@@ -21,6 +21,9 @@ import {
 } from '@nestjs/swagger';
 import { Activity } from './domain/activity';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
@@ -29,8 +32,6 @@ import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllActivitiesDto } from './dto/find-all-activities.dto';
 
 @ApiTags('Activities')
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'activities',
   version: '1',
@@ -39,6 +40,9 @@ export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiCreatedResponse({
     type: Activity,
   })
@@ -60,11 +64,8 @@ export class ActivitiesController {
     }
 
     return infinityPagination(
-      await this.activitiesService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
+      await this.activitiesService.findPublicWithPagination({
+        paginationOptions: { page, limit },
       }),
       { page, limit },
     );
@@ -84,6 +85,9 @@ export class ActivitiesController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,
@@ -100,6 +104,9 @@ export class ActivitiesController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,
