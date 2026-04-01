@@ -32,7 +32,7 @@ Fluxo administrativo onde moderadores garantem a qualidade e ganham XP automáti
 Gestão dos "Tokens de Gratidão" e histórico de pontos (prova real de tudo o que aconteceu).
 
 - `GET /api/v1/transactions/me` - Retorna o log de movimentações (Extrato do que ganhou e do que doou no mês).
-- `POST /api/v1/tokens/transfer` - Body: `{ toUsername, amount, feedbackMessage }`. Envia "Tokens de Gratidão" transferindo parte da cota mensal do usuário A para virar XP real no usuário B.
+- `POST /api/v1/gamification-profiles/transfer` - Body: `{ toUsername, amount, feedbackMessage }`. Envia "Tokens de Gratidão" transferindo parte da cota mensal do usuário A para virar XP real no usuário B.
 
 ## 6. Rankings Competitivos
 Consultas rápidas e cacheáveis para a Gamificação pública.

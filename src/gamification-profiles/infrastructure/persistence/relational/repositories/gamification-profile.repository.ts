@@ -85,4 +85,31 @@ export class GamificationProfileRelationalRepository
   async remove(id: GamificationProfile['id']): Promise<void> {
     await this.gamificationProfileRepository.delete(id);
   }
+
+  async findByUserId(
+    userId: GamificationProfile['userId'],
+  ): Promise<NullableType<GamificationProfile>> {
+    const entity = await this.gamificationProfileRepository.findOne({
+      where: { userId },
+    });
+
+    return entity ? GamificationProfileMapper.toDomain(entity) : null;
+  }
+
+  async findByUsername(
+    username: GamificationProfile['username'],
+  ): Promise<NullableType<GamificationProfile>> {
+    const entity = await this.gamificationProfileRepository.findOne({
+      where: { username },
+    });
+
+    return entity ? GamificationProfileMapper.toDomain(entity) : null;
+  }
+
+  async resetMonthlyXpAndTokens(defaultTokens: number): Promise<void> {
+    await this.gamificationProfileRepository.update(
+      {},
+      { currentMonthlyXp: 0, gratitudeTokens: defaultTokens },
+    );
+  }
 }

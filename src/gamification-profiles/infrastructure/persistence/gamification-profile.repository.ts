@@ -28,4 +28,14 @@ export abstract class GamificationProfileRepository {
   ): Promise<GamificationProfile | null>;
 
   abstract remove(id: GamificationProfile['id']): Promise<void>;
+
+  abstract findByUserId(
+    userId: GamificationProfile['userId'],
+  ): Promise<NullableType<GamificationProfile>>;
+
+  abstract findByUsername(
+    username: GamificationProfile['username'],
+  ): Promise<NullableType<GamificationProfile>>;
+
+  abstract resetMonthlyXpAndTokens(defaultTokens: number): Promise<void>;
 }
