@@ -95,6 +95,20 @@ export class SubmissionRelationalRepository implements SubmissionRepository {
     return entities.map((entity) => SubmissionMapper.toDomain(entity));
   }
 
+  async findApprovedByProfileId(
+    profileId: Submission['profileId'],
+    paginationOptions: IPaginationOptions,
+  ): Promise<Submission[]> {
+    const entities = await this.submissionRepository.find({
+      where: { profileId, status: SubmissionStatus.APPROVED },
+      order: { createdAt: 'DESC' },
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+    });
+
+    return entities.map((entity) => SubmissionMapper.toDomain(entity));
+  }
+
   async findPending(
     paginationOptions: IPaginationOptions,
   ): Promise<Submission[]> {

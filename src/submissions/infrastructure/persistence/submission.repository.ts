@@ -30,6 +30,11 @@ export abstract class SubmissionRepository {
     paginationOptions: IPaginationOptions,
   ): Promise<Submission[]>;
 
+  abstract findApprovedByProfileId(
+    profileId: Submission['profileId'],
+    paginationOptions: IPaginationOptions,
+  ): Promise<Submission[]>;
+
   abstract findPending(
     paginationOptions: IPaginationOptions,
   ): Promise<Submission[]>;

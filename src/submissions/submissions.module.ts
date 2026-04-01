@@ -1,6 +1,7 @@
 import {
   // do not remove this comment
   Module,
+  forwardRef,
 } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import { SubmissionsController } from './submissions.controller';
@@ -12,7 +13,7 @@ import { ActivitiesModule } from '../activities/activities.module';
   imports: [
     // do not remove this comment
     RelationalSubmissionPersistenceModule,
-    GamificationProfilesModule,
+    forwardRef(() => GamificationProfilesModule),
     ActivitiesModule,
   ],
   controllers: [SubmissionsController],

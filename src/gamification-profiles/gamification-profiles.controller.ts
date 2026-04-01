@@ -34,10 +34,11 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllGamificationProfilesDto } from './dto/find-all-gamification-profiles.dto';
+import { UpdateMyGamificationProfileDto } from './dto/update-my-gamification-profile.dto';
+import { SubmissionsService } from '../submissions/submissions.service';
+import { Submission } from '../submissions/domain/submission';
 
 @ApiTags('Gamification Profiles')
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'gamification-profiles',
   version: '1',
@@ -45,10 +46,12 @@ import { FindAllGamificationProfilesDto } from './dto/find-all-gamification-prof
 export class GamificationProfilesController {
   constructor(
     private readonly gamificationProfilesService: GamificationProfilesService,
+    private readonly submissionsService: SubmissionsService,
   ) {}
 
   @Post()
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
   @ApiCreatedResponse({
     type: GamificationProfile,
@@ -60,6 +63,8 @@ export class GamificationProfilesController {
   }
 
   @Post('transfer')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     type: GamificationProfile,
@@ -85,13 +90,47 @@ export class GamificationProfilesController {
 
     return infinityPagination(
       await this.gamificationProfilesService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
+        paginationOptions: { page, limit },
+        sort: query?.sort,
       }),
       { page, limit },
     );
+  }
+
+  @Get('me')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOkResponse({
+    type: GamificationProfile,
+  })
+  findMe(@Request() req) {
+    return this.gamificationProfilesService.findByUserId(req.user.id);
+  }
+
+  @Patch('me')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOkResponse({
+    type: GamificationProfile,
+  })
+  updateMe(@Body() dto: UpdateMyGamificationProfileDto, @Request() req) {
+    return this.gamificationProfilesService.updateMyProfile(
+      req.user.id,
+      dto.username,
+    );
+  }
+
+  @Get('by-username/:username')
+  @ApiParam({
+    name: 'username',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: GamificationProfile,
+  })
+  findByUsername(@Param('username') username: string) {
+    return this.gamificationProfilesService.findByUsername(username);
   }
 
   @Get(':id')
@@ -108,6 +147,8 @@ export class GamificationProfilesController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @ApiParam({
     name: 'id',
     type: String,
@@ -126,8 +167,33 @@ export class GamificationProfilesController {
     );
   }
 
+  @Get(':id/approved-submissions')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(Submission),
+  })
+  async findApprovedSubmissions(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ): Promise<InfinityPaginationResponseDto<Submission>> {
+    const safeLimit = Math.min(Number(limit), 50);
+    return infinityPagination(
+      await this.submissionsService.findApprovedByProfileId(id, {
+        page: Number(page),
+        limit: safeLimit,
+      }),
+      { page: Number(page), limit: safeLimit },
+    );
+  }
+
   @Delete(':id')
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',

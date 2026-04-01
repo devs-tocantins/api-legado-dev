@@ -10,8 +10,10 @@ export abstract class GamificationProfileRepository {
 
   abstract findAllWithPagination({
     paginationOptions,
+    sort,
   }: {
     paginationOptions: IPaginationOptions;
+    sort?: Array<{ orderBy: string; order: 'ASC' | 'DESC' }>;
   }): Promise<GamificationProfile[]>;
 
   abstract findById(

@@ -79,4 +79,11 @@ export class TransactionsService {
   remove(id: Transaction['id']) {
     return this.transactionRepository.remove(id);
   }
+
+  findByProfileId(profileId: string, paginationOptions: IPaginationOptions) {
+    return this.transactionRepository.findByProfileId(
+      profileId,
+      paginationOptions,
+    );
+  }
 }

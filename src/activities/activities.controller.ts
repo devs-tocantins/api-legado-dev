@@ -50,6 +50,32 @@ export class ActivitiesController {
     return this.activitiesService.create(createActivityDto);
   }
 
+  @Get('all')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(Activity),
+    description:
+      'Lista todas as atividades (incluindo ocultas). Apenas admin/moderador.',
+  })
+  async findAllAdmin(
+    @Query() query: FindAllActivitiesDto,
+  ): Promise<InfinityPaginationResponseDto<Activity>> {
+    const page = query?.page ?? 1;
+    let limit = query?.limit ?? 10;
+    if (limit > 50) {
+      limit = 50;
+    }
+
+    return infinityPagination(
+      await this.activitiesService.findAllWithPagination({
+        paginationOptions: { page, limit },
+      }),
+      { page, limit },
+    );
+  }
+
   @Get()
   @ApiOkResponse({
     type: InfinityPaginationResponse(Activity),

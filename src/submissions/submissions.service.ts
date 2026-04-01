@@ -1,12 +1,15 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
+import { RedeemSecretCodeDto } from './dto/redeem-secret-code.dto';
 import { ReviewSubmissionDto } from './dto/review-submission.dto';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { SubmissionRepository } from './infrastructure/persistence/submission.repository';
@@ -26,6 +29,7 @@ const MODERATOR_REWARD_XP = 10;
 export class SubmissionsService {
   constructor(
     private readonly submissionRepository: SubmissionRepository,
+    @Inject(forwardRef(() => GamificationProfilesService))
     private readonly gamificationProfilesService: GamificationProfilesService,
     private readonly activitiesService: ActivitiesService,
     @InjectDataSource() private readonly dataSource: DataSource,
@@ -112,6 +116,16 @@ export class SubmissionsService {
 
   findPending(paginationOptions: IPaginationOptions) {
     return this.submissionRepository.findPending(paginationOptions);
+  }
+
+  findApprovedByProfileId(
+    profileId: Submission['profileId'],
+    paginationOptions: IPaginationOptions,
+  ) {
+    return this.submissionRepository.findApprovedByProfileId(
+      profileId,
+      paginationOptions,
+    );
   }
 
   findById(id: Submission['id']) {
@@ -244,6 +258,95 @@ export class SubmissionsService {
     }
 
     return this.submissionRepository.findById(id);
+  }
+
+  async redeemSecretCode(dto: RedeemSecretCodeDto, userId: number) {
+    const profile = await this.gamificationProfilesService.findByUserId(userId);
+    if (!profile) {
+      throw new UnprocessableEntityException(
+        'Perfil de gamificação não encontrado.',
+      );
+    }
+
+    const activity = await this.activitiesService.findBySecretCode(
+      dto.secretCode,
+    );
+    if (!activity) {
+      throw new NotFoundException(
+        'Código inválido ou atividade não encontrada.',
+      );
+    }
+
+    if (activity.cooldownHours > 0) {
+      const since = new Date();
+      since.setHours(since.getHours() - activity.cooldownHours);
+      const recent =
+        await this.submissionRepository.findRecentByProfileAndActivity(
+          profile.id,
+          activity.id,
+          since,
+        );
+      if (recent.length > 0) {
+        throw new BadRequestException(
+          `Você já resgatou este código recentemente. Aguarde ${activity.cooldownHours}h.`,
+        );
+      }
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    let submissionId: string;
+
+    try {
+      const submission = await this.submissionRepository.create({
+        profileId: profile.id,
+        activityId: activity.id,
+        proofUrl: null,
+        status: SubmissionStatus.APPROVED,
+        feedback: null,
+        awardedXp: activity.fixedReward,
+        reviewerId: null,
+        reviewedAt: new Date(),
+      });
+      submissionId = submission.id;
+
+      await queryRunner.manager.increment(
+        GamificationProfileEntity,
+        { id: profile.id },
+        'totalXp',
+        activity.fixedReward,
+      );
+      await queryRunner.manager.increment(
+        GamificationProfileEntity,
+        { id: profile.id },
+        'currentMonthlyXp',
+        activity.fixedReward,
+      );
+      await queryRunner.manager.increment(
+        GamificationProfileEntity,
+        { id: profile.id },
+        'currentYearlyXp',
+        activity.fixedReward,
+      );
+
+      await queryRunner.manager.save(TransactionEntity, {
+        profile: { id: profile.id },
+        category: TransactionCategoryEnum.XP_REWARD,
+        amount: activity.fixedReward,
+        description: `Código secreto resgatado: ${activity.title}`,
+      });
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return this.submissionRepository.findById(submissionId!);
   }
 
   remove(id: Submission['id']) {

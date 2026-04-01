@@ -16,6 +16,7 @@ import { SubmissionsService } from './submissions.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { ReviewSubmissionDto } from './dto/review-submission.dto';
+import { RedeemSecretCodeDto } from './dto/redeem-secret-code.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -51,6 +52,16 @@ export class SubmissionsController {
   })
   create(@Body() createSubmissionDto: CreateSubmissionDto, @Request() req) {
     return this.submissionsService.create(createSubmissionDto, req.user.id);
+  }
+
+  @Post('redeem')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    type: Submission,
+    description: 'Resgata um código secreto de atividade oculta',
+  })
+  redeemSecretCode(@Body() dto: RedeemSecretCodeDto, @Request() req) {
+    return this.submissionsService.redeemSecretCode(dto, req.user.id);
   }
 
   @Get('me')
