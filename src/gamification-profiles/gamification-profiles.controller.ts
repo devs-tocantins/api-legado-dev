@@ -35,7 +35,7 @@ import {
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllGamificationProfilesDto } from './dto/find-all-gamification-profiles.dto';
 import { UpdateMyGamificationProfileDto } from './dto/update-my-gamification-profile.dto';
-import { SubmissionsService } from '../submissions/submissions.service';
+import { SubmissionRepository } from '../submissions/infrastructure/persistence/submission.repository';
 import { Submission } from '../submissions/domain/submission';
 
 @ApiTags('Gamification Profiles')
@@ -46,7 +46,7 @@ import { Submission } from '../submissions/domain/submission';
 export class GamificationProfilesController {
   constructor(
     private readonly gamificationProfilesService: GamificationProfilesService,
-    private readonly submissionsService: SubmissionsService,
+    private readonly submissionRepository: SubmissionRepository,
   ) {}
 
   @Post()
@@ -183,7 +183,7 @@ export class GamificationProfilesController {
   ): Promise<InfinityPaginationResponseDto<Submission>> {
     const safeLimit = Math.min(Number(limit), 50);
     return infinityPagination(
-      await this.submissionsService.findApprovedByProfileId(id, {
+      await this.submissionRepository.findApprovedByProfileId(id, {
         page: Number(page),
         limit: safeLimit,
       }),

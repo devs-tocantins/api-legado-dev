@@ -1,21 +1,20 @@
 import {
   // do not remove this comment
   Module,
-  forwardRef,
 } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { GamificationProfilesService } from './gamification-profiles.service';
 import { GamificationProfilesCronService } from './gamification-profiles-cron.service';
 import { GamificationProfilesController } from './gamification-profiles.controller';
 import { RelationalGamificationProfilePersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
-import { SubmissionsModule } from '../submissions/submissions.module';
+import { RelationalSubmissionPersistenceModule } from '../submissions/infrastructure/persistence/relational/relational-persistence.module';
 
 @Module({
   imports: [
     // do not remove this comment
     RelationalGamificationProfilePersistenceModule,
+    RelationalSubmissionPersistenceModule,
     ScheduleModule.forRoot(),
-    forwardRef(() => SubmissionsModule),
   ],
   controllers: [GamificationProfilesController],
   providers: [GamificationProfilesService, GamificationProfilesCronService],

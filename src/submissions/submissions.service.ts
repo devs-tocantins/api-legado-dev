@@ -1,10 +1,8 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
-  forwardRef,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -29,7 +27,6 @@ const MODERATOR_REWARD_XP = 10;
 export class SubmissionsService {
   constructor(
     private readonly submissionRepository: SubmissionRepository,
-    @Inject(forwardRef(() => GamificationProfilesService))
     private readonly gamificationProfilesService: GamificationProfilesService,
     private readonly activitiesService: ActivitiesService,
     @InjectDataSource() private readonly dataSource: DataSource,
