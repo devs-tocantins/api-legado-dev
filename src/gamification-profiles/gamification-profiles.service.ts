@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -36,14 +37,17 @@ export class GamificationProfilesService {
 
   findAllWithPagination({
     paginationOptions,
+    sort,
   }: {
     paginationOptions: IPaginationOptions;
+    sort?: Array<{ orderBy: string; order: 'ASC' | 'DESC' }>;
   }) {
     return this.gamificationProfileRepository.findAllWithPagination({
       paginationOptions: {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
       },
+      sort,
     });
   }
 
@@ -76,6 +80,29 @@ export class GamificationProfilesService {
 
   findByUsername(username: GamificationProfile['username']) {
     return this.gamificationProfileRepository.findByUsername(username);
+  }
+
+  async updateMyProfile(
+    userId: number,
+    newUsername: string,
+  ): Promise<GamificationProfile> {
+    const profile =
+      await this.gamificationProfileRepository.findByUserId(userId);
+    if (!profile) {
+      throw new NotFoundException('Perfil não encontrado.');
+    }
+
+    if (newUsername !== profile.username) {
+      const existing =
+        await this.gamificationProfileRepository.findByUsername(newUsername);
+      if (existing) {
+        throw new ConflictException('Este username já está em uso.');
+      }
+    }
+
+    return this.gamificationProfileRepository.update(profile.id, {
+      username: newUsername,
+    }) as Promise<GamificationProfile>;
   }
 
   resetMonthlyXpAndTokens(defaultTokens: number) {

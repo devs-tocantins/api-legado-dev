@@ -28,6 +28,7 @@ import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
+import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 
 @Injectable()
 export class AuthService {
@@ -37,7 +38,26 @@ export class AuthService {
     private sessionService: SessionService,
     private mailService: MailService,
     private configService: ConfigService<AllConfigType>,
+    private gamificationProfilesService: GamificationProfilesService,
   ) {}
+
+  private async ensureGamificationProfile(user: User): Promise<void> {
+    const existing = await this.gamificationProfilesService.findByUserId(
+      user.id as number,
+    );
+    if (!existing) {
+      const base =
+        `${(user.firstName ?? 'user').toLowerCase()}${(user.lastName ?? '').toLowerCase()}`.replace(
+          /\s+/g,
+          '',
+        );
+      const username = `${base}${user.id}`;
+      await this.gamificationProfilesService.create({
+        userId: user.id as number,
+        username,
+      });
+    }
+  }
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
     const user = await this.usersService.findByEmail(loginDto.email);
@@ -153,6 +173,9 @@ export class AuthService {
       });
 
       user = await this.usersService.findById(user.id);
+      if (user) {
+        await this.ensureGamificationProfile(user);
+      }
     }
 
     if (!user) {
@@ -266,6 +289,7 @@ export class AuthService {
     };
 
     await this.usersService.update(user.id, user);
+    await this.ensureGamificationProfile(user);
   }
 
   async confirmNewEmail(hash: string): Promise<void> {

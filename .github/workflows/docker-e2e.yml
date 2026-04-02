@@ -23,8 +23,6 @@ jobs:
         run: docker cp ci-relational-api-1:/usr/src/app/prod.log .
       # </database-relational-block>
 
-      
-
       - name: Upload prod.log to artifacts for debugging
         if: failure()
         uses: actions/upload-artifact@v4

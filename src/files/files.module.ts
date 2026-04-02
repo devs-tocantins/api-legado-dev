@@ -9,6 +9,7 @@ import { FileConfig, FileDriver } from './config/file-config.type';
 import { FilesLocalModule } from './infrastructure/uploader/local/files.module';
 import { FilesS3Module } from './infrastructure/uploader/s3/files.module';
 import { FilesS3PresignedModule } from './infrastructure/uploader/s3-presigned/files.module';
+import { FilesMockModule } from './infrastructure/uploader/mock/files.module';
 
 const infrastructurePersistenceModule = RelationalFilePersistenceModule;
 
@@ -17,7 +18,9 @@ const infrastructureUploaderModule =
     ? FilesLocalModule
     : (fileConfig() as FileConfig).driver === FileDriver.S3
       ? FilesS3Module
-      : FilesS3PresignedModule;
+      : (fileConfig() as FileConfig).driver === FileDriver.S3_PRESIGNED
+        ? FilesS3PresignedModule
+        : FilesMockModule;
 
 @Module({
   imports: [

@@ -27,12 +27,24 @@ export class GamificationProfileRelationalRepository
 
   async findAllWithPagination({
     paginationOptions,
+    sort,
   }: {
     paginationOptions: IPaginationOptions;
+    sort?: Array<{ orderBy: string; order: 'ASC' | 'DESC' }>;
   }): Promise<GamificationProfile[]> {
+    const order: Record<string, 'ASC' | 'DESC'> = {};
+    if (sort?.length) {
+      for (const s of sort) {
+        order[s.orderBy] = s.order;
+      }
+    } else {
+      order['totalXp'] = 'DESC';
+    }
+
     const entities = await this.gamificationProfileRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
+      order,
     });
 
     return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
