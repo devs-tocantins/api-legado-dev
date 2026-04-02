@@ -12,11 +12,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-
+- name: Prepare environment variables
+  run: |
+    cp env-example-relational .env
+    echo "FILE_DRIVER=LOCAL" >> .env
+    echo "MAIL_HOST=localhost" >> .env
+    echo "MAIL_PORT=1025" >> .env
+    echo "MAIL_USER=mock" >> .env
+    echo "MAIL_PASSWORD=mock" >> .env
+    echo "MAIL_DEFAULT_EMAIL=mock@example.com" >> .env
+    echo "MAIL_DEFAULT_NAME=Mock" >> .env
+    echo "MAIL_IGNORE_TLS=true" >> .env
+    echo "MAIL_SECURE=false" >> .env
+    echo "MAIL_REQUIRE_TLS=false" >> .env
       # <database-relational-block>
       - name: Run e2e tests for NestJS with TypeORM
         id: relational
-        run: docker compose -f docker-compose.relational.ci.yaml --env-file env-example-relational -p ci-relational up --build --exit-code-from api
+        run: docker compose -f docker-compose.relational.ci.yaml --env-file .env -p ci-relational up --build --exit-code-from api
 
       - name: Copy prod.log from container to host
         if: ${{ failure() && steps.relational.conclusion == 'failure' }}
