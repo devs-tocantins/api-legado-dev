@@ -11,6 +11,7 @@ export class GamificationProfileMapper {
     domainEntity.currentMonthlyXp = raw.currentMonthlyXp;
     domainEntity.currentYearlyXp = raw.currentYearlyXp;
     domainEntity.gratitudeTokens = raw.gratitudeTokens;
+    domainEntity.isBanned = raw.user?.isBanned ?? false;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 

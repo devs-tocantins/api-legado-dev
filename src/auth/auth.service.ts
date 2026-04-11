@@ -103,6 +103,15 @@ export class AuthService {
       });
     }
 
+    if (user.isBanned) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'banned',
+        },
+      });
+    }
+
     const hash = crypto
       .createHash('sha256')
       .update(randomStringGenerator())
@@ -183,6 +192,15 @@ export class AuthService {
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
           user: 'userNotFound',
+        },
+      });
+    }
+
+    if (user.isBanned) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'banned',
         },
       });
     }

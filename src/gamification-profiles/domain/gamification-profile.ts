@@ -47,6 +47,9 @@ export class GamificationProfile {
   })
   gratitudeTokens: number;
 
+  @ApiProperty({ type: Boolean, default: false })
+  isBanned: boolean;
+
   @ApiProperty()
   createdAt: Date;
 

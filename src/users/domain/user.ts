@@ -63,6 +63,9 @@ export class User {
   })
   status?: Status;
 
+  @ApiProperty({ type: Boolean, default: false })
+  isBanned: boolean;
+
   @ApiProperty()
   createdAt: Date;
 
