@@ -38,9 +38,11 @@ export class GamificationProfilesService {
   findAllWithPagination({
     paginationOptions,
     sort,
+    search,
   }: {
     paginationOptions: IPaginationOptions;
     sort?: Array<{ orderBy: string; order: 'ASC' | 'DESC' }>;
+    search?: string;
   }) {
     return this.gamificationProfileRepository.findAllWithPagination({
       paginationOptions: {
@@ -48,6 +50,7 @@ export class GamificationProfilesService {
         limit: paginationOptions.limit,
       },
       sort,
+      search,
     });
   }
 

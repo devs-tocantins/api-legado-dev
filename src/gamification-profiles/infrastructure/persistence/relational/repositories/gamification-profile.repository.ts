@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { ILike, Repository, In } from 'typeorm';
 import { GamificationProfileEntity } from '../entities/gamification-profile.entity';
 import { NullableType } from '../../../../../utils/types/nullable.type';
 import { GamificationProfile } from '../../../../domain/gamification-profile';
@@ -28,9 +28,11 @@ export class GamificationProfileRelationalRepository
   async findAllWithPagination({
     paginationOptions,
     sort,
+    search,
   }: {
     paginationOptions: IPaginationOptions;
     sort?: Array<{ orderBy: string; order: 'ASC' | 'DESC' }>;
+    search?: string;
   }): Promise<GamificationProfile[]> {
     const order: Record<string, 'ASC' | 'DESC'> = {};
     if (sort?.length) {
@@ -41,7 +43,10 @@ export class GamificationProfileRelationalRepository
       order['totalXp'] = 'DESC';
     }
 
+    const where = search ? { username: ILike(`%${search}%`) } : undefined;
+
     const entities = await this.gamificationProfileRepository.find({
+      where,
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
       order,

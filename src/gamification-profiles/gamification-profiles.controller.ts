@@ -92,6 +92,7 @@ export class GamificationProfilesController {
       await this.gamificationProfilesService.findAllWithPagination({
         paginationOptions: { page, limit },
         sort: query?.sort,
+        search: query?.search,
       }),
       { page, limit },
     );
