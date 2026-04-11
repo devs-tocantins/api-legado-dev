@@ -14,6 +14,7 @@ const mockGamificationProfile: GamificationProfile = {
   currentMonthlyXp: 0,
   currentYearlyXp: 0,
   gratitudeTokens: 0,
+  isBanned: false,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
 };
@@ -96,6 +97,7 @@ describe('GamificationProfilesService', () => {
         currentMonthlyXp: 0,
         currentYearlyXp: 0,
         gratitudeTokens: 0,
+        isBanned: false,
       });
       expect(result).toEqual(mockGamificationProfile);
     });

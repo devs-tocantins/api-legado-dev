@@ -16,6 +16,7 @@ import { GamificationProfilesService } from './gamification-profiles.service';
 import { CreateGamificationProfileDto } from './dto/create-gamification-profile.dto';
 import { UpdateGamificationProfileDto } from './dto/update-gamification-profile.dto';
 import { TransferTokensDto } from './dto/transfer-tokens.dto';
+import { ApplyPenaltyDto } from './dto/apply-penalty.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -190,6 +191,29 @@ export class GamificationProfilesController {
       }),
       { page: Number(page), limit: safeLimit },
     );
+  }
+
+  @Post(':id/penalty')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin)
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+    description: 'ID do perfil de gamificação a ser penalizado',
+  })
+  @ApiOkResponse({
+    type: GamificationProfile,
+    description: 'Perfil atualizado após a penalidade',
+  })
+  async applyPenalty(
+    @Param('id') id: string,
+    @Body() dto: ApplyPenaltyDto,
+    @Request() req,
+  ) {
+    return this.gamificationProfilesService.applyPenalty(id, dto, req.user.id);
   }
 
   @Delete(':id')

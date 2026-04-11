@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -10,6 +11,7 @@ import { DataSource } from 'typeorm';
 import { CreateGamificationProfileDto } from './dto/create-gamification-profile.dto';
 import { UpdateGamificationProfileDto } from './dto/update-gamification-profile.dto';
 import { TransferTokensDto } from './dto/transfer-tokens.dto';
+import { ApplyPenaltyDto } from './dto/apply-penalty.dto';
 import { GamificationProfileRepository } from './infrastructure/persistence/gamification-profile.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { GamificationProfile } from './domain/gamification-profile';
@@ -32,6 +34,7 @@ export class GamificationProfilesService {
       currentMonthlyXp: 0,
       currentYearlyXp: 0,
       gratitudeTokens: 0,
+      isBanned: false,
     });
   }
 
@@ -114,12 +117,68 @@ export class GamificationProfilesService {
     );
   }
 
+  async applyPenalty(
+    profileId: GamificationProfile['id'],
+    dto: ApplyPenaltyDto,
+    adminUserId: number,
+  ): Promise<GamificationProfile> {
+    const profile =
+      await this.gamificationProfileRepository.findById(profileId);
+    if (!profile) {
+      throw new NotFoundException('Perfil de gamificação não encontrado.');
+    }
+
+    const newTotal = Math.max(0, profile.totalXp - dto.amount);
+    const newMonthly = Math.max(0, profile.currentMonthlyXp - dto.amount);
+    const newYearly = Math.max(0, profile.currentYearlyXp - dto.amount);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      await queryRunner.manager.update(
+        GamificationProfileEntity,
+        { id: profileId },
+        {
+          totalXp: newTotal,
+          currentMonthlyXp: newMonthly,
+          currentYearlyXp: newYearly,
+        },
+      );
+
+      await queryRunner.manager.save(TransactionEntity, {
+        profile: { id: profileId },
+        category: TransactionCategoryEnum.PENALTY,
+        amount: -dto.amount,
+        description: `[Admin #${adminUserId}] ${dto.reason}`,
+      });
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return (await this.gamificationProfileRepository.findById(
+      profileId,
+    )) as GamificationProfile;
+  }
+
   async transferTokens(senderUserId: number, dto: TransferTokensDto) {
     const senderProfile =
       await this.gamificationProfileRepository.findByUserId(senderUserId);
     if (!senderProfile) {
       throw new UnprocessableEntityException(
         'Perfil de gamificação do remetente não encontrado.',
+      );
+    }
+
+    if (senderProfile.isBanned) {
+      throw new ForbiddenException(
+        'Sua conta está banida e não pode transferir tokens.',
       );
     }
 
