@@ -800,40 +800,57 @@
   │  #  │      Épico       │  User    │  Status Backend   │ Status Frontend │
   │     │                  │ Stories  │                   │                 │
   ├─────┼──────────────────┼──────────┼───────────────────┼─────────────────┤
-  │ 1   │ Identidade e     │ US-01 a  │ Implementado      │ Implementado    │
-  │     │ Acesso           │ US-07    │ (base)            │ (base)          │
+  │ 1   │ Identidade e     │ US-01 a  │ ✅ Completo       │ ✅ Completo     │
+  │     │ Acesso           │ US-07    │                   │                 │
   ├─────┼──────────────────┼──────────┼───────────────────┼─────────────────┤
-  │ 2   │ Catálogo de      │ US-08 a  │ Implementado      │ Implementado    │
+  │ 2   │ Catálogo de      │ US-08 a  │ ✅ Completo       │ ✅ Completo     │
   │     │ Atividades       │ US-12    │                   │                 │
   ├─────┼──────────────────┼──────────┼───────────────────┼─────────────────┤
-  │ 3   │ Submissão de     │ US-13 a  │ Implementado      │ Implementado    │
+  │ 3   │ Submissão de     │ US-13 a  │ ✅ Completo       │ ✅ Completo     │
   │     │ Atividades       │ US-15    │                   │                 │
   ├─────┼──────────────────┼──────────┼───────────────────┼─────────────────┤
-  │ 4   │ Moderação e      │ US-16 a  │ US-16/17/18 ✅ ·  │ Implementado    │
-  │     │ Auditoria        │ US-19    │ US-19 ❌          │ (parcial)       │
+  │ 4   │ Moderação e      │ US-16 a  │ ✅ Completo       │ ✅ Moderação    │
+  │     │ Auditoria        │ US-19    │                   │ ❌ Penalidade   │
   ├─────┼──────────────────┼──────────┼───────────────────┼─────────────────┤
-  │ 5   │ Economia P2P     │ US-20 a  │ Implementado      │ Implementado    │
-  │     │                  │ US-22    │                   │                 │
+  │ 5   │ Economia P2P     │ US-20 a  │ ✅ Completo       │ ✅ Transfer     │
+  │     │                  │ US-22    │                   │ ❌ Combobox     │
   ├─────┼──────────────────┼──────────┼───────────────────┼─────────────────┤
-  │ 6   │ Rankings e       │ US-23 a  │ Implementado      │ Implementado    │
+  │ 6   │ Rankings e       │ US-23 a  │ ✅ Completo       │ ✅ Completo     │
   │     │ Vitrine          │ US-27    │                   │                 │
   ├─────┼──────────────────┼──────────┼───────────────────┼─────────────────┤
-  │ 7   │ Conquistas       │ US-28 a  │ Entidade modelada │ ❌              │
-  │     │ (Badges)         │ US-30    │  · Lógica ❌      │                 │
+  │ 7   │ Conquistas       │ US-28 a  │ ✅ Completo       │ ❌ A fazer      │
+  │     │ (Badges)         │ US-30    │                   │                 │
   ├─────┼──────────────────┼──────────┼───────────────────┼─────────────────┤
-  │ 8   │ Administração    │ US-31 a  │ Parcial           │ Parcial         │
-  │     │                  │ US-33    │                   │                 │
+  │ 8   │ Administração    │ US-31 a  │ ✅ Completo       │ ✅ isBanned     │
+  │     │                  │ US-33    │                   │ ❌ Métricas     │
   └─────┴──────────────────┴──────────┴───────────────────┴─────────────────┘
 
-  Legenda: ✅ Implementado · ❌ A implementar                                   
-   
-  ---                                                                           
-  As histórias estão organizadas do ciclo mais básico (o usuário existe e acessa
-   a plataforma) até o ciclo completo de valor (contribuição → comprovação →    
-  moderação → reputação pública). As próximas histórias a atacar, considerando o
-   que já foi entregue nos Milestones 1-4, seriam:                              
-                                                                  
-  - US-19 (Penalidade Admin) — segurança anti-fraude crítica
-  - US-28/29/30 (Badges) — o diferencial de vitrine do produto                  
-  - US-32 (Métricas Admin) — necessário para decisões de produto                
-  - US-24 (Reset Anual) — CronJob faltante para o ranking anual   
+  Legenda: ✅ Implementado · ❌ A implementar
+
+  ---
+  Status atualizado em 2026-04-11 (Milestone 5 — backend completo):
+
+  Backend — tudo entregue:
+  - US-ban (isBanned): coluna na tabela user, login bloqueado, submissões e
+    transferências bloqueadas para banidos, leaderboard filtra banidos
+  - US-19: POST /gamification-profiles/:id/penalty — débito de XP com
+    transação PENALTY, protegido por role admin
+  - US-24: CronJob anual (1° de janeiro) zerando currentYearlyXp
+  - US-28: BadgeEvaluatorService automático — avalia critérios após aprovação
+    de submissão, resgate de código e transferência de tokens
+  - US-29: POST /badges/grant — concessão manual de badge (admin)
+  - US-30: CRUD completo de badges (GET/POST/PATCH/DELETE /badges)
+  - US-32: GET /admin/metrics — totalUsers, activeUsers, bannedUsers,
+    submissionsPending, submissionsApprovedThisMonth, submissionsRejectedThisMonth,
+    totalXpDistributed, tokensInCirculation
+
+  Frontend — concluído neste milestone:
+  - Toggle isBanned no painel admin de usuários (edit user page)
+  - Mensagem "conta banida" na tela de login
+  - i18n pt-BR e en para os novos campos
+
+  Frontend — pendente (ver implementation-plan-pending.md):
+  - US-20B: Combobox busca por @username na transferência de tokens
+  - US-19:  Modal de penalidade admin no perfil do usuário
+  - US-28/29/30: UI de badges (perfil público, dashboard, admin panel)
+  - US-32:  Página de métricas no painel admin
