@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository, In } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { GamificationProfileEntity } from '../entities/gamification-profile.entity';
 import { NullableType } from '../../../../../utils/types/nullable.type';
 import { GamificationProfile } from '../../../../domain/gamification-profile';
@@ -34,24 +34,28 @@ export class GamificationProfileRelationalRepository
     sort?: Array<{ orderBy: string; order: 'ASC' | 'DESC' }>;
     search?: string;
   }): Promise<GamificationProfile[]> {
-    const order: Record<string, 'ASC' | 'DESC'> = {};
-    if (sort?.length) {
-      for (const s of sort) {
-        order[s.orderBy] = s.order;
-      }
-    } else {
-      order['totalXp'] = 'DESC';
+    const qb = this.gamificationProfileRepository
+      .createQueryBuilder('gp')
+      .leftJoinAndSelect('gp.user', 'u')
+      .where('u.isBanned = false');
+
+    if (search) {
+      qb.andWhere('gp.username ILIKE :search', { search: `%${search}%` });
     }
 
-    const where = search ? { username: ILike(`%${search}%`) } : undefined;
+    if (sort?.length) {
+      for (const s of sort) {
+        qb.addOrderBy(`gp.${s.orderBy}`, s.order);
+      }
+    } else {
+      qb.orderBy('gp.totalXp', 'DESC');
+    }
 
-    const entities = await this.gamificationProfileRepository.find({
-      where,
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-      order,
-    });
+    qb.skip((paginationOptions.page - 1) * paginationOptions.limit).take(
+      paginationOptions.limit,
+    );
 
+    const entities = await qb.getMany();
     return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
   }
 
@@ -60,6 +64,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { id },
+      relations: { user: true },
     });
 
     return entity ? GamificationProfileMapper.toDomain(entity) : null;
@@ -70,6 +75,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<GamificationProfile[]> {
     const entities = await this.gamificationProfileRepository.find({
       where: { id: In(ids) },
+      relations: { user: true },
     });
 
     return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
@@ -108,6 +114,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { userId },
+      relations: { user: true },
     });
 
     return entity ? GamificationProfileMapper.toDomain(entity) : null;
@@ -118,6 +125,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { username },
+      relations: { user: true },
     });
 
     return entity ? GamificationProfileMapper.toDomain(entity) : null;
@@ -128,5 +136,9 @@ export class GamificationProfileRelationalRepository
       {},
       { currentMonthlyXp: 0, gratitudeTokens: defaultTokens },
     );
+  }
+
+  async resetYearlyXp(): Promise<void> {
+    await this.gamificationProfileRepository.update({}, { currentYearlyXp: 0 });
   }
 }

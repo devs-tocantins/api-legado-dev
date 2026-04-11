@@ -26,4 +26,16 @@ export class GamificationProfilesCronService {
       this.logger.error('Falha no reset mensal', err);
     }
   }
+
+  // Executa às 00h00 do dia 1° de janeiro (reinicia ranking anual)
+  @Cron('0 0 1 1 *')
+  async handleYearlyReset() {
+    this.logger.log('Iniciando reset anual de XP (currentYearlyXp)...');
+    try {
+      await this.gamificationProfilesService.resetYearlyXp();
+      this.logger.log('Reset anual concluído. currentYearlyXp zerado.');
+    } catch (err) {
+      this.logger.error('Falha no reset anual', err);
+    }
+  }
 }

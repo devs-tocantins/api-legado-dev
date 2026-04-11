@@ -117,6 +117,10 @@ export class GamificationProfilesService {
     );
   }
 
+  resetYearlyXp() {
+    return this.gamificationProfileRepository.resetYearlyXp();
+  }
+
   async applyPenalty(
     profileId: GamificationProfile['id'],
     dto: ApplyPenaltyDto,

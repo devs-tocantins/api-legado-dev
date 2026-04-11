@@ -42,4 +42,6 @@ export abstract class GamificationProfileRepository {
   ): Promise<NullableType<GamificationProfile>>;
 
   abstract resetMonthlyXpAndTokens(defaultTokens: number): Promise<void>;
+
+  abstract resetYearlyXp(): Promise<void>;
 }
