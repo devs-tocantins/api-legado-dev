@@ -35,9 +35,11 @@ import { ActivitiesModule } from './activities/activities.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 
 import { TransactionsModule } from './transactions/transactions.module';
+import { BadgesModule } from './badges/badges.module';
 
 @Module({
   imports: [
+    BadgesModule,
     TransactionsModule,
     SubmissionsModule,
     ActivitiesModule,
