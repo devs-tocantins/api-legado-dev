@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken } from '@nestjs/typeorm';
 import { GamificationProfilesService } from './gamification-profiles.service';
 import { GamificationProfileRepository } from './infrastructure/persistence/gamification-profile.repository';
+import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
 import { GamificationProfile } from './domain/gamification-profile';
 import { CreateGamificationProfileDto } from './dto/create-gamification-profile.dto';
 import { UpdateGamificationProfileDto } from './dto/update-gamification-profile.dto';
@@ -63,6 +64,10 @@ describe('GamificationProfilesService', () => {
         {
           provide: getDataSourceToken(),
           useValue: mockDataSource,
+        },
+        {
+          provide: BadgeEvaluatorService,
+          useValue: { evaluate: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

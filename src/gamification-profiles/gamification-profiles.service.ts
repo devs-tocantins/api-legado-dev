@@ -12,6 +12,7 @@ import { CreateGamificationProfileDto } from './dto/create-gamification-profile.
 import { UpdateGamificationProfileDto } from './dto/update-gamification-profile.dto';
 import { TransferTokensDto } from './dto/transfer-tokens.dto';
 import { ApplyPenaltyDto } from './dto/apply-penalty.dto';
+import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
 import { GamificationProfileRepository } from './infrastructure/persistence/gamification-profile.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { GamificationProfile } from './domain/gamification-profile';
@@ -23,6 +24,7 @@ import { TransactionCategoryEnum } from '../transactions/domain/transaction-cate
 export class GamificationProfilesService {
   constructor(
     private readonly gamificationProfileRepository: GamificationProfileRepository,
+    private readonly badgeEvaluatorService: BadgeEvaluatorService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -261,6 +263,8 @@ export class GamificationProfilesService {
     } finally {
       await queryRunner.release();
     }
+
+    void this.badgeEvaluatorService.evaluate(senderProfile.id);
 
     return this.gamificationProfileRepository.findById(senderProfile.id);
   }

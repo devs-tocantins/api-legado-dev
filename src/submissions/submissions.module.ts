@@ -7,6 +7,7 @@ import { SubmissionsController } from './submissions.controller';
 import { RelationalSubmissionPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { GamificationProfilesModule } from '../gamification-profiles/gamification-profiles.module';
 import { ActivitiesModule } from '../activities/activities.module';
+import { BadgesModule } from '../badges/badges.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ActivitiesModule } from '../activities/activities.module';
     RelationalSubmissionPersistenceModule,
     GamificationProfilesModule,
     ActivitiesModule,
+    BadgesModule,
   ],
   controllers: [SubmissionsController],
   providers: [SubmissionsService],

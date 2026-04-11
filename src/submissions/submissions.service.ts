@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -16,6 +17,7 @@ import { Submission } from './domain/submission';
 import { SubmissionStatus } from './domain/submission-status.enum';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 import { ActivitiesService } from '../activities/activities.service';
+import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
 import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
 import { SubmissionEntity } from './infrastructure/persistence/relational/entities/submission.entity';
 import { TransactionEntity } from '../transactions/infrastructure/persistence/relational/entities/transaction.entity';
@@ -29,6 +31,7 @@ export class SubmissionsService {
     private readonly submissionRepository: SubmissionRepository,
     private readonly gamificationProfilesService: GamificationProfilesService,
     private readonly activitiesService: ActivitiesService,
+    private readonly badgeEvaluatorService: BadgeEvaluatorService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -37,6 +40,12 @@ export class SubmissionsService {
     if (!profile) {
       throw new UnprocessableEntityException(
         'Perfil de gamificação não encontrado. Crie seu perfil antes de submeter.',
+      );
+    }
+
+    if (profile.isBanned) {
+      throw new ForbiddenException(
+        'Sua conta está banida e não pode realizar submissões.',
       );
     }
 
@@ -254,6 +263,10 @@ export class SubmissionsService {
       await queryRunner.release();
     }
 
+    if (reviewDto.status === SubmissionStatus.APPROVED) {
+      void this.badgeEvaluatorService.evaluate(submission.profileId);
+    }
+
     return this.submissionRepository.findById(id);
   }
 
@@ -262,6 +275,12 @@ export class SubmissionsService {
     if (!profile) {
       throw new UnprocessableEntityException(
         'Perfil de gamificação não encontrado.',
+      );
+    }
+
+    if (profile.isBanned) {
+      throw new ForbiddenException(
+        'Sua conta está banida e não pode resgatar códigos.',
       );
     }
 
@@ -342,6 +361,8 @@ export class SubmissionsService {
     } finally {
       await queryRunner.release();
     }
+
+    void this.badgeEvaluatorService.evaluate(profile.id);
 
     return this.submissionRepository.findById(submissionId!);
   }
