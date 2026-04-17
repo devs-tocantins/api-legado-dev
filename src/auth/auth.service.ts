@@ -41,17 +41,23 @@ export class AuthService {
     private gamificationProfilesService: GamificationProfilesService,
   ) {}
 
-  private async ensureGamificationProfile(user: User): Promise<void> {
+  private async ensureGamificationProfile(
+    user: User,
+    desiredUsername?: string,
+  ): Promise<void> {
     const existing = await this.gamificationProfilesService.findByUserId(
       user.id as number,
     );
     if (!existing) {
-      const base =
-        `${(user.firstName ?? 'user').toLowerCase()}${(user.lastName ?? '').toLowerCase()}`.replace(
-          /\s+/g,
-          '',
-        );
-      const username = `${base}${user.id}`;
+      let username = desiredUsername?.trim().toLowerCase();
+      if (!username || !/^[a-z0-9_]+$/.test(username)) {
+        const base =
+          `${(user.firstName ?? 'user').toLowerCase()}${(user.lastName ?? '').toLowerCase()}`.replace(
+            /[^a-z0-9_]/g,
+            '',
+          );
+        username = `${base || 'user'}${user.id}`;
+      }
       await this.gamificationProfilesService.create({
         userId: user.id as number,
         username,
@@ -245,6 +251,8 @@ export class AuthService {
         id: StatusEnum.inactive,
       },
     });
+
+    await this.ensureGamificationProfile(user, dto.username);
 
     const hash = await this.jwtService.signAsync(
       {
