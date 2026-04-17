@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  Min,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class TransferTokensDto {
   @ApiProperty({
@@ -24,5 +32,7 @@ export class TransferTokensDto {
   })
   @IsOptional()
   @IsString()
+  @MaxLength(300)
+  @Transform(({ value }) => value?.trim())
   message?: string;
 }

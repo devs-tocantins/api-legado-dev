@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateMyGamificationProfileDto {
   @ApiProperty({
@@ -15,4 +22,18 @@ export class UpdateMyGamificationProfileDto {
       'username deve conter apenas letras minúsculas, números e underscore',
   })
   username: string;
+
+  @ApiProperty({
+    description: 'Username do GitHub para exibir o avatar',
+    example: 'leo-nardo',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(39)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() || null : value,
+  )
+  githubUsername?: string | null;
 }

@@ -25,6 +25,15 @@ export class GamificationProfileRelationalRepository
     return GamificationProfileMapper.toDomain(newEntity);
   }
 
+  // Campos de ordenação permitidos (whitelist contra injeção)
+  private readonly ALLOWED_SORT_FIELDS = new Set([
+    'totalXp',
+    'currentMonthlyXp',
+    'currentYearlyXp',
+    'gratitudeTokens',
+    'createdAt',
+  ]);
+
   async findAllWithPagination({
     paginationOptions,
     sort,
@@ -34,29 +43,59 @@ export class GamificationProfileRelationalRepository
     sort?: Array<{ orderBy: string; order: 'ASC' | 'DESC' }>;
     search?: string;
   }): Promise<GamificationProfile[]> {
-    const qb = this.gamificationProfileRepository
+    // Passo 1 — busca IDs paginados/ordenados sem leftJoinAndSelect.
+    // Usar leftJoinAndSelect + skip/take dispara o bug do TypeORM ao montar
+    // a subquery DISTINCT (Cannot read properties of undefined 'databaseName').
+    // Com leftJoin (sem select) o TypeORM usa query simples de paginação.
+    const idsQb = this.gamificationProfileRepository
       .createQueryBuilder('gp')
-      .leftJoinAndSelect('gp.user', 'u')
+      .select('gp.id', 'id')
+      .leftJoin('gp.user', 'u')
       .where('u.isBanned = false');
 
     if (search) {
-      qb.andWhere('gp.username ILIKE :search', { search: `%${search}%` });
+      idsQb.andWhere(
+        '(gp.username ILIKE :search OR u.firstName ILIKE :search OR u.lastName ILIKE :search)',
+        { search: `%${search}%` },
+      );
     }
 
-    if (sort?.length) {
-      for (const s of sort) {
-        qb.addOrderBy(`gp.${s.orderBy}`, s.order);
-      }
-    } else {
-      qb.orderBy('gp.totalXp', 'DESC');
-    }
-
-    qb.skip((paginationOptions.page - 1) * paginationOptions.limit).take(
-      paginationOptions.limit,
+    const safeSorts = (sort ?? []).filter((s) =>
+      this.ALLOWED_SORT_FIELDS.has(s.orderBy),
     );
 
-    const entities = await qb.getMany();
-    return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
+    if (safeSorts.length) {
+      safeSorts.forEach((s, idx) => {
+        if (idx === 0) idsQb.orderBy(`gp.${s.orderBy}`, s.order);
+        else idsQb.addOrderBy(`gp.${s.orderBy}`, s.order);
+      });
+    } else {
+      idsQb.orderBy('gp.totalXp', 'DESC');
+    }
+
+    idsQb
+      .skip((paginationOptions.page - 1) * paginationOptions.limit)
+      .take(paginationOptions.limit);
+
+    const rawIds: { id: string }[] = await idsQb.getRawMany();
+    const ids = rawIds.map((r) => r.id);
+
+    if (!ids.length) return [];
+
+    // Passo 2 — carrega entidades completas (com relação user) pelos IDs.
+    // find() sem skip/take não usa a query de dois passos, então sem bug.
+    const entityMap = new Map<string, GamificationProfileEntity>();
+    const entities = await this.gamificationProfileRepository.find({
+      where: { id: In(ids) },
+      relations: { user: true },
+    });
+    entities.forEach((e) => entityMap.set(e.id, e));
+
+    // Restaura a ordem original do passo 1
+    return ids
+      .map((id) => entityMap.get(id))
+      .filter((e): e is GamificationProfileEntity => !!e)
+      .map((entity) => GamificationProfileMapper.toDomain(entity));
   }
 
   async findById(

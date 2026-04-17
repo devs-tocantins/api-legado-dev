@@ -119,7 +119,24 @@ export class GamificationProfilesController {
     return this.gamificationProfilesService.updateMyProfile(
       req.user.id,
       dto.username,
+      dto.githubUsername,
     );
+  }
+
+  @Get('check-username/:username')
+  @ApiParam({
+    name: 'username',
+    type: String,
+    required: true,
+    description: 'Username a verificar. Retorna { available: boolean }.',
+  })
+  @ApiOkResponse({ schema: { example: { available: true } } })
+  async checkUsername(
+    @Param('username') username: string,
+  ): Promise<{ available: boolean }> {
+    const existing =
+      await this.gamificationProfilesService.findByUsername(username);
+    return { available: !existing };
   }
 
   @Get('by-username/:username')
@@ -150,7 +167,8 @@ export class GamificationProfilesController {
 
   @Patch(':id')
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,

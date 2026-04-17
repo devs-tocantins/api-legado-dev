@@ -11,7 +11,10 @@ export class GamificationProfileMapper {
     domainEntity.currentMonthlyXp = raw.currentMonthlyXp;
     domainEntity.currentYearlyXp = raw.currentYearlyXp;
     domainEntity.gratitudeTokens = raw.gratitudeTokens;
+    domainEntity.githubUsername = raw.githubUsername ?? null;
     domainEntity.isBanned = raw.user?.isBanned ?? false;
+    domainEntity.firstName = raw.user?.firstName ?? undefined;
+    domainEntity.lastName = raw.user?.lastName ?? undefined;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -31,6 +34,9 @@ export class GamificationProfileMapper {
     persistenceEntity.currentMonthlyXp = domainEntity.currentMonthlyXp;
     persistenceEntity.currentYearlyXp = domainEntity.currentYearlyXp;
     persistenceEntity.gratitudeTokens = domainEntity.gratitudeTokens;
+    if (domainEntity.githubUsername !== undefined) {
+      persistenceEntity.githubUsername = domainEntity.githubUsername;
+    }
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

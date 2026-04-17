@@ -93,6 +93,7 @@ export class GamificationProfilesService {
   async updateMyProfile(
     userId: number,
     newUsername: string,
+    githubUsername?: string | null,
   ): Promise<GamificationProfile> {
     const profile =
       await this.gamificationProfileRepository.findByUserId(userId);
@@ -110,6 +111,7 @@ export class GamificationProfilesService {
 
     return this.gamificationProfileRepository.update(profile.id, {
       username: newUsername,
+      ...(githubUsername !== undefined && { githubUsername }),
     }) as Promise<GamificationProfile>;
   }
 
