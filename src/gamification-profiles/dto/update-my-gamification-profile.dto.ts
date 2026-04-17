@@ -17,9 +17,9 @@ export class UpdateMyGamificationProfileDto {
   @IsString()
   @MinLength(3)
   @MaxLength(30)
-  @Matches(/^[a-z0-9_]+$/, {
+  @Matches(/^[a-z0-9_-]+$/, {
     message:
-      'username deve conter apenas letras minúsculas, números e underscore',
+      'username deve conter apenas letras minúsculas, números, underscore e hífen',
   })
   username: string;
 

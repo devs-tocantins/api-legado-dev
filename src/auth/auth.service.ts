@@ -50,10 +50,10 @@ export class AuthService {
     );
     if (!existing) {
       let username = desiredUsername?.trim().toLowerCase();
-      if (!username || !/^[a-z0-9_]+$/.test(username)) {
+      if (!username || !/^[a-z0-9_-]+$/.test(username)) {
         const base =
           `${(user.firstName ?? 'user').toLowerCase()}${(user.lastName ?? '').toLowerCase()}`.replace(
-            /[^a-z0-9_]/g,
+            /[^a-z0-9_-]/g,
             '',
           );
         username = `${base || 'user'}${user.id}`;
