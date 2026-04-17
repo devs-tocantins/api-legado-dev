@@ -37,6 +37,9 @@ export class SubmissionEntity extends EntityRelationalHelper {
   @Column({ type: 'varchar', nullable: true, default: null })
   proofUrl: string | null;
 
+  @Column({ type: 'text', nullable: true, default: null })
+  description: string | null;
+
   @Column({
     type: 'enum',
     enum: SubmissionStatus,

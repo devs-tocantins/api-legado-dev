@@ -50,6 +50,13 @@ export class Activity {
   requiresProof: boolean;
 
   @ApiProperty({
+    type: Boolean,
+    description: 'Exige preenchimento de descrição na submissão',
+    example: false,
+  })
+  requiresDescription: boolean;
+
+  @ApiProperty({
     type: Number,
     description: 'Horas de cooldown anti-farming para o mesmo usuário',
     example: 24,

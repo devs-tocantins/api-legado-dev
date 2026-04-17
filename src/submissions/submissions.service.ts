@@ -62,6 +62,12 @@ export class SubmissionsService {
       );
     }
 
+    if (activity.requiresDescription && !createSubmissionDto.description) {
+      throw new BadRequestException(
+        'Esta atividade exige uma descrição (description).',
+      );
+    }
+
     if (activity.cooldownHours > 0) {
       const since = new Date();
       since.setHours(since.getHours() - activity.cooldownHours);
@@ -84,6 +90,7 @@ export class SubmissionsService {
       profileId: profile.id,
       activityId: activity.id,
       proofUrl: createSubmissionDto.proofUrl ?? null,
+      description: createSubmissionDto.description ?? null,
       status: SubmissionStatus.PENDING,
       feedback: null,
       awardedXp: 0,
@@ -320,6 +327,7 @@ export class SubmissionsService {
         profileId: profile.id,
         activityId: activity.id,
         proofUrl: null,
+        description: null,
         status: SubmissionStatus.APPROVED,
         feedback: null,
         awardedXp: activity.fixedReward,
