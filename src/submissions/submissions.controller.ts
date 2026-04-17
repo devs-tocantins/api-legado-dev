@@ -165,6 +165,8 @@ export class SubmissionsController {
   }
 
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,
