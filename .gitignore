@@ -40,3 +40,4 @@ lerna-debug.log*
 .env.prod
 /ormconfig.json
 .codegpt*.key
+*.key

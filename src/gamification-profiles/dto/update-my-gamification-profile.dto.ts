@@ -36,4 +36,14 @@ export class UpdateMyGamificationProfileDto {
     typeof value === 'string' ? value.trim() || null : value,
   )
   githubUsername?: string | null;
+
+  @ApiProperty({
+    description: 'Preset de banner do perfil público',
+    example: 'emerald',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  bannerPreset?: string;
 }

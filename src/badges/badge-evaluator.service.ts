@@ -80,6 +80,9 @@ export class BadgeEvaluatorService {
       case 'total_xp':
         return this.checkTotalXp(profileId, config.threshold);
 
+      case 'membership_months':
+        return this.checkMembershipMonths(profileId, config.threshold);
+
       default:
         this.logger.warn(`Critério desconhecido: ${config.type}`);
         return false;
@@ -122,5 +125,21 @@ export class BadgeEvaluatorService {
       .getRepository(GamificationProfileEntity)
       .findOne({ where: { id: profileId } });
     return (profile?.totalXp ?? 0) >= threshold;
+  }
+
+  private async checkMembershipMonths(
+    profileId: string,
+    threshold: number,
+  ): Promise<boolean> {
+    const profile = await this.dataSource
+      .getRepository(GamificationProfileEntity)
+      .findOne({ where: { id: profileId } });
+    if (!profile) return false;
+    const createdAt = new Date(profile.createdAt);
+    const now = new Date();
+    const months =
+      (now.getFullYear() - createdAt.getFullYear()) * 12 +
+      (now.getMonth() - createdAt.getMonth());
+    return months >= threshold;
   }
 }

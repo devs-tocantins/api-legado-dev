@@ -182,6 +182,14 @@ export class SubmissionsController {
     return this.submissionsService.update(id, updateSubmissionDto);
   }
 
+  @Delete(':id/cancel')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({ name: 'id', type: String, required: true })
+  cancelOwn(@Param('id') id: string, @Request() req) {
+    return this.submissionsService.cancel(id, req.user.id);
+  }
+
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.admin)

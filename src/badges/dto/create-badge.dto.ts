@@ -9,6 +9,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { BadgeCriteriaTypeEnum } from '../domain/badge-criteria-type.enum';
+import { BadgeCategoryEnum } from '../domain/badge-category.enum';
 
 export class CreateBadgeDto {
   @ApiProperty({ example: 'Primeira Missão' })
@@ -25,6 +26,10 @@ export class CreateBadgeDto {
   @IsOptional()
   @IsUrl()
   imageUrl?: string;
+
+  @ApiProperty({ enum: BadgeCategoryEnum })
+  @IsEnum(BadgeCategoryEnum)
+  category: BadgeCategoryEnum;
 
   @ApiProperty({ enum: BadgeCriteriaTypeEnum })
   @IsEnum(BadgeCriteriaTypeEnum)

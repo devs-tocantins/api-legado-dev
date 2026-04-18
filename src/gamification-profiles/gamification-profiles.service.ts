@@ -37,6 +37,7 @@ export class GamificationProfilesService {
       currentYearlyXp: 0,
       gratitudeTokens: 0,
       isBanned: false,
+      bannerPreset: 'default',
     });
   }
 
@@ -94,6 +95,7 @@ export class GamificationProfilesService {
     userId: number,
     newUsername: string,
     githubUsername?: string | null,
+    bannerPreset?: string,
   ): Promise<GamificationProfile> {
     const profile =
       await this.gamificationProfileRepository.findByUserId(userId);
@@ -112,6 +114,7 @@ export class GamificationProfilesService {
     return this.gamificationProfileRepository.update(profile.id, {
       username: newUsername,
       ...(githubUsername !== undefined && { githubUsername }),
+      ...(bannerPreset !== undefined && { bannerPreset }),
     }) as Promise<GamificationProfile>;
   }
 

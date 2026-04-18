@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BadgeCriteriaTypeEnum } from './badge-criteria-type.enum';
+import { BadgeCategoryEnum } from './badge-category.enum';
 
 export class Badge {
   @ApiProperty({ type: String })
@@ -16,6 +17,9 @@ export class Badge {
     example: 'https://cdn.example.com/badge.png',
   })
   imageUrl?: string | null;
+
+  @ApiProperty({ enum: BadgeCategoryEnum })
+  category: BadgeCategoryEnum;
 
   @ApiProperty({ enum: BadgeCriteriaTypeEnum })
   criteriaType: BadgeCriteriaTypeEnum;

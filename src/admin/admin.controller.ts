@@ -6,6 +6,7 @@ import { Roles } from '../roles/roles.decorator';
 import { RoleEnum } from '../roles/roles.enum';
 import { AdminService } from './admin.service';
 import { AdminMetricsDto } from './admin-metrics.dto';
+import { AdminHealthDto } from './admin-health.dto';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -22,5 +23,11 @@ export class AdminController {
   @ApiOkResponse({ type: AdminMetricsDto })
   getMetrics(): Promise<AdminMetricsDto> {
     return this.adminService.getMetrics();
+  }
+
+  @Get('health')
+  @ApiOkResponse({ type: AdminHealthDto })
+  getHealth(): Promise<AdminHealthDto> {
+    return this.adminService.getHealth();
   }
 }

@@ -11,6 +11,7 @@ import {
   Delete,
   SerializeOptions,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
@@ -33,6 +34,10 @@ import { RefreshResponseDto } from './dto/refresh-response.dto';
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 
+  @Throttle({
+    short: { ttl: 60_000, limit: 5 },
+    medium: { ttl: 3_600_000, limit: 20 },
+  })
   @SerializeOptions({
     groups: ['me'],
   })
@@ -45,6 +50,10 @@ export class AuthController {
     return this.service.validateLogin(loginDto);
   }
 
+  @Throttle({
+    short: { ttl: 60_000, limit: 5 },
+    medium: { ttl: 3_600_000, limit: 10 },
+  })
   @Post('email/register')
   @HttpCode(HttpStatus.NO_CONTENT)
   async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
@@ -67,6 +76,10 @@ export class AuthController {
     return this.service.confirmNewEmail(confirmEmailDto.hash);
   }
 
+  @Throttle({
+    short: { ttl: 60_000, limit: 3 },
+    medium: { ttl: 3_600_000, limit: 10 },
+  })
   @Post('forgot/password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(

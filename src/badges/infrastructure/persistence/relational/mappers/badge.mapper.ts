@@ -8,6 +8,7 @@ export class BadgeMapper {
     domain.name = raw.name;
     domain.description = raw.description;
     domain.imageUrl = raw.imageUrl ?? null;
+    domain.category = raw.category;
     domain.criteriaType = raw.criteriaType;
     domain.criteriaConfig = raw.criteriaConfig ?? null;
     domain.isActive = raw.isActive;
@@ -22,6 +23,7 @@ export class BadgeMapper {
     entity.name = domain.name;
     entity.description = domain.description;
     entity.imageUrl = domain.imageUrl ?? null;
+    entity.category = domain.category;
     entity.criteriaType = domain.criteriaType;
     entity.criteriaConfig = domain.criteriaConfig ?? null;
     entity.isActive = domain.isActive;

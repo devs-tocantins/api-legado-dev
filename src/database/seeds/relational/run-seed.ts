@@ -6,6 +6,7 @@ import { UserSeedService } from './user/user-seed.service';
 import { GamificationProfileSeedService } from './gamification-profile/gamification-profile-seed.service';
 import { ActivitySeedService } from './activity/activity-seed.service';
 import { BadgeSeedService } from './badge/badge-seed.service';
+import { MissionSeedService } from './mission/mission-seed.service';
 
 const runSeed = async () => {
   const app = await NestFactory.create(SeedModule);
@@ -17,6 +18,7 @@ const runSeed = async () => {
   await app.get(GamificationProfileSeedService).run();
   await app.get(ActivitySeedService).run();
   await app.get(BadgeSeedService).run();
+  await app.get(MissionSeedService).run();
 
   await app.close();
 };

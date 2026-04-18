@@ -120,6 +120,7 @@ export class GamificationProfilesController {
       req.user.id,
       dto.username,
       dto.githubUsername,
+      dto.bannerPreset,
     );
   }
 

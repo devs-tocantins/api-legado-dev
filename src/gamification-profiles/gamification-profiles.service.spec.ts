@@ -16,6 +16,7 @@ const mockGamificationProfile: GamificationProfile = {
   currentYearlyXp: 0,
   gratitudeTokens: 0,
   isBanned: false,
+  bannerPreset: 'default',
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
 };
@@ -98,6 +99,7 @@ describe('GamificationProfilesService', () => {
       expect(repository.create).toHaveBeenCalledWith({
         userId: 1,
         username: 'johndoe',
+        bannerPreset: 'default',
         totalXp: 0,
         currentMonthlyXp: 0,
         currentYearlyXp: 0,

@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
 import { BadgeCriteriaTypeEnum } from '../../../../domain/badge-criteria-type.enum';
+import { BadgeCategoryEnum } from '../../../../domain/badge-category.enum';
 
 @Entity({ name: 'badge' })
 export class BadgeEntity extends EntityRelationalHelper {
@@ -21,6 +22,13 @@ export class BadgeEntity extends EntityRelationalHelper {
 
   @Column({ type: 'varchar', nullable: true })
   imageUrl?: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: BadgeCategoryEnum,
+    default: BadgeCategoryEnum.SPECIAL,
+  })
+  category: BadgeCategoryEnum;
 
   @Column({ type: 'enum', enum: BadgeCriteriaTypeEnum })
   criteriaType: BadgeCriteriaTypeEnum;

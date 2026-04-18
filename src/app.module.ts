@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from './users/users.module';
 import { FilesModule } from './files/files.module';
 import { AuthModule } from './auth/auth.module';
@@ -37,11 +39,29 @@ import { SubmissionsModule } from './submissions/submissions.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { BadgesModule } from './badges/badges.module';
 import { AdminModule } from './admin/admin.module';
+import { MissionsModule } from './missions/missions.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ContributionReportsModule } from './contribution-reports/contribution-reports.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: 10,
+      },
+      {
+        name: 'medium',
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     AdminModule,
     BadgesModule,
+    MissionsModule,
+    NotificationsModule,
+    ContributionReportsModule,
     TransactionsModule,
     SubmissionsModule,
     ActivitiesModule,
@@ -90,6 +110,12 @@ import { AdminModule } from './admin/admin.module';
     MailModule,
     MailerModule,
     HomeModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

@@ -12,6 +12,7 @@ import { GrantBadgeDto } from './dto/grant-badge.dto';
 import { Badge } from './domain/badge';
 import { GamificationProfileBadge } from './domain/gamification-profile-badge';
 import { BadgeCriteriaTypeEnum } from './domain/badge-criteria-type.enum';
+import { BadgeCategoryEnum } from './domain/badge-category.enum';
 
 @Injectable()
 export class BadgesService {
@@ -25,6 +26,7 @@ export class BadgesService {
       name: dto.name,
       description: dto.description,
       imageUrl: dto.imageUrl ?? null,
+      category: dto.category,
       criteriaType: dto.criteriaType,
       criteriaConfig: dto.criteriaConfig ?? null,
       isActive: true,
@@ -67,9 +69,12 @@ export class BadgesService {
   ): Promise<GamificationProfileBadge> {
     const badge = await this.badgeRepository.findById(dto.badgeId);
     if (!badge) throw new NotFoundException('Badge não encontrado.');
-    if (badge.criteriaType !== BadgeCriteriaTypeEnum.MANUAL) {
+    if (
+      badge.category !== BadgeCategoryEnum.SPECIAL &&
+      badge.criteriaType !== BadgeCriteriaTypeEnum.MANUAL
+    ) {
       throw new BadRequestException(
-        'Apenas badges com criteriaType MANUAL podem ser concedidos manualmente.',
+        'Apenas badges SPECIAL ou MANUAL podem ser concedidos manualmente.',
       );
     }
 
