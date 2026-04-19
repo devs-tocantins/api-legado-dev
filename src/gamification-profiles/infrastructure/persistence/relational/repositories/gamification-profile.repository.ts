@@ -25,17 +25,77 @@ export class GamificationProfileRelationalRepository
     return GamificationProfileMapper.toDomain(newEntity);
   }
 
+  // Campos de ordenação permitidos (whitelist contra injeção)
+  private readonly ALLOWED_SORT_FIELDS = new Set([
+    'totalXp',
+    'currentMonthlyXp',
+    'currentYearlyXp',
+    'gratitudeTokens',
+    'createdAt',
+  ]);
+
   async findAllWithPagination({
     paginationOptions,
+    sort,
+    search,
   }: {
     paginationOptions: IPaginationOptions;
+    sort?: Array<{ orderBy: string; order: 'ASC' | 'DESC' }>;
+    search?: string;
   }): Promise<GamificationProfile[]> {
-    const entities = await this.gamificationProfileRepository.find({
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-    });
+    // Passo 1 — busca IDs paginados/ordenados sem leftJoinAndSelect.
+    // Usar leftJoinAndSelect + skip/take dispara o bug do TypeORM ao montar
+    // a subquery DISTINCT (Cannot read properties of undefined 'databaseName').
+    // Com leftJoin (sem select) o TypeORM usa query simples de paginação.
+    const idsQb = this.gamificationProfileRepository
+      .createQueryBuilder('gp')
+      .select('gp.id', 'id')
+      .leftJoin('gp.user', 'u')
+      .where('u.isBanned = false');
 
-    return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
+    if (search) {
+      idsQb.andWhere(
+        '(gp.username ILIKE :search OR u.firstName ILIKE :search OR u.lastName ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    const safeSorts = (sort ?? []).filter((s) =>
+      this.ALLOWED_SORT_FIELDS.has(s.orderBy),
+    );
+
+    if (safeSorts.length) {
+      safeSorts.forEach((s, idx) => {
+        if (idx === 0) idsQb.orderBy(`gp.${s.orderBy}`, s.order);
+        else idsQb.addOrderBy(`gp.${s.orderBy}`, s.order);
+      });
+    } else {
+      idsQb.orderBy('gp.totalXp', 'DESC');
+    }
+
+    idsQb
+      .skip((paginationOptions.page - 1) * paginationOptions.limit)
+      .take(paginationOptions.limit);
+
+    const rawIds: { id: string }[] = await idsQb.getRawMany();
+    const ids = rawIds.map((r) => r.id);
+
+    if (!ids.length) return [];
+
+    // Passo 2 — carrega entidades completas (com relação user) pelos IDs.
+    // find() sem skip/take não usa a query de dois passos, então sem bug.
+    const entityMap = new Map<string, GamificationProfileEntity>();
+    const entities = await this.gamificationProfileRepository.find({
+      where: { id: In(ids) },
+      relations: { user: true },
+    });
+    entities.forEach((e) => entityMap.set(e.id, e));
+
+    // Restaura a ordem original do passo 1
+    return ids
+      .map((id) => entityMap.get(id))
+      .filter((e): e is GamificationProfileEntity => !!e)
+      .map((entity) => GamificationProfileMapper.toDomain(entity));
   }
 
   async findById(
@@ -43,6 +103,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { id },
+      relations: { user: true },
     });
 
     return entity ? GamificationProfileMapper.toDomain(entity) : null;
@@ -53,6 +114,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<GamificationProfile[]> {
     const entities = await this.gamificationProfileRepository.find({
       where: { id: In(ids) },
+      relations: { user: true },
     });
 
     return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
@@ -84,5 +146,38 @@ export class GamificationProfileRelationalRepository
 
   async remove(id: GamificationProfile['id']): Promise<void> {
     await this.gamificationProfileRepository.delete(id);
+  }
+
+  async findByUserId(
+    userId: GamificationProfile['userId'],
+  ): Promise<NullableType<GamificationProfile>> {
+    const entity = await this.gamificationProfileRepository.findOne({
+      where: { userId },
+      relations: { user: true },
+    });
+
+    return entity ? GamificationProfileMapper.toDomain(entity) : null;
+  }
+
+  async findByUsername(
+    username: GamificationProfile['username'],
+  ): Promise<NullableType<GamificationProfile>> {
+    const entity = await this.gamificationProfileRepository.findOne({
+      where: { username },
+      relations: { user: true },
+    });
+
+    return entity ? GamificationProfileMapper.toDomain(entity) : null;
+  }
+
+  async resetMonthlyXpAndTokens(defaultTokens: number): Promise<void> {
+    await this.gamificationProfileRepository.update(
+      {},
+      { currentMonthlyXp: 0, gratitudeTokens: defaultTokens },
+    );
+  }
+
+  async resetYearlyXp(): Promise<void> {
+    await this.gamificationProfileRepository.update({}, { currentYearlyXp: 0 });
   }
 }

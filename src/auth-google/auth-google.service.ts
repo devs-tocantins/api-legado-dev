@@ -23,8 +23,33 @@ export class AuthGoogleService {
   async getProfileByToken(
     loginDto: AuthGoogleLoginDto,
   ): Promise<SocialInterface> {
+    if (loginDto.accessToken) {
+      const response = await fetch(
+        'https://www.googleapis.com/oauth2/v3/userinfo',
+        { headers: { Authorization: `Bearer ${loginDto.accessToken}` } },
+      );
+      if (!response.ok) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: { user: 'wrongToken' },
+        });
+      }
+      const data = (await response.json()) as {
+        sub: string;
+        email: string;
+        given_name?: string;
+        family_name?: string;
+      };
+      return {
+        id: data.sub,
+        email: data.email,
+        firstName: data.given_name,
+        lastName: data.family_name,
+      };
+    }
+
     const ticket = await this.google.verifyIdToken({
-      idToken: loginDto.idToken,
+      idToken: loginDto.idToken as string,
       audience: [
         this.configService.getOrThrow('google.clientId', { infer: true }),
       ],

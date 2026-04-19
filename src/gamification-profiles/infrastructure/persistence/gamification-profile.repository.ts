@@ -10,8 +10,12 @@ export abstract class GamificationProfileRepository {
 
   abstract findAllWithPagination({
     paginationOptions,
+    sort,
+    search,
   }: {
     paginationOptions: IPaginationOptions;
+    sort?: Array<{ orderBy: string; order: 'ASC' | 'DESC' }>;
+    search?: string;
   }): Promise<GamificationProfile[]>;
 
   abstract findById(
@@ -28,4 +32,16 @@ export abstract class GamificationProfileRepository {
   ): Promise<GamificationProfile | null>;
 
   abstract remove(id: GamificationProfile['id']): Promise<void>;
+
+  abstract findByUserId(
+    userId: GamificationProfile['userId'],
+  ): Promise<NullableType<GamificationProfile>>;
+
+  abstract findByUsername(
+    username: GamificationProfile['username'],
+  ): Promise<NullableType<GamificationProfile>>;
+
+  abstract resetMonthlyXpAndTokens(defaultTokens: number): Promise<void>;
+
+  abstract resetYearlyXp(): Promise<void>;
 }

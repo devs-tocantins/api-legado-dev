@@ -32,6 +32,9 @@ export class ActivityEntity extends EntityRelationalHelper {
   @Column({ type: 'boolean', default: false })
   requiresProof: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  requiresDescription: boolean;
+
   @Column({ type: 'int', default: 0 })
   cooldownHours: number;
 

@@ -90,79 +90,79 @@ As **Labels** utilizadas aqui foram corrigidas para utilizar estritamente o padr
 
 ---
 
-## 📍 Milestone 2: Catálogo e Core de Submissões (v0.2.0)
+## ✅ Milestone 2: Catálogo e Core de Submissões (v0.2.0) — CONCLUÍDA
 *Foco: Acesso de Usuário Comum.*
 
-### [ ] Rota Pública do Catálogo: `GET /activities`
+### [x] Rota Pública do Catálogo: `GET /activities`
 **Labels:** `enhancement`
 *Habilitar o retorno de onde dá para ganhar pontos.*
-- [ ] Personalizar a rota List-All gerada do `ActivitiesController`.
-- [ ] Adicionar filtro nas queries TypeORM escondendo as atividades secretas (`isHidden: true`).
-- [ ] Garantir que os casos de Teste Unitários no Controller cubram essa requisição.
+- [x] Personalizar a rota List-All gerada do `ActivitiesController`.
+- [x] Adicionar filtro nas queries TypeORM escondendo as atividades secretas (`isHidden: true`).
+- [x] Garantir que os casos de Teste Unitários no Controller cubram essa requisição.
 
-### [ ] Endpoint de Submissão C/ URL Assinada de Prova
+### [x] Endpoint de Submissão C/ URL Assinada de Prova
 **Labels:** `enhancement`, `help wanted`
 *Conectar as regras S3 Presigned ao envio prático do Front.*
-- [ ] Revisorar a rota de `FilesModule` para aceitar/gerar a URL temporária do painel AWS do líder.
-- [ ] Criar validadores rígidos (class-validator) na DTO de Submissão (`POST /submissions`).
-- [ ] Receber o retorno da provedora no Payload antes da persistência de status `PENDING`.
-- [ ] Escrever Testes Unitários mimetizando falhas na ausência do Payload.
+- [x] Revisorar a rota de `FilesModule` para aceitar/gerar a URL temporária do painel AWS do líder.
+- [x] Criar validadores rígidos (class-validator) na DTO de Submissão (`POST /submissions`).
+- [x] Receber o retorno da provedora no Payload antes da persistência de status `PENDING`.
+- [x] Escrever Testes Unitários mimetizando falhas na ausência do Payload.
 
-### [ ] Regra Abusiva de Cooldown Limit (Anti-Farming)
+### [x] Regra Abusiva de Cooldown Limit (Anti-Farming)
 **Labels:** `enhancement`, `bug`
 *Não deixar clicar enviar o form sem parar.*
-- [ ] No momento que o SubmissionsService chamar o create, pesquisar no BD se aquela Activity e User tiveram criações recentes limitadas pela propriedade `.cooldownHours`.
-- [ ] Rejeitar a Promisse jogando um `BadRequestException` nativo.
-- [ ] Adicionar explicitamente Testes Unitários validando as tentativas de spam simulando picos.
+- [x] No momento que o SubmissionsService chamar o create, pesquisar no BD se aquela Activity e User tiveram criações recentes limitadas pela propriedade `.cooldownHours`.
+- [x] Rejeitar a Promisse jogando um `BadRequestException` nativo.
+- [x] Adicionar explicitamente Testes Unitários validando as tentativas de spam simulando picos.
 
-### [ ] Endpoint de Histórico Pessoal: `GET /submissions/me`
+### [x] Endpoint de Histórico Pessoal: `GET /submissions/me`
 **Labels:** `good first issue`, `enhancement`
 *O dev só pode enxergar os históricos dele mesmo.*
-- [ ] Adicionar o `@UseGuards(AuthGuard('jwt'))` e pegar o id dinamicamente do `request.user.id`.
-- [ ] Usar repositório pra retornar os status finais de forma paginada.
-- [ ] Acoplar os Testes Unitários.
+- [x] Adicionar o `@UseGuards(AuthGuard('jwt'))` e pegar o id dinamicamente do `request.user.id`.
+- [x] Usar repositório pra retornar os status finais de forma paginada.
+- [x] Acoplar os Testes Unitários.
 
 ---
 
-## 📍 Milestone 3: Economia, Moderação e Segurança (v0.3.0)
+## ✅ Milestone 3: Economia, Moderação e Segurança (v0.3.0) — CONCLUÍDA
 *Foco: Como os administradores aprovam os lucros.*
 
-### [ ] Fila Restrita de Moderação: `GET /submissions/pending`
+### [x] Fila Restrita de Moderação: `GET /submissions/pending`
 **Labels:** `good first issue`, `enhancement`
 *Listagem de pendências apenas para o "staff".*
-- [ ] Restringir usando `@Roles(RoleEnum.admin, RoleEnum.moderator)`.
-- [ ] Retornar o relacionamento do `GamificationProfile` (Pra sabermos o nome de quem pediu XP juntamente do link da foto de prova).
-- [ ] Escrever casos de Teste de E2E batendo sem Token/Role proibindo acesso de invasores 403.
+- [x] Restringir usando `@Roles(RoleEnum.admin, RoleEnum.moderator)`.
+- [x] Retornar o relacionamento do `GamificationProfile` (Pra sabermos o nome de quem pediu XP juntamente do link da foto de prova).
+- [x] Escrever casos de Teste de E2E batendo sem Token/Role proibindo acesso de invasores 403.
 
-### [ ] Workflow de Auditoria Master: `POST /submissions/:id/review`
+### [x] Workflow de Auditoria Master: `POST /submissions/:id/review`
 **Labels:** `enhancement`, `help wanted`
 *A API onde todas as operações atômicas da economia acontecem numa chamada só.*
-- [ ] Validar DTO mudando o PENDING para `APPROVED` | `REJECTED`.
-- [ ] Fazer query de `UPDATE` somando o `awardedXp` na carteira do Perfil.
-- [ ] No mesmo contexto de execução TypeORM (se possível em ACID Database Transaction), inserir a linha extra de log contábil em `Transaction`.
-- [ ] Adicionar vasta gama de Testes Unitários de falhas entre entidades e de Sucesso Completo.
+- [x] Validar DTO mudando o PENDING para `APPROVED` | `REJECTED`.
+- [x] Fazer query de `UPDATE` somando o `awardedXp` na carteira do Perfil.
+- [x] No mesmo contexto de execução TypeORM (se possível em ACID Database Transaction), inserir a linha extra de log contábil em `Transaction`.
+- [x] Adicionar vasta gama de Testes Unitários de falhas entre entidades e de Sucesso Completo.
 
-### [ ] Atribuição de Recompensa Oculta ao Moderador
+### [x] Atribuição de Recompensa Oculta ao Moderador
 **Labels:** `enhancement`, `good first issue`
 *Injetar um bônus pro auditor logo após a auditoria do passo anterior.*
-- [ ] Adicionar um acréscimo de pontuação estática no Wallet de onde partiu o Token de autorização (`request.user.id`).
-- [ ] Mapear isto no Transaction typeEnum via `AUDITOR_REWARD`.
-- [ ] Validar via Teste Unitário.
+- [x] Adicionar um acréscimo de pontuação estática no Wallet de onde partiu o Token de autorização (`request.user.id`).
+- [x] Mapear isto no Transaction typeEnum via `AUDITOR_REWARD`.
+- [x] Validar via Teste Unitário.
 
-### [ ] Economia Peer-to-Peer: Transferência de Tokens
+### [x] Economia Peer-to-Peer: Transferência de Tokens
 **Labels:** `enhancement`
 *Permitir aos usuários se agradarem sem moderação.*
-- [ ] Rota `POST /tokens/transfer` validando que a carteira do remente possui fundos > DTO.amount.
-- [ ] Subtrair da cota de envio do remente `GamificationProfile`.
-- [ ] Somar como Experiência Total (`totalXp`) em quem recebeu as gorjetas virtuais.
-- [ ] Gerar os 2 registros imutáveis em `Transaction`.
-- [ ] Escrever Testes Unitários tentando fraudar sem fundos negativos.
+- [x] Rota `POST /gamification-profiles/transfer` validando que a carteira do remente possui fundos > DTO.amount.
+- [x] Subtrair da cota de envio do remente `GamificationProfile`.
+- [x] Somar como Experiência Total (`totalXp`) em quem recebeu as gorjetas virtuais.
+- [x] Gerar os 2 registros imutáveis em `Transaction`.
+- [x] Escrever Testes Unitários tentando fraudar sem fundos negativos.
 
-### [ ] CronJob de Renovações Mensais
+### [x] CronJob de Renovações Mensais
 **Labels:** `enhancement`, `help wanted`
 *Refil automático na virada do mês.*
-- [ ] Importar e utilizar plugin `@nestjs/schedule`.
-- [ ] Rodar uma rotina (CronJob) a cada dia 1º do mês realizando duas ações: (1) Resetar a coluna `currentMonthlyXp` de todos os usuários para ZERO, reiniciando o Ranking Mensal. (2) Resetar a cota de "Tokens de Gratidão" pendentes de todos os usuários para o valor padrão (ex: 5 Tokens), sem acumular o saldo do mês anterior.
+- [x] Importar e utilizar plugin `@nestjs/schedule`.
+- [x] Rodar uma rotina (CronJob) a cada dia 1º do mês realizando duas ações: (1) Resetar a coluna `currentMonthlyXp` de todos os usuários para ZERO, reiniciando o Ranking Mensal. (2) Resetar a cota de "Tokens de Gratidão" pendentes de todos os usuários para o valor padrão (ex: 5 Tokens), sem acumular o saldo do mês anterior.
 
 ---
 

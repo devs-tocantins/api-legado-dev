@@ -24,4 +24,24 @@ export abstract class SubmissionRepository {
   ): Promise<Submission | null>;
 
   abstract remove(id: Submission['id']): Promise<void>;
+
+  abstract findByProfileId(
+    profileId: Submission['profileId'],
+    paginationOptions: IPaginationOptions,
+  ): Promise<Submission[]>;
+
+  abstract findApprovedByProfileId(
+    profileId: Submission['profileId'],
+    paginationOptions: IPaginationOptions,
+  ): Promise<Submission[]>;
+
+  abstract findPending(
+    paginationOptions: IPaginationOptions,
+  ): Promise<Submission[]>;
+
+  abstract findRecentByProfileAndActivity(
+    profileId: Submission['profileId'],
+    activityId: Submission['activityId'],
+    since: Date,
+  ): Promise<Submission[]>;
 }

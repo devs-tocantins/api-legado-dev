@@ -79,4 +79,18 @@ export class TransactionRelationalRepository implements TransactionRepository {
   async remove(id: Transaction['id']): Promise<void> {
     await this.transactionRepository.delete(id);
   }
+
+  async findByProfileId(
+    profileId: string,
+    paginationOptions: IPaginationOptions,
+  ): Promise<Transaction[]> {
+    const entities = await this.transactionRepository.find({
+      where: { profile: { id: profileId } },
+      order: { createdAt: 'DESC' },
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+    });
+
+    return entities.map((entity) => TransactionMapper.toDomain(entity));
+  }
 }

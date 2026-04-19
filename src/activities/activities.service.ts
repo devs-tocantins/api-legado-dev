@@ -28,6 +28,7 @@ export class ActivitiesService {
       isHidden: createActivityDto.isHidden ?? false,
       secretCode: createActivityDto.secretCode ?? null,
       requiresProof: createActivityDto.requiresProof ?? false,
+      requiresDescription: createActivityDto.requiresDescription ?? false,
       cooldownHours: createActivityDto.cooldownHours ?? 0,
     });
   }
@@ -86,5 +87,22 @@ export class ActivitiesService {
 
   remove(id: Activity['id']) {
     return this.activityRepository.remove(id);
+  }
+
+  findPublicWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }) {
+    return this.activityRepository.findPublicWithPagination({
+      paginationOptions: {
+        page: paginationOptions.page,
+        limit: paginationOptions.limit,
+      },
+    });
+  }
+
+  findBySecretCode(secretCode: Activity['secretCode']) {
+    return this.activityRepository.findBySecretCode(secretCode);
   }
 }

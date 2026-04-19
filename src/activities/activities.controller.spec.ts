@@ -14,6 +14,7 @@ const mockActivity: Activity = {
   isHidden: false,
   secretCode: null,
   requiresProof: true,
+  requiresDescription: false,
   cooldownHours: 24,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
@@ -22,6 +23,7 @@ const mockActivity: Activity = {
 const mockService: Partial<Record<keyof ActivitiesService, jest.Mock>> = {
   create: jest.fn().mockResolvedValue(mockActivity),
   findAllWithPagination: jest.fn().mockResolvedValue([mockActivity]),
+  findPublicWithPagination: jest.fn().mockResolvedValue([mockActivity]),
   findById: jest.fn().mockResolvedValue(mockActivity),
   update: jest.fn().mockResolvedValue(mockActivity),
   remove: jest.fn().mockResolvedValue(undefined),
@@ -72,27 +74,27 @@ describe('ActivitiesController', () => {
   });
 
   describe('findAll', () => {
-    it('should return paginated activities with default page and limit', async () => {
-      (mockService.findAllWithPagination as jest.Mock).mockResolvedValue([
+    it('should return only public (non-hidden) activities with default page and limit', async () => {
+      (mockService.findPublicWithPagination as jest.Mock).mockResolvedValue([
         mockActivity,
       ]);
 
       const query: FindAllActivitiesDto = {};
       const result = await controller.findAll(query);
 
-      expect(service.findAllWithPagination).toHaveBeenCalledWith({
+      expect(service.findPublicWithPagination).toHaveBeenCalledWith({
         paginationOptions: { page: 1, limit: 10 },
       });
       expect(result.data).toEqual([mockActivity]);
     });
 
     it('should cap limit at 50 when a higher value is provided', async () => {
-      (mockService.findAllWithPagination as jest.Mock).mockResolvedValue([]);
+      (mockService.findPublicWithPagination as jest.Mock).mockResolvedValue([]);
 
       const query: FindAllActivitiesDto = { page: 1, limit: 200 };
       await controller.findAll(query);
 
-      expect(service.findAllWithPagination).toHaveBeenCalledWith({
+      expect(service.findPublicWithPagination).toHaveBeenCalledWith({
         paginationOptions: { page: 1, limit: 50 },
       });
     });

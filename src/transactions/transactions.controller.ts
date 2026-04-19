@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   Query,
+  Request,
+  NotFoundException,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -21,12 +23,16 @@ import {
 } from '@nestjs/swagger';
 import { Transaction } from './domain/transaction';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllTransactionsDto } from './dto/find-all-transactions.dto';
+import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 
 @ApiTags('Transactions')
 @ApiBearerAuth()
@@ -36,9 +42,14 @@ import { FindAllTransactionsDto } from './dto/find-all-transactions.dto';
   version: '1',
 })
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly gamificationProfilesService: GamificationProfilesService,
+  ) {}
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiCreatedResponse({
     type: Transaction,
   })
@@ -46,7 +57,39 @@ export class TransactionsController {
     return this.transactionsService.create(createTransactionDto);
   }
 
+  @Get('me')
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(Transaction),
+  })
+  async findMine(
+    @Query() query: FindAllTransactionsDto,
+    @Request() req,
+  ): Promise<InfinityPaginationResponseDto<Transaction>> {
+    const page = query?.page ?? 1;
+    let limit = query?.limit ?? 20;
+    if (limit > 50) {
+      limit = 50;
+    }
+
+    const profile = await this.gamificationProfilesService.findByUserId(
+      req.user.id,
+    );
+    if (!profile) {
+      throw new NotFoundException('Perfil de gamificação não encontrado.');
+    }
+
+    return infinityPagination(
+      await this.transactionsService.findByProfileId(profile.id, {
+        page,
+        limit,
+      }),
+      { page, limit },
+    );
+  }
+
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiOkResponse({
     type: InfinityPaginationResponse(Transaction),
   })
@@ -71,6 +114,8 @@ export class TransactionsController {
   }
 
   @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,
@@ -84,6 +129,8 @@ export class TransactionsController {
   }
 
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,
@@ -100,6 +147,8 @@ export class TransactionsController {
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,

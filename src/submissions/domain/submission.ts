@@ -27,6 +27,13 @@ export class Submission {
   proofUrl: string | null;
 
   @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Descrição/contexto da submissão fornecido pelo usuário',
+  })
+  description: string | null;
+
+  @ApiProperty({
     enum: SubmissionStatus,
     description: 'Status da submissão',
     example: SubmissionStatus.PENDING,

@@ -1,0 +1,6 @@
+export enum BadgeCategoryEnum {
+  MILESTONE = 'MILESTONE',
+  RANKING = 'RANKING',
+  PARTICIPATION = 'PARTICIPATION',
+  SPECIAL = 'SPECIAL',
+}

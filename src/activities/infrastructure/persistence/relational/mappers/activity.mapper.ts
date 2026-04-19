@@ -11,6 +11,7 @@ export class ActivityMapper {
     domainEntity.isHidden = raw.isHidden;
     domainEntity.secretCode = raw.secretCode;
     domainEntity.requiresProof = raw.requiresProof;
+    domainEntity.requiresDescription = raw.requiresDescription;
     domainEntity.cooldownHours = raw.cooldownHours;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
@@ -29,6 +30,7 @@ export class ActivityMapper {
     persistenceEntity.isHidden = domainEntity.isHidden;
     persistenceEntity.secretCode = domainEntity.secretCode;
     persistenceEntity.requiresProof = domainEntity.requiresProof;
+    persistenceEntity.requiresDescription = domainEntity.requiresDescription;
     persistenceEntity.cooldownHours = domainEntity.cooldownHours;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;

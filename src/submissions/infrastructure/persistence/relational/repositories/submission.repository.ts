@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, MoreThanOrEqual } from 'typeorm';
 import { SubmissionEntity } from '../entities/submission.entity';
+import { SubmissionStatus } from '../../../../domain/submission-status.enum';
 import { NullableType } from '../../../../../utils/types/nullable.type';
 import { Submission } from '../../../../domain/submission';
 import { SubmissionRepository } from '../../submission.repository';
@@ -78,5 +79,62 @@ export class SubmissionRelationalRepository implements SubmissionRepository {
 
   async remove(id: Submission['id']): Promise<void> {
     await this.submissionRepository.delete(id);
+  }
+
+  async findByProfileId(
+    profileId: Submission['profileId'],
+    paginationOptions: IPaginationOptions,
+  ): Promise<Submission[]> {
+    const entities = await this.submissionRepository.find({
+      where: { profileId },
+      order: { createdAt: 'DESC' },
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+    });
+
+    return entities.map((entity) => SubmissionMapper.toDomain(entity));
+  }
+
+  async findApprovedByProfileId(
+    profileId: Submission['profileId'],
+    paginationOptions: IPaginationOptions,
+  ): Promise<Submission[]> {
+    const entities = await this.submissionRepository.find({
+      where: { profileId, status: SubmissionStatus.APPROVED },
+      order: { createdAt: 'DESC' },
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+    });
+
+    return entities.map((entity) => SubmissionMapper.toDomain(entity));
+  }
+
+  async findPending(
+    paginationOptions: IPaginationOptions,
+  ): Promise<Submission[]> {
+    const entities = await this.submissionRepository.find({
+      where: { status: SubmissionStatus.PENDING },
+      order: { createdAt: 'ASC' },
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+    });
+
+    return entities.map((entity) => SubmissionMapper.toDomain(entity));
+  }
+
+  async findRecentByProfileAndActivity(
+    profileId: Submission['profileId'],
+    activityId: Submission['activityId'],
+    since: Date,
+  ): Promise<Submission[]> {
+    const entities = await this.submissionRepository.find({
+      where: {
+        profileId,
+        activityId,
+        createdAt: MoreThanOrEqual(since),
+      },
+    });
+
+    return entities.map((entity) => SubmissionMapper.toDomain(entity));
   }
 }

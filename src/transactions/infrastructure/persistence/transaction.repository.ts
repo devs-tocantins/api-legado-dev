@@ -24,4 +24,9 @@ export abstract class TransactionRepository {
   ): Promise<Transaction | null>;
 
   abstract remove(id: Transaction['id']): Promise<void>;
+
+  abstract findByProfileId(
+    profileId: string,
+    paginationOptions: IPaginationOptions,
+  ): Promise<Transaction[]>;
 }

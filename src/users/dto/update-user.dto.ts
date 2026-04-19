@@ -45,4 +45,8 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @Type(() => StatusDto)
   status?: StatusDto;
+
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
+  isBanned?: boolean;
 }

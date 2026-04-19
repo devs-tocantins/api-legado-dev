@@ -7,11 +7,15 @@ import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { FindAllSubmissionsDto } from './dto/find-all-submissions.dto';
 
+const mockUserId = 42;
+const mockReq = { user: { id: mockUserId } };
+
 const mockSubmission: Submission = {
   id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
   profileId: 'profile-uuid-0001',
   activityId: 'activity-uuid-0001',
   proofUrl: null,
+  description: null,
   status: SubmissionStatus.PENDING,
   feedback: null,
   awardedXp: 0,
@@ -24,8 +28,11 @@ const mockSubmission: Submission = {
 const mockService: Partial<Record<keyof SubmissionsService, jest.Mock>> = {
   create: jest.fn().mockResolvedValue(mockSubmission),
   findAllWithPagination: jest.fn().mockResolvedValue([mockSubmission]),
+  findMySubmissions: jest.fn().mockResolvedValue([mockSubmission]),
+  findPending: jest.fn().mockResolvedValue([mockSubmission]),
   findById: jest.fn().mockResolvedValue(mockSubmission),
   update: jest.fn().mockResolvedValue(mockSubmission),
+  review: jest.fn().mockResolvedValue(mockSubmission),
   remove: jest.fn().mockResolvedValue(undefined),
 };
 
@@ -55,22 +62,20 @@ describe('SubmissionsController', () => {
   });
 
   describe('create', () => {
-    it('should create a submission with PENDING status and return it', async () => {
+    it('should create a submission using userId from JWT and return it', async () => {
       const dto: CreateSubmissionDto = {
-        profileId: 'profile-uuid-0001',
         activityId: 'activity-uuid-0001',
       };
 
-      const result = await controller.create(dto);
+      const result = await controller.create(dto, mockReq as any);
 
-      expect(service.create).toHaveBeenCalledWith(dto);
+      expect(service.create).toHaveBeenCalledWith(dto, mockUserId);
       expect(result).toEqual(mockSubmission);
       expect(result.status).toBe(SubmissionStatus.PENDING);
     });
 
     it('should create a submission with proofUrl when provided', async () => {
       const dto: CreateSubmissionDto = {
-        profileId: 'profile-uuid-0001',
         activityId: 'activity-uuid-0001',
         proofUrl: 'https://s3.amazonaws.com/bucket/prova.png',
       };
@@ -83,9 +88,9 @@ describe('SubmissionsController', () => {
         submissionWithProof,
       );
 
-      const result = await controller.create(dto);
+      const result = await controller.create(dto, mockReq as any);
 
-      expect(service.create).toHaveBeenCalledWith(dto);
+      expect(service.create).toHaveBeenCalledWith(dto, mockUserId);
       expect(result.proofUrl).toBe('https://s3.amazonaws.com/bucket/prova.png');
     });
   });
@@ -114,6 +119,37 @@ describe('SubmissionsController', () => {
       expect(service.findAllWithPagination).toHaveBeenCalledWith({
         paginationOptions: { page: 2, limit: 50 },
       });
+    });
+  });
+
+  describe('findMine', () => {
+    it('should return paginated submissions for the authenticated user', async () => {
+      (mockService.findMySubmissions as jest.Mock).mockResolvedValue([
+        mockSubmission,
+      ]);
+
+      const query: FindAllSubmissionsDto = {};
+      const result = await controller.findMine(query, mockReq as any);
+
+      expect(service.findMySubmissions).toHaveBeenCalledWith(mockUserId, {
+        page: 1,
+        limit: 10,
+      });
+      expect(result.data).toEqual([mockSubmission]);
+    });
+  });
+
+  describe('findPending', () => {
+    it('should return paginated pending submissions', async () => {
+      (mockService.findPending as jest.Mock).mockResolvedValue([
+        mockSubmission,
+      ]);
+
+      const query: FindAllSubmissionsDto = {};
+      const result = await controller.findPending(query);
+
+      expect(service.findPending).toHaveBeenCalledWith({ page: 1, limit: 10 });
+      expect(result.data).toEqual([mockSubmission]);
     });
   });
 
