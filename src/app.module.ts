@@ -10,10 +10,12 @@ import appConfig from './config/app.config';
 import mailConfig from './mail/config/mail.config';
 import fileConfig from './files/config/file.config';
 import googleConfig from './auth-google/config/google.config';
+import githubConfig from './auth-github/config/github.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthGoogleModule } from './auth-google/auth-google.module';
+import { AuthGitHubModule } from './auth-github/auth-github.module';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { TypeOrmConfigService } from './database/typeorm-config.service';
 import { MailModule } from './mail/mail.module';
@@ -75,6 +77,7 @@ import { ContributionReportsModule } from './contribution-reports/contribution-r
         mailConfig,
         fileConfig,
         googleConfig,
+        githubConfig,
       ],
       envFilePath: ['.env'],
     }),
@@ -106,6 +109,7 @@ import { ContributionReportsModule } from './contribution-reports/contribution-r
     FilesModule,
     AuthModule,
     AuthGoogleModule,
+    AuthGitHubModule,
     SessionModule,
     MailModule,
     MailerModule,
