@@ -150,6 +150,7 @@ export class AuthService {
     let user: NullableType<User> = null;
     const socialEmail = socialData.email?.toLowerCase();
     let userByEmail: NullableType<User> = null;
+    let isNewUser = false;
 
     if (socialEmail) {
       userByEmail = await this.usersService.findByEmail(socialEmail);
@@ -191,6 +192,7 @@ export class AuthService {
       if (user) {
         await this.ensureGamificationProfile(user);
       }
+      isNewUser = true;
     }
 
     if (!user) {
@@ -237,6 +239,7 @@ export class AuthService {
       token: jwtToken,
       tokenExpires,
       user,
+      isNewUser,
     };
   }
 
