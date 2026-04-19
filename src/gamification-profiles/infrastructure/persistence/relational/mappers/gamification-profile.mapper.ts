@@ -1,5 +1,6 @@
 import { GamificationProfile } from '../../../../domain/gamification-profile';
 import { GamificationProfileEntity } from '../entities/gamification-profile.entity';
+import { FileMapper } from '../../../../../files/infrastructure/persistence/relational/mappers/file.mapper';
 
 export class GamificationProfileMapper {
   static toDomain(raw: GamificationProfileEntity): GamificationProfile {
@@ -16,9 +17,11 @@ export class GamificationProfileMapper {
     domainEntity.isBanned = raw.user?.isBanned ?? false;
     domainEntity.firstName = raw.user?.firstName ?? undefined;
     domainEntity.lastName = raw.user?.lastName ?? undefined;
+    domainEntity.photo = raw.user?.photo
+      ? FileMapper.toDomain(raw.user.photo)
+      : null;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
-
     return domainEntity;
   }
 

@@ -23,6 +23,10 @@ export class FileType {
   })
   @Transform(
     ({ value }) => {
+      if (value?.startsWith('http://') || value?.startsWith('https://')) {
+        return value;
+      }
+
       if ((fileConfig() as FileConfig).driver === FileDriver.LOCAL) {
         return (appConfig() as AppConfig).backendDomain + value;
       } else if ((fileConfig() as FileConfig).driver === FileDriver.S3) {

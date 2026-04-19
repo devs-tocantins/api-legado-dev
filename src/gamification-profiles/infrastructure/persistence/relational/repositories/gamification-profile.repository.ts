@@ -87,7 +87,7 @@ export class GamificationProfileRelationalRepository
     const entityMap = new Map<string, GamificationProfileEntity>();
     const entities = await this.gamificationProfileRepository.find({
       where: { id: In(ids) },
-      relations: { user: true },
+      relations: { user: { photo: true } },
     });
     entities.forEach((e) => entityMap.set(e.id, e));
 
@@ -103,7 +103,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { id },
-      relations: { user: true },
+      relations: { user: { photo: true } },
     });
 
     return entity ? GamificationProfileMapper.toDomain(entity) : null;
@@ -114,7 +114,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<GamificationProfile[]> {
     const entities = await this.gamificationProfileRepository.find({
       where: { id: In(ids) },
-      relations: { user: true },
+      relations: { user: { photo: true } },
     });
 
     return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
@@ -153,7 +153,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { userId },
-      relations: { user: true },
+      relations: { user: { photo: true } },
     });
 
     return entity ? GamificationProfileMapper.toDomain(entity) : null;
@@ -164,7 +164,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { username },
-      relations: { user: true },
+      relations: { user: { photo: true } },
     });
 
     return entity ? GamificationProfileMapper.toDomain(entity) : null;

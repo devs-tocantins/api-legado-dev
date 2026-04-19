@@ -2,7 +2,10 @@ import {
   HttpStatus,
   Injectable,
   UnprocessableEntityException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
+import crypto from 'crypto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { NullableType } from '../utils/types/nullable.type';
 import { FilterUserDto, SortUserDto } from './dto/query-user.dto';
@@ -18,12 +21,15 @@ import { FileType } from '../files/domain/file';
 import { Role } from '../roles/domain/role';
 import { Status } from '../statuses/domain/status';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
+    @Inject(forwardRef(() => GamificationProfilesService))
+    private readonly gamificationProfilesService: GamificationProfilesService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -174,15 +180,16 @@ export class UsersService {
     id: User['id'],
     updateUserDto: UpdateUserDto,
   ): Promise<User | null> {
+    const existingUser = await this.usersRepository.findById(id);
+    if (!existingUser) return null;
+
     // Do not remove comment below.
     // <updating-property />
 
     let password: string | undefined = undefined;
 
     if (updateUserDto.password) {
-      const userObject = await this.usersRepository.findById(id);
-
-      if (userObject && userObject?.password !== updateUserDto.password) {
+      if (existingUser.password !== updateUserDto.password) {
         const salt = await bcrypt.genSalt();
         password = await bcrypt.hash(updateUserDto.password, salt);
       }
@@ -268,7 +275,7 @@ export class UsersService {
       };
     }
 
-    return this.usersRepository.update(id, {
+    const updatedUser = await this.usersRepository.update(id, {
       // Do not remove comment below.
       // <updating-property-payload />
       firstName: updateUserDto.firstName,
@@ -282,9 +289,39 @@ export class UsersService {
       provider: updateUserDto.provider,
       socialId: updateUserDto.socialId,
     });
+
+    if (updateUserDto.isBanned === true && existingUser.isBanned === false) {
+      await this.gamificationProfilesService.zeroOutProfile(
+        Number(id),
+        'Usuário banido',
+        false,
+      );
+    }
+
+    return updatedUser;
   }
 
   async remove(id: User['id']): Promise<void> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) return;
+
+    const randomHash = crypto.randomBytes(4).toString('hex');
+    const anonymizedEmail = `deleted-${id}-${randomHash}@legado.dev`;
+
+    await this.usersRepository.update(id, {
+      firstName: 'Usuário',
+      lastName: 'Deletado',
+      email: anonymizedEmail,
+      socialId: null,
+      photo: null,
+    });
+
+    await this.gamificationProfilesService.zeroOutProfile(
+      Number(id),
+      'Conta excluída',
+      true,
+    );
+
     await this.usersRepository.remove(id);
   }
 }

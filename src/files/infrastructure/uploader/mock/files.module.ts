@@ -19,7 +19,7 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
     infrastructurePersistenceModule,
     MulterModule.register({
       fileFilter: (request, file, callback) => {
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/i)) {
           return callback(
             new UnprocessableEntityException({
               status: HttpStatus.UNPROCESSABLE_ENTITY,

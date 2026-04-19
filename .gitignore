@@ -41,3 +41,6 @@ lerna-debug.log*
 /ormconfig.json
 .codegpt*.key
 *.key
+
+# Documentação local — não vai pro repositório
+docs-local/

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { FileType } from '../../files/domain/file';
 
 export class GamificationProfile {
   @ApiProperty({
@@ -61,6 +62,9 @@ export class GamificationProfile {
 
   @ApiProperty({ type: String, required: false })
   lastName?: string;
+
+  @ApiProperty({ type: () => FileType, required: false, nullable: true })
+  photo?: FileType | null;
 
   @ApiProperty()
   createdAt: Date;

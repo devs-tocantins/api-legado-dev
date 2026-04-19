@@ -29,6 +29,7 @@ import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class AuthService {
@@ -39,6 +40,7 @@ export class AuthService {
     private mailService: MailService,
     private configService: ConfigService<AllConfigType>,
     private gamificationProfilesService: GamificationProfilesService,
+    private filesService: FilesService,
   ) {}
 
   private async ensureGamificationProfile(
@@ -178,6 +180,13 @@ export class AuthService {
         id: StatusEnum.active,
       };
 
+      let photo;
+      if (socialData.picture) {
+        photo = await this.filesService.create({
+          path: socialData.picture,
+        } as any);
+      }
+
       user = await this.usersService.create({
         email: socialEmail ?? null,
         firstName: socialData.firstName ?? null,
@@ -186,6 +195,7 @@ export class AuthService {
         provider: authProvider,
         role,
         status,
+        ...(photo && { photo: { id: photo.id } }),
       });
 
       user = await this.usersService.findById(user.id);

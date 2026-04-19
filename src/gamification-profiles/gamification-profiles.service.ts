@@ -128,6 +128,55 @@ export class GamificationProfilesService {
     return this.gamificationProfileRepository.resetYearlyXp();
   }
 
+  async zeroOutProfile(
+    userId: number,
+    reason: string,
+    anonymize: boolean = false,
+  ): Promise<void> {
+    const profile =
+      await this.gamificationProfileRepository.findByUserId(userId);
+    if (!profile) return;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const updateData: any = {
+        totalXp: 0,
+        currentMonthlyXp: 0,
+        currentYearlyXp: 0,
+      };
+
+      if (anonymize) {
+        updateData.username = `deletado_${profile.id}_${Math.floor(Math.random() * 10000)}`;
+        updateData.githubUsername = null;
+      }
+
+      await queryRunner.manager.update(
+        GamificationProfileEntity,
+        { id: profile.id },
+        updateData,
+      );
+
+      if (profile.totalXp > 0) {
+        await queryRunner.manager.save(TransactionEntity, {
+          profile: { id: profile.id },
+          category: TransactionCategoryEnum.PENALTY,
+          amount: -profile.totalXp,
+          description: reason,
+        });
+      }
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async applyPenalty(
     profileId: GamificationProfile['id'],
     dto: ApplyPenaltyDto,

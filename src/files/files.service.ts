@@ -8,6 +8,10 @@ import { NullableType } from '../utils/types/nullable.type';
 export class FilesService {
   constructor(private readonly fileRepository: FileRepository) {}
 
+  create(data: FileType): Promise<FileType> {
+    return this.fileRepository.create(data);
+  }
+
   findById(id: FileType['id']): Promise<NullableType<FileType>> {
     return this.fileRepository.findById(id);
   }

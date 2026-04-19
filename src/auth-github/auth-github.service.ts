@@ -71,6 +71,7 @@ export class AuthGitHubService {
       id: number;
       name?: string;
       login: string;
+      avatar_url?: string;
     };
 
     const emails = (await emailsRes.json()) as Array<{
@@ -95,6 +96,7 @@ export class AuthGitHubService {
       email: primaryEmail,
       firstName,
       lastName: rest.join(' ') || undefined,
+      picture: user.avatar_url,
     };
   }
 }
