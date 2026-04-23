@@ -66,10 +66,9 @@ AWS_S3_ENDPOINT=http://minio:9000
 
 O recurso `/api/v1/files/upload` aceita Multipart Form. Ele te devolve um Modelo `File` base contendo o ID e Path (`caminho`) para você atrelar a qualquer outra entidade.
 
-### Exemplo de upload de Avatar:
-1. Cliente envia o arquivo via Requisição POST `api/v1/files/upload`.
-2. O Backend te devolve o ID.
-3. Você passa esse ID para atualizar seu Usuário em `PATCH /api/v1/auth/me`.
+**Formatos Suportados:**
+- Imagens: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`.
+- Tamanho máximo: Configurado via `FILE_MAX_FILE_SIZE` no `.env`.
 
 ## Fluxo de Upload `s3`
 

@@ -16,33 +16,36 @@
 
 O sistema de Login padrão permite criar conta e entrar usando E-mail e Senha tradicional.
 
+**Importante: Confirmação de E-mail Obrigatória**
+Após o cadastro (`POST /api/v1/auth/email/register`), o usuário é criado com o status `INACTIVE`. O sistema envia automaticamente um e-mail de ativação. Enquanto o e-mail não for confirmado, qualquer tentativa de login via formulário ou rede social retornará um erro `422 (inactive)`.
+
 ```mermaid
 sequenceDiagram
     participant A as Frontend (Web/Mobile)
     participant B as Backend API
+    participant C as E-mail (SMTP)
 
     A->>B: 1. Cadastro com E-mail e Senha (Sign up)
-    A->>B: 2. Login com E-mail e Senha (Sign in)
-    B->>A: 3. Responde com Token JWT
-    A->>B: 4. Faz requisições posteriores usando o JWT no Header
+    B-->>C: 2. Dispara e-mail de ativação
+    C-->>A: 3. Usuário clica no link de confirmação
+    A->>B: 4. Chama API de confirmação
+    A->>B: 5. Login com E-mail e Senha (Sign in)
+    B->>A: 6. Responde com Token JWT
 ```
 
 ## Fluxo de Autenticação com Login Social
 
-O projeto já está estruturado para suportar login fácil através do Apple, Facebook e Google.
+O projeto já está estruturado para suportar login fácil através do Google e GitHub.
 
-```mermaid
-sequenceDiagram
-    participant B as Provedor de Login (Google, Apple)
-    participant A as Frontend (Web/Mobile)
-    participant C as Backend API
+**Autenticação Híbrida (Redundância)**
+O sistema permite que um usuário que se cadastrou via Rede Social (Google/GitHub) possa posteriormente definir uma senha tradicional através do fluxo de "Esqueci minha senha" (`POST /api/v1/auth/forgot/password`). Isso permite que ele tenha duas formas de entrar na mesma conta, garantindo redundância de acesso.
 
-    A->>B: 1. Autenticação através do provedor
-    B->>A: 2. Retorna o Access Token de redes sociais
-    A->>C: 3. Envia esse Access Token para o Backend via API
-    C->>A: 4. Valida e responde com Token JWT da nossa plataforma
-    A->>C: 5. Faz requisições posteriores usando o JWT no Header
-```
+## Segurança e Rate Limiting
+
+A API possui proteção contra ataques de força bruta e spam de e-mails usando `ThrottlerGuard`:
+- **Esqueci minha senha:** Limite de 3 tentativas por minuto e 10 por hora.
+- **Cadastro de conta:** Limite de 5 tentativas por minuto e 10 por hora.
+- **Login:** Limite de 5 tentativas por minuto e 20 por hora.
 
 Para autenticar com serviços externos:
 1. No Frontend, o usuário se loga usando o SDK do Google/Apple, resultando num Access token.
