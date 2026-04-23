@@ -9,6 +9,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { SubmitMissionDto } from './dto/submit-mission.dto';
+import { FindAllMissionsDto } from './dto/find-all-missions.dto';
 import { ReviewMissionSubmissionDto } from './dto/review-mission-submission.dto';
 import { MissionStatus } from './domain/mission-status.enum';
 import { MissionSubmissionStatus } from './domain/mission-submission-status.enum';
@@ -34,23 +35,83 @@ export class MissionsService {
       requirements: dto.requirements ?? null,
       xpReward: dto.xpReward,
       isSecret: dto.isSecret ?? false,
+      requiresProof: dto.requiresProof ?? false,
+      requiresDescription: dto.requiresDescription ?? false,
       status: MissionStatus.OPEN,
       winnerId: null,
     });
     return this.dataSource.getRepository(MissionEntity).save(mission);
   }
 
-  async findAll() {
-    return this.dataSource.getRepository(MissionEntity).find({
-      order: { createdAt: 'DESC' },
-    });
+  async findAll(dto?: FindAllMissionsDto) {
+    const page = dto?.page ?? 1;
+    const limit = dto?.limit ?? 10;
+    const search = dto?.search;
+    const view = dto?.view;
+
+    const query = this.dataSource
+      .getRepository(MissionEntity)
+      .createQueryBuilder('mission');
+
+    if (search) {
+      query.andWhere(
+        '(mission.title ILIKE :search OR mission.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    query.orderBy('mission.createdAt', 'DESC');
+    query.skip((page - 1) * limit).take(limit);
+
+    const missions = await query.getMany();
+
+    if (view === 'card') {
+      return missions.map((m) => ({
+        id: m.id,
+        title: m.title,
+        xpReward: m.xpReward,
+        status: m.status,
+        createdAt: m.createdAt,
+      }));
+    }
+    return missions;
   }
 
-  async findOpen() {
-    return this.dataSource.getRepository(MissionEntity).find({
-      where: { status: MissionStatus.OPEN, isSecret: false },
-      order: { createdAt: 'DESC' },
-    });
+  async findOpen(dto?: FindAllMissionsDto) {
+    const page = dto?.page ?? 1;
+    const limit = dto?.limit ?? 10;
+    const search = dto?.search;
+    const view = dto?.view;
+
+    const query = this.dataSource
+      .getRepository(MissionEntity)
+      .createQueryBuilder('mission');
+
+    query.andWhere('mission.status = :status', { status: MissionStatus.OPEN });
+    query.andWhere('mission.isSecret = :isSecret', { isSecret: false });
+
+    if (search) {
+      query.andWhere(
+        '(mission.title ILIKE :search OR mission.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    query.orderBy('mission.createdAt', 'DESC');
+    query.skip((page - 1) * limit).take(limit);
+
+    const missions = await query.getMany();
+
+    if (view === 'card') {
+      return missions.map((m) => ({
+        id: m.id,
+        title: m.title,
+        xpReward: m.xpReward,
+        status: m.status,
+        createdAt: m.createdAt,
+      }));
+    }
+    return missions;
   }
 
   async findById(id: string) {
@@ -69,6 +130,12 @@ export class MissionsService {
       ...(dto.requirements !== undefined && { requirements: dto.requirements }),
       ...(dto.xpReward !== undefined && { xpReward: dto.xpReward }),
       ...(dto.isSecret !== undefined && { isSecret: dto.isSecret }),
+      ...(dto.requiresProof !== undefined && {
+        requiresProof: dto.requiresProof,
+      }),
+      ...(dto.requiresDescription !== undefined && {
+        requiresDescription: dto.requiresDescription,
+      }),
     });
     return this.dataSource.getRepository(MissionEntity).save(mission);
   }

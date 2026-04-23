@@ -34,6 +34,12 @@ export class MissionEntity extends EntityRelationalHelper {
   @Column({ type: 'boolean', default: false })
   isSecret: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  requiresProof: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  requiresDescription: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

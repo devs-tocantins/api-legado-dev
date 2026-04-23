@@ -1,5 +1,6 @@
 services:
   api:
+    image: api-legado-dev:latest
     build:
       context: .
       dockerfile: Dockerfile

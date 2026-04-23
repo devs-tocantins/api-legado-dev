@@ -10,6 +10,7 @@ import {
   Post,
   Request,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -25,9 +26,15 @@ import { RoleEnum } from '../roles/roles.enum';
 import { MissionsService } from './missions.service';
 import { CreateMissionDto } from './dto/create-mission.dto';
 import { SubmitMissionDto } from './dto/submit-mission.dto';
+import { FindAllMissionsDto } from './dto/find-all-missions.dto';
 import { ReviewMissionSubmissionDto } from './dto/review-mission-submission.dto';
 import { Mission } from './domain/mission';
 import { MissionSubmission } from './domain/mission-submission';
+import {
+  InfinityPaginationResponse,
+  InfinityPaginationResponseDto,
+} from '../utils/dto/infinity-pagination-response.dto';
+import { infinityPagination } from '../utils/infinity-pagination';
 
 @ApiTags('Missions')
 @Controller({ path: 'missions', version: '1' })
@@ -37,9 +44,18 @@ export class MissionsController {
   // ── Public ───────────────────────────────────────────────────────────────────
 
   @Get()
-  @ApiOkResponse({ type: [Mission] })
-  findOpen() {
-    return this.missionsService.findOpen();
+  @ApiOkResponse({ type: InfinityPaginationResponse(Mission) })
+  async findOpen(
+    @Query() query: FindAllMissionsDto,
+  ): Promise<InfinityPaginationResponseDto<Mission | any>> {
+    const page = query?.page ?? 1;
+    let limit = query?.limit ?? 10;
+    if (limit > 50) limit = 50;
+
+    return infinityPagination(
+      await this.missionsService.findOpen({ ...query, page, limit }),
+      { page, limit },
+    );
   }
 
   @Get(':id')
@@ -88,9 +104,18 @@ export class MissionsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin, RoleEnum.moderator)
-  @ApiOkResponse({ type: [Mission] })
-  findAll() {
-    return this.missionsService.findAll();
+  @ApiOkResponse({ type: InfinityPaginationResponse(Mission) })
+  async findAll(
+    @Query() query: FindAllMissionsDto,
+  ): Promise<InfinityPaginationResponseDto<Mission | any>> {
+    const page = query?.page ?? 1;
+    let limit = query?.limit ?? 10;
+    if (limit > 50) limit = 50;
+
+    return infinityPagination(
+      await this.missionsService.findAll({ ...query, page, limit }),
+      { page, limit },
+    );
   }
 
   @Patch(':id')

@@ -42,20 +42,31 @@ export class MailerService {
     if (templatePath) {
       const template = await fs.readFile(templatePath, 'utf-8');
       html = Handlebars.compile(template, {
-        strict: true,
+        strict: false,
       })(context);
     }
 
-    await this.transporter.sendMail({
-      ...mailOptions,
-      from: mailOptions.from
-        ? mailOptions.from
-        : `"${this.configService.get('mail.defaultName', {
-            infer: true,
-          })}" <${this.configService.get('mail.defaultEmail', {
-            infer: true,
-          })}>`,
-      html: mailOptions.html ? mailOptions.html : html,
-    });
+    try {
+      console.log(
+        `[MAILER] Preparando envio de e-mail para: ${mailOptions.to}`,
+      );
+      const info = await this.transporter.sendMail({
+        ...mailOptions,
+        from: mailOptions.from
+          ? mailOptions.from
+          : `"${this.configService.get('mail.defaultName', {
+              infer: true,
+            })}" <${this.configService.get('mail.defaultEmail', {
+              infer: true,
+            })}>`,
+        html: mailOptions.html ? mailOptions.html : html,
+      });
+      console.log(
+        `[MAILER] E-mail enviado com sucesso! MessageID: ${info.messageId}`,
+      );
+    } catch (error: any) {
+      console.error(`[MAILER] Falha crítica ao enviar e-mail:`, error);
+      throw error;
+    }
   }
 }

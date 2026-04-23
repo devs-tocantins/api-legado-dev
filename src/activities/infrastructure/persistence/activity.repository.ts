@@ -27,8 +27,12 @@ export abstract class ActivityRepository {
 
   abstract findPublicWithPagination({
     paginationOptions,
+    search,
+    view,
   }: {
     paginationOptions: IPaginationOptions;
+    search?: string;
+    view?: 'card' | 'list';
   }): Promise<Activity[]>;
 
   abstract findBySecretCode(

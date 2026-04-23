@@ -47,7 +47,7 @@ export class FilesS3PresignedService {
       });
     }
 
-    if (!file.fileName.match(/\.(jpg|jpeg|png|gif)$/i)) {
+    if (!file.fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {

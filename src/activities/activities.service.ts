@@ -91,14 +91,20 @@ export class ActivitiesService {
 
   findPublicWithPagination({
     paginationOptions,
+    search,
+    view,
   }: {
     paginationOptions: IPaginationOptions;
+    search?: string;
+    view?: 'card' | 'list';
   }) {
     return this.activityRepository.findPublicWithPagination({
       paginationOptions: {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
       },
+      search,
+      view,
     });
   }
 

@@ -12,7 +12,6 @@ import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
-import { AuthProvidersEnum } from './auth-providers.enum';
 import { SocialInterface } from '../social/interfaces/social.interface';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { NullableType } from '../utils/types/nullable.type';
@@ -79,15 +78,6 @@ export class AuthService {
       });
     }
 
-    if (user.provider !== AuthProvidersEnum.email) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: `needLoginViaProvider:${user.provider}`,
-        },
-      });
-    }
-
     if (!user.password) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -116,6 +106,15 @@ export class AuthService {
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
           user: 'banned',
+        },
+      });
+    }
+
+    if (user.status?.id?.toString() === StatusEnum.inactive.toString()) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'inactive',
         },
       });
     }
@@ -219,6 +218,15 @@ export class AuthService {
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
           user: 'banned',
+        },
+      });
+    }
+
+    if (user.status?.id?.toString() === StatusEnum.inactive.toString()) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'inactive',
         },
       });
     }

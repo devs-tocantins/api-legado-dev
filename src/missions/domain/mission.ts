@@ -38,6 +38,12 @@ export class Mission {
   })
   isSecret: boolean;
 
+  @ApiProperty({ type: Boolean, default: false })
+  requiresProof: boolean;
+
+  @ApiProperty({ type: Boolean, default: false })
+  requiresDescription: boolean;
+
   @ApiProperty()
   createdAt: Date;
 

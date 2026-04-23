@@ -92,6 +92,8 @@ export class ActivitiesController {
     return infinityPagination(
       await this.activitiesService.findPublicWithPagination({
         paginationOptions: { page, limit },
+        search: query?.search,
+        view: query?.view,
       }),
       { page, limit },
     );

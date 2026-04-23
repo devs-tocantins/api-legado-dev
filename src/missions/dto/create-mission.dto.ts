@@ -43,4 +43,14 @@ export class CreateMissionDto {
   @IsOptional()
   @IsBoolean()
   isSecret?: boolean;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  requiresProof?: boolean;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  requiresDescription?: boolean;
 }
