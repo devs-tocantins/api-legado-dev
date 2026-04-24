@@ -13,7 +13,7 @@ export class CreateSubmissionDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(2048)
   @Transform(({ value }) => value?.trim() ?? null)
   proofUrl?: string | null;
 
@@ -24,7 +24,7 @@ export class CreateSubmissionDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(1000)
+  @MaxLength(2000)
   @Transform(({ value }) => value?.trim() ?? null)
   description?: string | null;
 }
