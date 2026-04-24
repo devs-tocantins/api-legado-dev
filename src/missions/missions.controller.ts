@@ -65,6 +65,29 @@ export class MissionsController {
     return this.missionsService.findById(id);
   }
 
+  @Get(':id/participants')
+  @ApiParam({ name: 'id', type: String })
+  @ApiOkResponse({
+    schema: {
+      properties: {
+        count: { type: 'number' },
+        participants: {
+          type: 'array',
+          items: {
+            properties: {
+              username: { type: 'string' },
+              status: { type: 'string' },
+              submittedAt: { type: 'string', format: 'date-time' },
+            },
+          },
+        },
+      },
+    },
+  })
+  findParticipants(@Param('id') id: string) {
+    return this.missionsService.findParticipants(id);
+  }
+
   // ── Authenticated user ────────────────────────────────────────────────────────
 
   @Post(':id/submit')

@@ -51,7 +51,9 @@ export class GamificationProfileRelationalRepository
       .createQueryBuilder('gp')
       .select('gp.id', 'id')
       .leftJoin('gp.user', 'u')
-      .where('u.isBanned = false');
+      .leftJoin('u.role', 'role')
+      .where('u.isBanned = false')
+      .andWhere('role.id != :adminRole', { adminRole: 1 });
 
     if (search) {
       idsQb.andWhere(
@@ -103,10 +105,12 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { id },
-      relations: { user: { photo: true } },
+      relations: { user: { photo: true, role: true } },
     });
 
-    return entity ? GamificationProfileMapper.toDomain(entity) : null;
+    if (!entity) return null;
+    if (entity.user?.role?.id === 1) return null;
+    return GamificationProfileMapper.toDomain(entity);
   }
 
   async findByIds(
@@ -164,10 +168,12 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { username },
-      relations: { user: { photo: true } },
+      relations: { user: { photo: true, role: true } },
     });
 
-    return entity ? GamificationProfileMapper.toDomain(entity) : null;
+    if (!entity) return null;
+    if (entity.user?.role?.id === 1) return null;
+    return GamificationProfileMapper.toDomain(entity);
   }
 
   async resetMonthlyXpAndTokens(defaultTokens: number): Promise<void> {

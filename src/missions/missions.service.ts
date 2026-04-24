@@ -191,6 +191,28 @@ export class MissionsService {
     });
   }
 
+  async findParticipants(missionId: string): Promise<{
+    count: number;
+    participants: { username: string; status: string; submittedAt: Date }[];
+  }> {
+    await this.findById(missionId);
+    const submissions = await this.dataSource
+      .getRepository(MissionSubmissionEntity)
+      .find({
+        where: { missionId },
+        relations: { profile: true },
+        order: { createdAt: 'ASC' },
+      });
+    return {
+      count: submissions.length,
+      participants: submissions.map((s) => ({
+        username: s.profile?.username ?? 'desconhecido',
+        status: s.status,
+        submittedAt: s.createdAt,
+      })),
+    };
+  }
+
   async findMySubmission(missionId: string, userId: number) {
     const profile = await this.dataSource
       .getRepository(GamificationProfileEntity)
