@@ -7,6 +7,7 @@ import { Transaction } from '../../../../domain/transaction';
 import { TransactionRepository } from '../../transaction.repository';
 import { TransactionMapper } from '../mappers/transaction.mapper';
 import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { TransactionCategoryEnum } from '../../../../domain/transaction-category.enum';
 
 @Injectable()
 export class TransactionRelationalRepository implements TransactionRepository {
@@ -86,6 +87,29 @@ export class TransactionRelationalRepository implements TransactionRepository {
   ): Promise<Transaction[]> {
     const entities = await this.transactionRepository.find({
       where: { profile: { id: profileId } },
+      order: { createdAt: 'DESC' },
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+    });
+
+    return entities.map((entity) => TransactionMapper.toDomain(entity));
+  }
+
+  async findTokenTransactionsByProfileId(
+    profileId: string,
+    paginationOptions: IPaginationOptions,
+  ): Promise<Transaction[]> {
+    const entities = await this.transactionRepository.find({
+      where: [
+        {
+          profile: { id: profileId },
+          category: TransactionCategoryEnum.TOKEN_REWARD,
+        },
+        {
+          profile: { id: profileId },
+          category: TransactionCategoryEnum.TOKEN_TRANSFER,
+        },
+      ],
       order: { createdAt: 'DESC' },
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,

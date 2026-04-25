@@ -10,6 +10,8 @@ import {
   Query,
   Request,
   NotFoundException,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -35,8 +37,6 @@ import { FindAllTransactionsDto } from './dto/find-all-transactions.dto';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 
 @ApiTags('Transactions')
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'transactions',
   version: '1',
@@ -47,29 +47,44 @@ export class TransactionsController {
     private readonly gamificationProfilesService: GamificationProfilesService,
   ) {}
 
+  @Get('profile/:profileId/tokens')
+  @ApiParam({ name: 'profileId', type: String, required: true })
+  @ApiOkResponse({ type: InfinityPaginationResponse(Transaction) })
+  async findProfileTokens(
+    @Param('profileId') profileId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ): Promise<InfinityPaginationResponseDto<Transaction>> {
+    if (limit > 50) limit = 50;
+    return infinityPagination(
+      await this.transactionsService.findTokenTransactionsByProfileId(
+        profileId,
+        { page, limit },
+      ),
+      { page, limit },
+    );
+  }
+
   @Post()
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
-  @ApiCreatedResponse({
-    type: Transaction,
-  })
+  @ApiCreatedResponse({ type: Transaction })
   create(@Body() createTransactionDto: CreateTransactionDto) {
     return this.transactionsService.create(createTransactionDto);
   }
 
   @Get('me')
-  @ApiOkResponse({
-    type: InfinityPaginationResponse(Transaction),
-  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOkResponse({ type: InfinityPaginationResponse(Transaction) })
   async findMine(
     @Query() query: FindAllTransactionsDto,
     @Request() req,
   ): Promise<InfinityPaginationResponseDto<Transaction>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 20;
-    if (limit > 50) {
-      limit = 50;
-    }
+    if (limit > 50) limit = 50;
 
     const profile = await this.gamificationProfilesService.findByUserId(
       req.user.id,
@@ -88,57 +103,41 @@ export class TransactionsController {
   }
 
   @Get()
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
-  @ApiOkResponse({
-    type: InfinityPaginationResponse(Transaction),
-  })
+  @ApiOkResponse({ type: InfinityPaginationResponse(Transaction) })
   async findAll(
     @Query() query: FindAllTransactionsDto,
   ): Promise<InfinityPaginationResponseDto<Transaction>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
-    if (limit > 50) {
-      limit = 50;
-    }
+    if (limit > 50) limit = 50;
 
     return infinityPagination(
       await this.transactionsService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
+        paginationOptions: { page, limit },
       }),
       { page, limit },
     );
   }
 
   @Get(':id')
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
-  @ApiOkResponse({
-    type: Transaction,
-  })
+  @ApiParam({ name: 'id', type: String, required: true })
+  @ApiOkResponse({ type: Transaction })
   findById(@Param('id') id: string) {
     return this.transactionsService.findById(id);
   }
 
   @Patch(':id')
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
-  @ApiOkResponse({
-    type: Transaction,
-  })
+  @ApiParam({ name: 'id', type: String, required: true })
+  @ApiOkResponse({ type: Transaction })
   update(
     @Param('id') id: string,
     @Body() updateTransactionDto: UpdateTransactionDto,
@@ -147,13 +146,10 @@ export class TransactionsController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
+  @ApiParam({ name: 'id', type: String, required: true })
   remove(@Param('id') id: string) {
     return this.transactionsService.remove(id);
   }

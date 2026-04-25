@@ -86,4 +86,14 @@ export class TransactionsService {
       paginationOptions,
     );
   }
+
+  findTokenTransactionsByProfileId(
+    profileId: string,
+    paginationOptions: IPaginationOptions,
+  ) {
+    return this.transactionRepository.findTokenTransactionsByProfileId(
+      profileId,
+      paginationOptions,
+    );
+  }
 }
