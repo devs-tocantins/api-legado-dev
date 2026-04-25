@@ -124,6 +124,12 @@ export class GamificationProfilesService {
     );
   }
 
+  replenishDailyTokens(defaultTokens: number) {
+    return this.gamificationProfileRepository.replenishDailyTokens(
+      defaultTokens,
+    );
+  }
+
   resetYearlyXp() {
     return this.gamificationProfileRepository.resetYearlyXp();
   }

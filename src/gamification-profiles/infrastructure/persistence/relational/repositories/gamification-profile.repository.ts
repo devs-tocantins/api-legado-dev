@@ -183,6 +183,13 @@ export class GamificationProfileRelationalRepository
     );
   }
 
+  async replenishDailyTokens(defaultTokens: number): Promise<void> {
+    await this.gamificationProfileRepository.update(
+      {},
+      { gratitudeTokens: defaultTokens },
+    );
+  }
+
   async resetYearlyXp(): Promise<void> {
     await this.gamificationProfileRepository.update({}, { currentYearlyXp: 0 });
   }
