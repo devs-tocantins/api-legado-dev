@@ -290,6 +290,14 @@ export class UsersService {
       socialId: updateUserDto.socialId,
     });
 
+    // Delete old photo from storage when replaced or removed
+    const oldPhoto = existingUser.photo;
+    const photoChanged =
+      photo !== undefined && oldPhoto?.path && oldPhoto.id !== photo?.id;
+    if (photoChanged) {
+      void this.filesService.deleteFile(oldPhoto!.path);
+    }
+
     if (updateUserDto.isBanned === true && existingUser.isBanned === false) {
       await this.gamificationProfilesService.zeroOutProfile(
         Number(id),

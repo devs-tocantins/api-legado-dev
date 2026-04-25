@@ -24,6 +24,7 @@ import { TransactionEntity } from '../transactions/infrastructure/persistence/re
 import { TransactionCategoryEnum } from '../transactions/domain/transaction-category.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/domain/notification-type.enum';
+import { FilesService } from '../files/files.service';
 
 const MODERATOR_REWARD_XP = 10;
 
@@ -35,6 +36,7 @@ export class SubmissionsService {
     private readonly activitiesService: ActivitiesService,
     private readonly badgeEvaluatorService: BadgeEvaluatorService,
     private readonly notificationsService: NotificationsService,
+    private readonly filesService: FilesService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -299,6 +301,12 @@ export class SubmissionsService {
       }
     }
 
+    if (reviewDto.status === SubmissionStatus.REJECTED && submission.proofUrl) {
+      void this.filesService.deleteFile(
+        this.filesService.extractStoragePath(submission.proofUrl),
+      );
+    }
+
     return this.submissionRepository.findById(id);
   }
 
@@ -419,7 +427,13 @@ export class SubmissionsService {
       );
     }
 
-    return this.submissionRepository.remove(id);
+    await this.submissionRepository.remove(id);
+
+    if (submission.proofUrl) {
+      void this.filesService.deleteFile(
+        this.filesService.extractStoragePath(submission.proofUrl),
+      );
+    }
   }
 
   remove(id: Submission['id']) {
