@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { GamificationProfilesService } from './gamification-profiles.service';
 
-const DEFAULT_DAILY_TOKENS = 3;
+const DEFAULT_DAILY_TOKENS = 5;
 const DEFAULT_MONTHLY_TOKENS = DEFAULT_DAILY_TOKENS;
 
 @Injectable()

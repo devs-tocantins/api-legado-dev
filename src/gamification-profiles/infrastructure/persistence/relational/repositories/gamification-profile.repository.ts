@@ -177,20 +177,26 @@ export class GamificationProfileRelationalRepository
   }
 
   async resetMonthlyXpAndTokens(defaultTokens: number): Promise<void> {
-    await this.gamificationProfileRepository.update(
-      {},
-      { currentMonthlyXp: 0, gratitudeTokens: defaultTokens },
-    );
+    await this.gamificationProfileRepository
+      .createQueryBuilder()
+      .update(GamificationProfileEntity)
+      .set({ currentMonthlyXp: 0, gratitudeTokens: defaultTokens })
+      .execute();
   }
 
   async replenishDailyTokens(defaultTokens: number): Promise<void> {
-    await this.gamificationProfileRepository.update(
-      {},
-      { gratitudeTokens: defaultTokens },
-    );
+    await this.gamificationProfileRepository
+      .createQueryBuilder()
+      .update(GamificationProfileEntity)
+      .set({ gratitudeTokens: defaultTokens })
+      .execute();
   }
 
   async resetYearlyXp(): Promise<void> {
-    await this.gamificationProfileRepository.update({}, { currentYearlyXp: 0 });
+    await this.gamificationProfileRepository
+      .createQueryBuilder()
+      .update(GamificationProfileEntity)
+      .set({ currentYearlyXp: 0 })
+      .execute();
   }
 }
