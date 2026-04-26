@@ -27,6 +27,11 @@ export class CreateActivityDto {
   @Min(1)
   fixedReward: number;
 
+  @ApiProperty({ example: 10 })
+  @IsInt()
+  @Min(0)
+  auditorReward: number;
+
   @ApiProperty({ example: false, required: false })
   @IsOptional()
   @IsBoolean()

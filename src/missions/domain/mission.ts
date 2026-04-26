@@ -21,6 +21,12 @@ export class Mission {
   @ApiProperty({ type: Number })
   xpReward: number;
 
+  @ApiProperty({ type: Number })
+  participationReward: number;
+
+  @ApiProperty({ type: Number })
+  auditorReward: number;
+
   @ApiProperty({ enum: MissionStatus })
   status: MissionStatus;
 

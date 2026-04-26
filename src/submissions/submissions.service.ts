@@ -26,8 +26,6 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/domain/notification-type.enum';
 import { FilesService } from '../files/files.service';
 
-const MODERATOR_REWARD_XP = 10;
-
 @Injectable()
 export class SubmissionsService {
   constructor(
@@ -253,25 +251,25 @@ export class SubmissionsService {
           GamificationProfileEntity,
           { id: moderatorProfile.id },
           'totalXp',
-          MODERATOR_REWARD_XP,
+          activity.auditorReward,
         );
         await queryRunner.manager.increment(
           GamificationProfileEntity,
           { id: moderatorProfile.id },
           'currentMonthlyXp',
-          MODERATOR_REWARD_XP,
+          activity.auditorReward,
         );
         await queryRunner.manager.increment(
           GamificationProfileEntity,
           { id: moderatorProfile.id },
           'currentYearlyXp',
-          MODERATOR_REWARD_XP,
+          activity.auditorReward,
         );
 
         await queryRunner.manager.save(TransactionEntity, {
           profile: { id: moderatorProfile.id },
           category: TransactionCategoryEnum.AUDITOR_REWARD,
-          amount: MODERATOR_REWARD_XP,
+          amount: activity.auditorReward,
           description: 'Recompensa por auditoria de submissão',
         });
       }

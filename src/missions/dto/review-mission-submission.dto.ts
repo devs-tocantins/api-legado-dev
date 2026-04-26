@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsBoolean,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { MissionSubmissionStatus } from '../domain/mission-submission-status.enum';
 
 export class ReviewMissionSubmissionDto {
@@ -14,4 +20,9 @@ export class ReviewMissionSubmissionDto {
   @IsString()
   @MaxLength(500)
   feedback?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isWinner?: boolean;
 }

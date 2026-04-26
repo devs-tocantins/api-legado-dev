@@ -25,6 +25,7 @@ export class ActivitiesService {
       title: createActivityDto.title,
       description: createActivityDto.description,
       fixedReward: createActivityDto.fixedReward,
+      auditorReward: createActivityDto.auditorReward,
       isHidden: createActivityDto.isHidden ?? false,
       secretCode: createActivityDto.secretCode ?? null,
       requiresProof: createActivityDto.requiresProof ?? false,
@@ -69,6 +70,9 @@ export class ActivitiesService {
       }),
       ...(updateActivityDto.fixedReward !== undefined && {
         fixedReward: updateActivityDto.fixedReward,
+      }),
+      ...(updateActivityDto.auditorReward !== undefined && {
+        auditorReward: updateActivityDto.auditorReward,
       }),
       ...(updateActivityDto.isHidden !== undefined && {
         isHidden: updateActivityDto.isHidden,

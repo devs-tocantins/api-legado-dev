@@ -63,6 +63,13 @@ export class Activity {
   })
   cooldownHours: number;
 
+  @ApiProperty({
+    type: Number,
+    description: 'Pontos XP concedidos ao auditor por revisar esta atividade',
+    example: 10,
+  })
+  auditorReward: number;
+
   @ApiProperty()
   createdAt: Date;
 

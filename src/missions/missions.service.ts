@@ -13,6 +13,8 @@ import { FindAllMissionsDto } from './dto/find-all-missions.dto';
 import { ReviewMissionSubmissionDto } from './dto/review-mission-submission.dto';
 import { MissionStatus } from './domain/mission-status.enum';
 import { MissionSubmissionStatus } from './domain/mission-submission-status.enum';
+import { TransactionEntity } from '../transactions/infrastructure/persistence/relational/entities/transaction.entity';
+import { TransactionCategoryEnum } from '../transactions/domain/transaction-category.enum';
 import { MissionEntity } from './infrastructure/persistence/relational/entities/mission.entity';
 import { MissionSubmissionEntity } from './infrastructure/persistence/relational/entities/mission-submission.entity';
 import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
@@ -34,6 +36,8 @@ export class MissionsService {
       description: dto.description ?? null,
       requirements: dto.requirements ?? null,
       xpReward: dto.xpReward,
+      participationReward: dto.participationReward,
+      auditorReward: dto.auditorReward,
       isSecret: dto.isSecret ?? false,
       requiresProof: dto.requiresProof ?? false,
       requiresDescription: dto.requiresDescription ?? false,
@@ -129,6 +133,12 @@ export class MissionsService {
       ...(dto.description !== undefined && { description: dto.description }),
       ...(dto.requirements !== undefined && { requirements: dto.requirements }),
       ...(dto.xpReward !== undefined && { xpReward: dto.xpReward }),
+      ...(dto.participationReward !== undefined && {
+        participationReward: dto.participationReward,
+      }),
+      ...(dto.auditorReward !== undefined && {
+        auditorReward: dto.auditorReward,
+      }),
       ...(dto.isSecret !== undefined && { isSecret: dto.isSecret }),
       ...(dto.requiresProof !== undefined && {
         requiresProof: dto.requiresProof,
@@ -255,15 +265,11 @@ export class MissionsService {
       throw new BadRequestException('Feedback é obrigatório ao rejeitar.');
     }
 
-    if (dto.status === MissionSubmissionStatus.APPROVED) {
-      // Check no other submission is already approved
-      const alreadyApproved = await this.dataSource
-        .getRepository(MissionSubmissionEntity)
-        .findOne({
-          where: { missionId, status: MissionSubmissionStatus.APPROVED },
-        });
-      if (alreadyApproved) {
-        throw new ConflictException('Esta missão já tem um vencedor.');
+    const isWinner = dto.isWinner === true;
+
+    if (isWinner && dto.status === MissionSubmissionStatus.APPROVED) {
+      if (mission.status === MissionStatus.CLOSED) {
+        throw new ConflictException('Esta missão já foi encerrada.');
       }
     }
 
@@ -271,60 +277,103 @@ export class MissionsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
+      const awardedXp =
+        dto.status === MissionSubmissionStatus.APPROVED
+          ? isWinner
+            ? mission.xpReward
+            : mission.participationReward
+          : 0;
+
       await queryRunner.manager.update(MissionSubmissionEntity, submissionId, {
         status: dto.status,
         feedback: dto.feedback ?? null,
         reviewerId: reviewerUserId,
         reviewedAt: new Date(),
-        awardedXp:
-          dto.status === MissionSubmissionStatus.APPROVED
-            ? mission.xpReward
-            : 0,
+        awardedXp,
       });
 
       if (dto.status === MissionSubmissionStatus.APPROVED) {
-        // Grant XP to winner
         await queryRunner.manager.increment(
           GamificationProfileEntity,
           { id: submission.profileId },
           'totalXp',
-          mission.xpReward,
+          awardedXp,
         );
         await queryRunner.manager.increment(
           GamificationProfileEntity,
           { id: submission.profileId },
           'currentMonthlyXp',
-          mission.xpReward,
+          awardedXp,
         );
         await queryRunner.manager.increment(
           GamificationProfileEntity,
           { id: submission.profileId },
           'currentYearlyXp',
-          mission.xpReward,
+          awardedXp,
         );
 
-        // Close mission and record winner
-        await queryRunner.manager.update(MissionEntity, missionId, {
-          status: MissionStatus.CLOSED,
-          winnerId: submission.profileId,
+        await queryRunner.manager.save(TransactionEntity, {
+          profile: { id: submission.profileId },
+          category: TransactionCategoryEnum.XP_REWARD,
+          amount: awardedXp,
+          description: isWinner
+            ? `Venceu a missão: ${mission.title}`
+            : `Participação na missão: ${mission.title}`,
         });
 
-        // Auto-reject remaining pending submissions
-        await queryRunner.manager
-          .createQueryBuilder()
-          .update(MissionSubmissionEntity)
-          .set({
-            status: MissionSubmissionStatus.REJECTED,
-            feedback: 'A missão foi concluída por outro participante.',
-            reviewerId: reviewerUserId,
-            reviewedAt: new Date(),
-          })
-          .where('missionId = :missionId AND status = :status AND id != :id', {
-            missionId,
-            status: MissionSubmissionStatus.PENDING,
-            id: submissionId,
-          })
-          .execute();
+        if (isWinner) {
+          await queryRunner.manager.update(MissionEntity, missionId, {
+            status: MissionStatus.CLOSED,
+            winnerId: submission.profileId,
+          });
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .update(MissionSubmissionEntity)
+            .set({
+              status: MissionSubmissionStatus.REJECTED,
+              feedback: 'A missão foi concluída por outro participante.',
+              reviewerId: reviewerUserId,
+              reviewedAt: new Date(),
+            })
+            .where(
+              'missionId = :missionId AND status = :status AND id != :id',
+              {
+                missionId,
+                status: MissionSubmissionStatus.PENDING,
+                id: submissionId,
+              },
+            )
+            .execute();
+        }
+      }
+
+      if (reviewerProfile) {
+        await queryRunner.manager.increment(
+          GamificationProfileEntity,
+          { id: reviewerProfile.id },
+          'totalXp',
+          mission.auditorReward,
+        );
+        await queryRunner.manager.increment(
+          GamificationProfileEntity,
+          { id: reviewerProfile.id },
+          'currentMonthlyXp',
+          mission.auditorReward,
+        );
+        await queryRunner.manager.increment(
+          GamificationProfileEntity,
+          { id: reviewerProfile.id },
+          'currentYearlyXp',
+          mission.auditorReward,
+        );
+
+        await queryRunner.manager.save(TransactionEntity, {
+          profile: { id: reviewerProfile.id },
+          category: TransactionCategoryEnum.AUDITOR_REWARD,
+          amount: mission.auditorReward,
+          description: `Recompensa por auditoria de missão: ${mission.title}`,
+        });
       }
 
       await queryRunner.commitTransaction();
@@ -342,9 +391,15 @@ export class MissionsService {
       if (winnerProfile) {
         void this.notificationsService.create({
           userId: winnerProfile.userId,
-          type: NotificationType.MISSION_WON,
-          title: 'Você venceu uma missão!',
-          body: `Parabéns! Sua participação na missão foi aprovada e você ganhou ${mission.xpReward} XP.`,
+          type: isWinner
+            ? NotificationType.MISSION_WON
+            : NotificationType.SUBMISSION_APPROVED,
+          title: isWinner
+            ? 'Você venceu uma missão!'
+            : 'Participação aprovada!',
+          body: isWinner
+            ? `Parabéns! Você ganhou ${mission.xpReward} XP.`
+            : `Sua participação foi validada e você ganhou ${mission.participationReward} XP.`,
           relatedId: missionId,
         });
       }

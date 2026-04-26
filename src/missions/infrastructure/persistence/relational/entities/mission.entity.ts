@@ -25,6 +25,12 @@ export class MissionEntity extends EntityRelationalHelper {
   @Column({ type: 'int' })
   xpReward: number;
 
+  @Column({ type: 'int', default: 50 })
+  participationReward: number;
+
+  @Column({ type: 'int', default: 20 })
+  auditorReward: number;
+
   @Column({ type: 'enum', enum: MissionStatus, default: MissionStatus.OPEN })
   status: MissionStatus;
 
