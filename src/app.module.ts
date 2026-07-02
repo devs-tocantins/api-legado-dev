@@ -36,12 +36,15 @@ import { SubmissionsModule } from './submissions/submissions.module';
 
 import { TransactionsModule } from './transactions/transactions.module';
 
+import { EventsModule } from './events/events.module';
+
 @Module({
   imports: [
     TransactionsModule,
     SubmissionsModule,
     ActivitiesModule,
     GamificationProfilesModule,
+    EventsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
