@@ -103,6 +103,15 @@ export class AuthService {
       });
     }
 
+    if (user.status?.id !== StatusEnum.active) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'inactive',
+        },
+      });
+    }
+
     const hash = crypto
       .createHash('sha256')
       .update(randomStringGenerator())
