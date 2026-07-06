@@ -73,7 +73,8 @@ const SEED_EVENTS = [
   },
   {
     title: 'Divulgação de curso pago de programação',
-    description: 'Anúncio de bootcamp particular sem relação com a comunidade DevsTO.',
+    description:
+      'Anúncio de bootcamp particular sem relação com a comunidade DevsTO.',
     category: EventCategory.OUTRO,
     modality: EventModality.ONLINE,
     startAt: new Date('2026-09-01T20:00:00.000Z'),
@@ -81,7 +82,8 @@ const SEED_EVENTS = [
     organizerEmail: 'john.doe@example.com',
     status: EventStatus.REJECTED,
     reviewerEmail: 'ana.mod@example.com',
-    rejectionReason: 'Divulgação comercial fora do foco de comunidade da agenda.',
+    rejectionReason:
+      'Divulgação comercial fora do foco de comunidade da agenda.',
   },
 ];
 
