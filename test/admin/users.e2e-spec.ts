@@ -1,10 +1,17 @@
-import { APP_URL, ADMIN_EMAIL, ADMIN_PASSWORD } from '../utils/constants';
+import {
+  APP_URL,
+  ADMIN_EMAIL,
+  ADMIN_PASSWORD,
+  MAIL_HOST,
+  MAIL_PORT,
+} from '../utils/constants';
 import request from 'supertest';
 import { RoleEnum } from '../../src/roles/roles.enum';
 import { StatusEnum } from '../../src/statuses/statuses.enum';
 
 describe('Users Module', () => {
   const app = APP_URL;
+  const mail = `http://${MAIL_HOST}:${MAIL_PORT}`;
   let apiToken;
 
   beforeAll(async () => {
@@ -32,6 +39,23 @@ describe('Users Module', () => {
           firstName: `First${Date.now()}`,
           lastName: 'E2E',
         });
+
+      const confirmHash = await request(mail)
+        .get('/email')
+        .then(({ body }) =>
+          body
+            .find(
+              (letter) =>
+                letter.to[0].address.toLowerCase() ===
+                  newUserEmail.toLowerCase() &&
+                /.*confirm\-email\?hash\=(\S+).*/g.test(letter.text),
+            )
+            ?.text.replace(/.*confirm\-email\?hash\=(\S+).*/g, '$1'),
+        );
+
+      await request(app).post('/api/v1/auth/email/confirm').send({
+        hash: confirmHash,
+      });
 
       await request(app)
         .post('/api/v1/auth/email/login')
