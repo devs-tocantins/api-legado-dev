@@ -51,12 +51,12 @@ import { ContributionReportsModule } from './contribution-reports/contribution-r
       {
         name: 'short',
         ttl: 1000,
-        limit: 10,
+        limit: Number(process.env.THROTTLE_SHORT_LIMIT) || 10,
       },
       {
         name: 'medium',
         ttl: 60_000,
-        limit: 100,
+        limit: Number(process.env.THROTTLE_MEDIUM_LIMIT) || 100,
       },
     ]),
     AdminModule,

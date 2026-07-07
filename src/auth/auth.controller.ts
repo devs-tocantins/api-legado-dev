@@ -35,8 +35,14 @@ export class AuthController {
   constructor(private readonly service: AuthService) {}
 
   @Throttle({
-    short: { ttl: 60_000, limit: 5 },
-    medium: { ttl: 3_600_000, limit: 20 },
+    short: {
+      ttl: 60_000,
+      limit: Number(process.env.THROTTLE_LOGIN_SHORT_LIMIT) || 5,
+    },
+    medium: {
+      ttl: 3_600_000,
+      limit: Number(process.env.THROTTLE_LOGIN_MEDIUM_LIMIT) || 20,
+    },
   })
   @SerializeOptions({
     groups: ['me'],
@@ -51,8 +57,14 @@ export class AuthController {
   }
 
   @Throttle({
-    short: { ttl: 60_000, limit: 5 },
-    medium: { ttl: 3_600_000, limit: 10 },
+    short: {
+      ttl: 60_000,
+      limit: Number(process.env.THROTTLE_REGISTER_SHORT_LIMIT) || 5,
+    },
+    medium: {
+      ttl: 3_600_000,
+      limit: Number(process.env.THROTTLE_REGISTER_MEDIUM_LIMIT) || 10,
+    },
   })
   @Post('email/register')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -77,8 +89,14 @@ export class AuthController {
   }
 
   @Throttle({
-    short: { ttl: 60_000, limit: 3 },
-    medium: { ttl: 3_600_000, limit: 10 },
+    short: {
+      ttl: 60_000,
+      limit: Number(process.env.THROTTLE_FORGOT_SHORT_LIMIT) || 3,
+    },
+    medium: {
+      ttl: 3_600_000,
+      limit: Number(process.env.THROTTLE_FORGOT_MEDIUM_LIMIT) || 10,
+    },
   })
   @Post('forgot/password')
   @HttpCode(HttpStatus.NO_CONTENT)
