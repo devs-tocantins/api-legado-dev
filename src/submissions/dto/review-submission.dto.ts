@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { SubmissionStatus } from '../domain/submission-status.enum';
 
 const allowedStatuses = [SubmissionStatus.APPROVED, SubmissionStatus.REJECTED];
@@ -23,5 +24,7 @@ export class ReviewSubmissionDto {
   })
   @IsOptional()
   @IsString()
+  @MaxLength(500)
+  @Transform(({ value }) => value?.trim())
   feedback?: string;
 }

@@ -16,6 +16,7 @@ import { GamificationProfilesService } from './gamification-profiles.service';
 import { CreateGamificationProfileDto } from './dto/create-gamification-profile.dto';
 import { UpdateGamificationProfileDto } from './dto/update-gamification-profile.dto';
 import { TransferTokensDto } from './dto/transfer-tokens.dto';
+import { ApplyPenaltyDto } from './dto/apply-penalty.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -92,6 +93,7 @@ export class GamificationProfilesController {
       await this.gamificationProfilesService.findAllWithPagination({
         paginationOptions: { page, limit },
         sort: query?.sort,
+        search: query?.search,
       }),
       { page, limit },
     );
@@ -117,7 +119,25 @@ export class GamificationProfilesController {
     return this.gamificationProfilesService.updateMyProfile(
       req.user.id,
       dto.username,
+      dto.githubUsername,
+      dto.bannerPreset,
     );
+  }
+
+  @Get('check-username/:username')
+  @ApiParam({
+    name: 'username',
+    type: String,
+    required: true,
+    description: 'Username a verificar. Retorna { available: boolean }.',
+  })
+  @ApiOkResponse({ schema: { example: { available: true } } })
+  async checkUsername(
+    @Param('username') username: string,
+  ): Promise<{ available: boolean }> {
+    const existing =
+      await this.gamificationProfilesService.findByUsername(username);
+    return { available: !existing };
   }
 
   @Get('by-username/:username')
@@ -148,7 +168,8 @@ export class GamificationProfilesController {
 
   @Patch(':id')
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,
@@ -189,6 +210,29 @@ export class GamificationProfilesController {
       }),
       { page: Number(page), limit: safeLimit },
     );
+  }
+
+  @Post(':id/penalty')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin)
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+    description: 'ID do perfil de gamificação a ser penalizado',
+  })
+  @ApiOkResponse({
+    type: GamificationProfile,
+    description: 'Perfil atualizado após a penalidade',
+  })
+  async applyPenalty(
+    @Param('id') id: string,
+    @Body() dto: ApplyPenaltyDto,
+    @Request() req,
+  ) {
+    return this.gamificationProfilesService.applyPenalty(id, dto, req.user.id);
   }
 
   @Delete(':id')

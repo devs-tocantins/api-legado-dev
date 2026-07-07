@@ -25,24 +25,39 @@ export class FileType {
     ({ value }) => {
       if ((fileConfig() as FileConfig).driver === FileDriver.LOCAL) {
         return (appConfig() as AppConfig).backendDomain + value;
-      } else if (
-        [FileDriver.S3_PRESIGNED, FileDriver.S3].includes(
-          (fileConfig() as FileConfig).driver,
-        )
-      ) {
+      } else if ((fileConfig() as FileConfig).driver === FileDriver.S3) {
+        const publicUrl = (fileConfig() as FileConfig).awsS3PublicUrl;
+        if (publicUrl) {
+          return `${publicUrl.replace(/\/$/, '')}/${value}`;
+        }
         const s3 = new S3Client({
           region: (fileConfig() as FileConfig).awsS3Region ?? '',
+          endpoint: (fileConfig() as FileConfig).awsS3Endpoint,
           credentials: {
             accessKeyId: (fileConfig() as FileConfig).accessKeyId ?? '',
             secretAccessKey: (fileConfig() as FileConfig).secretAccessKey ?? '',
           },
         });
-
         const command = new GetObjectCommand({
           Bucket: (fileConfig() as FileConfig).awsDefaultS3Bucket ?? '',
           Key: value,
         });
-
+        return getSignedUrl(s3, command, { expiresIn: 3600 });
+      } else if (
+        (fileConfig() as FileConfig).driver === FileDriver.S3_PRESIGNED
+      ) {
+        const s3 = new S3Client({
+          region: (fileConfig() as FileConfig).awsS3Region ?? '',
+          endpoint: (fileConfig() as FileConfig).awsS3Endpoint,
+          credentials: {
+            accessKeyId: (fileConfig() as FileConfig).accessKeyId ?? '',
+            secretAccessKey: (fileConfig() as FileConfig).secretAccessKey ?? '',
+          },
+        });
+        const command = new GetObjectCommand({
+          Bucket: (fileConfig() as FileConfig).awsDefaultS3Bucket ?? '',
+          Key: value,
+        });
         return getSignedUrl(s3, command, { expiresIn: 3600 });
       }
 

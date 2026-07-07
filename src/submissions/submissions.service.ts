@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -16,10 +17,13 @@ import { Submission } from './domain/submission';
 import { SubmissionStatus } from './domain/submission-status.enum';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 import { ActivitiesService } from '../activities/activities.service';
+import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
 import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
 import { SubmissionEntity } from './infrastructure/persistence/relational/entities/submission.entity';
 import { TransactionEntity } from '../transactions/infrastructure/persistence/relational/entities/transaction.entity';
 import { TransactionCategoryEnum } from '../transactions/domain/transaction-category.enum';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/domain/notification-type.enum';
 
 const MODERATOR_REWARD_XP = 10;
 
@@ -29,6 +33,8 @@ export class SubmissionsService {
     private readonly submissionRepository: SubmissionRepository,
     private readonly gamificationProfilesService: GamificationProfilesService,
     private readonly activitiesService: ActivitiesService,
+    private readonly badgeEvaluatorService: BadgeEvaluatorService,
+    private readonly notificationsService: NotificationsService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -37,6 +43,12 @@ export class SubmissionsService {
     if (!profile) {
       throw new UnprocessableEntityException(
         'Perfil de gamificação não encontrado. Crie seu perfil antes de submeter.',
+      );
+    }
+
+    if (profile.isBanned) {
+      throw new ForbiddenException(
+        'Sua conta está banida e não pode realizar submissões.',
       );
     }
 
@@ -50,6 +62,12 @@ export class SubmissionsService {
     if (activity.requiresProof && !createSubmissionDto.proofUrl) {
       throw new BadRequestException(
         'Esta atividade exige um comprovante (proofUrl).',
+      );
+    }
+
+    if (activity.requiresDescription && !createSubmissionDto.description) {
+      throw new BadRequestException(
+        'Esta atividade exige uma descrição (description).',
       );
     }
 
@@ -75,6 +93,7 @@ export class SubmissionsService {
       profileId: profile.id,
       activityId: activity.id,
       proofUrl: createSubmissionDto.proofUrl ?? null,
+      description: createSubmissionDto.description ?? null,
       status: SubmissionStatus.PENDING,
       feedback: null,
       awardedXp: 0,
@@ -150,6 +169,15 @@ export class SubmissionsService {
     if (!submission) {
       throw new NotFoundException('Submissão não encontrada.');
     }
+
+    const reviewerProfile =
+      await this.gamificationProfilesService.findByUserId(reviewerUserId);
+    if (reviewerProfile && reviewerProfile.id === submission.profileId) {
+      throw new ForbiddenException(
+        'Você não pode revisar sua própria submissão.',
+      );
+    }
+
     if (submission.status !== SubmissionStatus.PENDING) {
       throw new BadRequestException(
         'Somente submissões com status PENDING podem ser revisadas.',
@@ -254,6 +282,23 @@ export class SubmissionsService {
       await queryRunner.release();
     }
 
+    if (reviewDto.status === SubmissionStatus.APPROVED) {
+      void this.badgeEvaluatorService.evaluate(submission.profileId);
+
+      const ownerProfile = await this.dataSource
+        .getRepository(GamificationProfileEntity)
+        .findOne({ where: { id: submission.profileId } });
+      if (ownerProfile) {
+        void this.notificationsService.create({
+          userId: ownerProfile.userId,
+          type: NotificationType.SUBMISSION_APPROVED,
+          title: 'Submissão aprovada!',
+          body: `Sua submissão foi aprovada e você ganhou ${activity.fixedReward} XP.`,
+          relatedId: id,
+        });
+      }
+    }
+
     return this.submissionRepository.findById(id);
   }
 
@@ -262,6 +307,12 @@ export class SubmissionsService {
     if (!profile) {
       throw new UnprocessableEntityException(
         'Perfil de gamificação não encontrado.',
+      );
+    }
+
+    if (profile.isBanned) {
+      throw new ForbiddenException(
+        'Sua conta está banida e não pode resgatar códigos.',
       );
     }
 
@@ -301,6 +352,7 @@ export class SubmissionsService {
         profileId: profile.id,
         activityId: activity.id,
         proofUrl: null,
+        description: null,
         status: SubmissionStatus.APPROVED,
         feedback: null,
         awardedXp: activity.fixedReward,
@@ -343,7 +395,31 @@ export class SubmissionsService {
       await queryRunner.release();
     }
 
+    void this.badgeEvaluatorService.evaluate(profile.id);
+
     return this.submissionRepository.findById(submissionId!);
+  }
+
+  async cancel(id: Submission['id'], userId: number) {
+    const submission = await this.submissionRepository.findById(id);
+    if (!submission) {
+      throw new NotFoundException('Submissão não encontrada.');
+    }
+
+    const profile = await this.gamificationProfilesService.findByUserId(userId);
+    if (!profile || profile.id !== submission.profileId) {
+      throw new ForbiddenException(
+        'Você não pode cancelar a submissão de outro usuário.',
+      );
+    }
+
+    if (submission.status !== SubmissionStatus.PENDING) {
+      throw new BadRequestException(
+        'Somente submissões pendentes podem ser canceladas.',
+      );
+    }
+
+    return this.submissionRepository.remove(id);
   }
 
   remove(id: Submission['id']) {
