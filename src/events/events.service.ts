@@ -376,7 +376,9 @@ export class EventsService {
       .find({ where: { userId: In(subscriberIds) } });
 
     const profilesWithNumber = profiles.filter(
-      (profile): profile is GamificationProfileEntity & {
+      (
+        profile,
+      ): profile is GamificationProfileEntity & {
         whatsappNumber: string;
       } => !!profile.whatsappNumber,
     );
