@@ -14,6 +14,7 @@ const mockActivity: Activity = {
   isHidden: false,
   secretCode: null,
   requiresProof: true,
+  requiresDescription: false,
   cooldownHours: 24,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),

@@ -125,6 +125,7 @@ export class UsersService {
       status: status,
       provider: createUserDto.provider ?? AuthProvidersEnum.email,
       socialId: createUserDto.socialId,
+      isBanned: false,
     });
   }
 
@@ -277,6 +278,7 @@ export class UsersService {
       photo,
       role,
       status,
+      isBanned: updateUserDto.isBanned,
       provider: updateUserDto.provider,
       socialId: updateUserDto.socialId,
     });

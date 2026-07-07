@@ -48,6 +48,13 @@ export class FindAllGamificationProfilesDto {
   limit?: number;
 
   @ApiPropertyOptional({
+    description: 'Filter profiles by username (case-insensitive partial match)',
+  })
+  @IsString()
+  @IsOptional()
+  search?: string;
+
+  @ApiPropertyOptional({
     type: [GamificationProfileSortDto],
     description:
       'Sort by field. Example: [{"orderBy":"totalXp","order":"DESC"}]',

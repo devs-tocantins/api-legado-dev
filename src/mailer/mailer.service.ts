@@ -21,6 +21,15 @@ export class MailerService {
     });
   }
 
+  async verifyConnection(): Promise<boolean> {
+    try {
+      await this.transporter.verify();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async sendMail({
     templatePath,
     context,

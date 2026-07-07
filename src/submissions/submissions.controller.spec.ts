@@ -15,6 +15,7 @@ const mockSubmission: Submission = {
   profileId: 'profile-uuid-0001',
   activityId: 'activity-uuid-0001',
   proofUrl: null,
+  description: null,
   status: SubmissionStatus.PENDING,
   feedback: null,
   awardedXp: 0,

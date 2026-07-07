@@ -41,17 +41,23 @@ export class AuthService {
     private gamificationProfilesService: GamificationProfilesService,
   ) {}
 
-  private async ensureGamificationProfile(user: User): Promise<void> {
+  private async ensureGamificationProfile(
+    user: User,
+    desiredUsername?: string,
+  ): Promise<void> {
     const existing = await this.gamificationProfilesService.findByUserId(
       user.id as number,
     );
     if (!existing) {
-      const base =
-        `${(user.firstName ?? 'user').toLowerCase()}${(user.lastName ?? '').toLowerCase()}`.replace(
-          /\s+/g,
-          '',
-        );
-      const username = `${base}${user.id}`;
+      let username = desiredUsername?.trim().toLowerCase();
+      if (!username || !/^[a-z0-9_-]+$/.test(username)) {
+        const base =
+          `${(user.firstName ?? 'user').toLowerCase()}${(user.lastName ?? '').toLowerCase()}`.replace(
+            /[^a-z0-9_-]/g,
+            '',
+          );
+        username = `${base || 'user'}${user.id}`;
+      }
       await this.gamificationProfilesService.create({
         userId: user.id as number,
         username,
@@ -112,6 +118,15 @@ export class AuthService {
       });
     }
 
+    if (user.isBanned) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'banned',
+        },
+      });
+    }
+
     const hash = crypto
       .createHash('sha256')
       .update(randomStringGenerator())
@@ -144,6 +159,7 @@ export class AuthService {
     let user: NullableType<User> = null;
     const socialEmail = socialData.email?.toLowerCase();
     let userByEmail: NullableType<User> = null;
+    let isNewUser = false;
 
     if (socialEmail) {
       userByEmail = await this.usersService.findByEmail(socialEmail);
@@ -185,6 +201,7 @@ export class AuthService {
       if (user) {
         await this.ensureGamificationProfile(user);
       }
+      isNewUser = true;
     }
 
     if (!user) {
@@ -192,6 +209,15 @@ export class AuthService {
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
           user: 'userNotFound',
+        },
+      });
+    }
+
+    if (user.isBanned) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'banned',
         },
       });
     }
@@ -222,6 +248,7 @@ export class AuthService {
       token: jwtToken,
       tokenExpires,
       user,
+      isNewUser,
     };
   }
 
@@ -236,6 +263,8 @@ export class AuthService {
         id: StatusEnum.inactive,
       },
     });
+
+    await this.ensureGamificationProfile(user, dto.username);
 
     const hash = await this.jwtService.signAsync(
       {

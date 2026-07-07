@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MinLength } from 'class-validator';
+import { IsString, MaxLength, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RedeemSecretCodeDto {
   @ApiProperty({
@@ -8,5 +9,7 @@ export class RedeemSecretCodeDto {
   })
   @IsString()
   @MinLength(1)
+  @MaxLength(200)
+  @Transform(({ value }) => value?.trim())
   secretCode: string;
 }

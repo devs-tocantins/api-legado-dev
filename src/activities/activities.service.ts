@@ -28,6 +28,7 @@ export class ActivitiesService {
       isHidden: createActivityDto.isHidden ?? false,
       secretCode: createActivityDto.secretCode ?? null,
       requiresProof: createActivityDto.requiresProof ?? false,
+      requiresDescription: createActivityDto.requiresDescription ?? false,
       cooldownHours: createActivityDto.cooldownHours ?? 0,
     });
   }

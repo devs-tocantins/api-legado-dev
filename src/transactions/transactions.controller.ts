@@ -23,6 +23,9 @@ import {
 } from '@nestjs/swagger';
 import { Transaction } from './domain/transaction';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
@@ -45,6 +48,8 @@ export class TransactionsController {
   ) {}
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiCreatedResponse({
     type: Transaction,
   })
@@ -83,6 +88,8 @@ export class TransactionsController {
   }
 
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiOkResponse({
     type: InfinityPaginationResponse(Transaction),
   })
@@ -107,6 +114,8 @@ export class TransactionsController {
   }
 
   @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,
@@ -120,6 +129,8 @@ export class TransactionsController {
   }
 
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,
@@ -136,6 +147,8 @@ export class TransactionsController {
   }
 
   @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
     type: String,

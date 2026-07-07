@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateSubmissionDto {
   @ApiProperty({ example: 'uuid-da-activity' })
@@ -12,5 +13,18 @@ export class CreateSubmissionDto {
   })
   @IsOptional()
   @IsString()
+  @MaxLength(500)
+  @Transform(({ value }) => value?.trim() ?? null)
   proofUrl?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'Participei do evento e aprendi sobre...',
+    description:
+      'Descrição/contexto da submissão. Obrigatório se a atividade exigir descrição.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  @Transform(({ value }) => value?.trim() ?? null)
+  description?: string | null;
 }

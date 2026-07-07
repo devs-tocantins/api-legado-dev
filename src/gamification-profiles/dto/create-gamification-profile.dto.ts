@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateGamificationProfileDto {
   @ApiProperty({
@@ -15,5 +16,7 @@ export class CreateGamificationProfileDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(30)
+  @Transform(({ value }) => value?.trim().toLowerCase())
   username: string;
 }

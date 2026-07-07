@@ -8,6 +8,7 @@ import { GamificationProfilesCronService } from './gamification-profiles-cron.se
 import { GamificationProfilesController } from './gamification-profiles.controller';
 import { RelationalGamificationProfilePersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { RelationalSubmissionPersistenceModule } from '../submissions/infrastructure/persistence/relational/relational-persistence.module';
+import { BadgesModule } from '../badges/badges.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RelationalSubmissionPersistenceModule } from '../submissions/infrastruc
     RelationalGamificationProfilePersistenceModule,
     RelationalSubmissionPersistenceModule,
     ScheduleModule.forRoot(),
+    BadgesModule,
   ],
   controllers: [GamificationProfilesController],
   providers: [GamificationProfilesService, GamificationProfilesCronService],

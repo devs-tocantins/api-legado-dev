@@ -63,6 +63,9 @@ export class UserEntity extends EntityRelationalHelper {
   })
   status?: StatusEntity;
 
+  @Column({ default: false })
+  isBanned: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 
