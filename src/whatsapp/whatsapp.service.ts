@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { rm } from 'fs/promises';
 import type { WASocket } from 'baileys';
@@ -39,7 +44,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleDestroy() {
-    this.sock?.end(undefined);
+    void this.sock?.end(undefined);
   }
 
   getStatus(): WhatsappStatus {
