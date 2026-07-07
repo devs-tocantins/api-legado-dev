@@ -109,6 +109,15 @@ export class AuthService {
       });
     }
 
+    if (user.status?.id !== StatusEnum.active) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'inactive',
+        },
+      });
+    }
+
     if (user.isBanned) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,

@@ -9,6 +9,7 @@ import { StatusSeedModule } from './status/status-seed.module';
 import { UserSeedModule } from './user/user-seed.module';
 import { GamificationProfileSeedModule } from './gamification-profile/gamification-profile-seed.module';
 import { ActivitySeedModule } from './activity/activity-seed.module';
+import { EventSeedModule } from './event/event-seed.module';
 import { BadgeSeedModule } from './badge/badge-seed.module';
 import { MissionSeedModule } from './mission/mission-seed.module';
 import databaseConfig from '../../config/database.config';
@@ -21,6 +22,7 @@ import appConfig from '../../../config/app.config';
     UserSeedModule,
     GamificationProfileSeedModule,
     ActivitySeedModule,
+    EventSeedModule,
     BadgeSeedModule,
     MissionSeedModule,
     ConfigModule.forRoot({
