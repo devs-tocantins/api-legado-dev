@@ -11,4 +11,19 @@ export class UpdateNotificationPreferenceDto {
   @IsOptional()
   @IsBoolean()
   emailOnMissionWon?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  whatsappOnSubmissionApproved?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  whatsappOnMissionWon?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  whatsappOnEventChanges?: boolean;
 }

@@ -12,6 +12,7 @@ export class GamificationProfileMapper {
     domainEntity.currentYearlyXp = raw.currentYearlyXp;
     domainEntity.gratitudeTokens = raw.gratitudeTokens;
     domainEntity.githubUsername = raw.githubUsername ?? null;
+    domainEntity.whatsappNumber = raw.whatsappNumber ?? null;
     domainEntity.bannerPreset = raw.bannerPreset ?? 'default';
     domainEntity.isBanned = raw.user?.isBanned ?? false;
     domainEntity.firstName = raw.user?.firstName ?? undefined;
@@ -37,6 +38,9 @@ export class GamificationProfileMapper {
     persistenceEntity.gratitudeTokens = domainEntity.gratitudeTokens;
     if (domainEntity.githubUsername !== undefined) {
       persistenceEntity.githubUsername = domainEntity.githubUsername;
+    }
+    if (domainEntity.whatsappNumber !== undefined) {
+      persistenceEntity.whatsappNumber = domainEntity.whatsappNumber;
     }
     if (domainEntity.bannerPreset !== undefined) {
       persistenceEntity.bannerPreset = domainEntity.bannerPreset;

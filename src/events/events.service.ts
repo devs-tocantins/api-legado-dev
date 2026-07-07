@@ -4,6 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, In } from 'typeorm';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { ReviewEventDto } from './dto/review-event.dto';
@@ -18,6 +20,9 @@ import { EventStatus } from './domain/event-status.enum';
 import { EventsIcsService } from './events-ics.service';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
+import { NotificationPreferenceEntity } from '../notifications/infrastructure/persistence/relational/entities/notification-preference.entity';
 
 const NOTIFIABLE_FIELD_LABELS: Record<string, string> = {
   startAt: 'a data/horário de início',
@@ -35,6 +40,8 @@ export class EventsService {
     private readonly eventsIcsService: EventsIcsService,
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
+    private readonly whatsappService: WhatsappService,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   create(createEventDto: CreateEventDto, organizerId: number) {
@@ -290,32 +297,58 @@ export class EventsService {
     changedFields: string[],
   ): Promise<void> {
     const subscriberEmails = await this.getSubscriberEmails(event.id);
-    if (subscriberEmails.length === 0) return;
 
     const changesSummary = `Foi alterado(a): ${changedFields
       .map((field) => NOTIFIABLE_FIELD_LABELS[field])
       .join(', ')}.`;
 
+    if (subscriberEmails.length > 0) {
+      await Promise.all(
+        subscriberEmails.map((email) =>
+          this.mailService.eventUpdated({
+            to: email,
+            data: {
+              eventId: event.id,
+              eventTitle: event.title,
+              changesSummary,
+            },
+          }),
+        ),
+      );
+    }
+
+    const whatsappTargets = await this.getSubscriberWhatsappTargets(event.id);
     await Promise.all(
-      subscriberEmails.map((email) =>
-        this.mailService.eventUpdated({
-          to: email,
-          data: { eventId: event.id, eventTitle: event.title, changesSummary },
-        }),
+      whatsappTargets.map((target) =>
+        this.whatsappService.sendText(
+          target.whatsappNumber,
+          `O evento "${event.title}" foi atualizado. ${changesSummary}`,
+        ),
       ),
     );
   }
 
   private async notifySubscribersOfCancellation(event: Event): Promise<void> {
     const subscriberEmails = await this.getSubscriberEmails(event.id);
-    if (subscriberEmails.length === 0) return;
 
+    if (subscriberEmails.length > 0) {
+      await Promise.all(
+        subscriberEmails.map((email) =>
+          this.mailService.eventCancelled({
+            to: email,
+            data: { eventTitle: event.title },
+          }),
+        ),
+      );
+    }
+
+    const whatsappTargets = await this.getSubscriberWhatsappTargets(event.id);
     await Promise.all(
-      subscriberEmails.map((email) =>
-        this.mailService.eventCancelled({
-          to: email,
-          data: { eventTitle: event.title },
-        }),
+      whatsappTargets.map((target) =>
+        this.whatsappService.sendText(
+          target.whatsappNumber,
+          `O evento "${event.title}" foi cancelado.`,
+        ),
       ),
     );
   }
@@ -329,5 +362,42 @@ export class EventsService {
     return users
       .map((user) => user.email)
       .filter((email): email is string => !!email);
+  }
+
+  private async getSubscriberWhatsappTargets(
+    eventId: Event['id'],
+  ): Promise<Array<{ userId: number; whatsappNumber: string }>> {
+    const subscriberIds =
+      await this.eventSubscriptionRepository.findSubscriberUserIds(eventId);
+    if (subscriberIds.length === 0) return [];
+
+    const profiles = await this.dataSource
+      .getRepository(GamificationProfileEntity)
+      .find({ where: { userId: In(subscriberIds) } });
+
+    const profilesWithNumber = profiles.filter(
+      (profile): profile is GamificationProfileEntity & {
+        whatsappNumber: string;
+      } => !!profile.whatsappNumber,
+    );
+    if (profilesWithNumber.length === 0) return [];
+
+    const preferences = await this.dataSource
+      .getRepository(NotificationPreferenceEntity)
+      .find({
+        where: { userId: In(profilesWithNumber.map((p) => p.userId)) },
+      });
+    const optedInUserIds = new Set(
+      preferences
+        .filter((pref) => pref.whatsappOnEventChanges)
+        .map((pref) => pref.userId),
+    );
+
+    return profilesWithNumber
+      .filter((profile) => optedInUserIds.has(profile.userId))
+      .map((profile) => ({
+        userId: profile.userId,
+        whatsappNumber: profile.whatsappNumber,
+      }));
   }
 }
