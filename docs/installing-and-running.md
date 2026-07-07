@@ -56,7 +56,7 @@ Aproveite seu projeto! Todas as edições e gravações reiniciam graciosamente 
 
 Você conta com ferramentas administrativas fora da caixa se ligar os outros contêineres:
 
-- Swagger (A documentação interativa das requisições REST): <http://localhost:3000/docs>
+- Swagger (A documentação interativa das requisições REST): <http://localhost:3000/swagger> — disponível apenas em desenvolvimento (`NODE_ENV !== production`)
 - Adminer (Cliente Visual para interagir com o PostgreSQL e ver as tabelas e dados crus por fora da sua aplicação): <http://localhost:8080>
 - Maildev (Caixa de Entrada unificada, simulará todos os envios de Email na plataforma. Você vai abrir ele para confirmar contas registradas ou verificar ressetes de senha): <http://localhost:1080>
 

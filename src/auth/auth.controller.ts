@@ -11,6 +11,7 @@ import {
   Delete,
   SerializeOptions,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
@@ -33,6 +34,16 @@ import { RefreshResponseDto } from './dto/refresh-response.dto';
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 
+  @Throttle({
+    short: {
+      ttl: 60_000,
+      limit: Number(process.env.THROTTLE_LOGIN_SHORT_LIMIT) || 5,
+    },
+    medium: {
+      ttl: 3_600_000,
+      limit: Number(process.env.THROTTLE_LOGIN_MEDIUM_LIMIT) || 20,
+    },
+  })
   @SerializeOptions({
     groups: ['me'],
   })
@@ -45,6 +56,16 @@ export class AuthController {
     return this.service.validateLogin(loginDto);
   }
 
+  @Throttle({
+    short: {
+      ttl: 60_000,
+      limit: Number(process.env.THROTTLE_REGISTER_SHORT_LIMIT) || 5,
+    },
+    medium: {
+      ttl: 3_600_000,
+      limit: Number(process.env.THROTTLE_REGISTER_MEDIUM_LIMIT) || 10,
+    },
+  })
   @Post('email/register')
   @HttpCode(HttpStatus.NO_CONTENT)
   async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
@@ -67,6 +88,16 @@ export class AuthController {
     return this.service.confirmNewEmail(confirmEmailDto.hash);
   }
 
+  @Throttle({
+    short: {
+      ttl: 60_000,
+      limit: Number(process.env.THROTTLE_FORGOT_SHORT_LIMIT) || 3,
+    },
+    medium: {
+      ttl: 3_600_000,
+      limit: Number(process.env.THROTTLE_FORGOT_MEDIUM_LIMIT) || 10,
+    },
+  })
   @Post('forgot/password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(

@@ -15,7 +15,16 @@ import { ResolvePromisesInterceptor } from './utils/serializer.interceptor';
 
 async function bootstrap() {
   try {
-    const app = await NestFactory.create(AppModule, { cors: true });
+    const app = await NestFactory.create(AppModule, {
+      cors: {
+        origin: process.env.FRONTEND_DOMAIN
+          ? process.env.FRONTEND_DOMAIN.split(',').map((s) => s.trim())
+          : process.env.NODE_ENV === 'production'
+            ? false
+            : true,
+        credentials: true,
+      },
+    });
 
     useContainer(app.select(AppModule), { fallbackOnErrors: true });
     const configService = app.get(ConfigService<AllConfigType>);
@@ -36,25 +45,25 @@ async function bootstrap() {
       new ClassSerializerInterceptor(app.get(Reflector)),
     );
 
-    const options = new DocumentBuilder()
-      .setTitle('API')
-      .setDescription('API docs')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .addGlobalParameters({
-        in: 'header',
-        required: false,
-        name: process.env.APP_HEADER_LANGUAGE || 'x-custom-lang',
-        schema: {
-          example: 'en',
-        },
-      })
-      .build();
+    if (process.env.NODE_ENV !== 'production') {
+      const options = new DocumentBuilder()
+        .setTitle('API')
+        .setDescription('API docs')
+        .setVersion('1.0')
+        .addBearerAuth()
+        .addGlobalParameters({
+          in: 'header',
+          required: false,
+          name: process.env.APP_HEADER_LANGUAGE || 'x-custom-lang',
+          schema: {
+            example: 'en',
+          },
+        })
+        .build();
 
-    const document = SwaggerModule.createDocument(app, options);
-
-    const swaggerPath = 'swagger';
-    SwaggerModule.setup(swaggerPath, app, document);
+      const document = SwaggerModule.createDocument(app, options);
+      SwaggerModule.setup('swagger', app, document);
+    }
 
     const port = configService.getOrThrow('app.port', { infer: true });
     await app.listen(port, '0.0.0.0');
