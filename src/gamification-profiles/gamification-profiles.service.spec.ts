@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken } from '@nestjs/typeorm';
 import { GamificationProfilesService } from './gamification-profiles.service';
 import { GamificationProfileRepository } from './infrastructure/persistence/gamification-profile.repository';
+import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
 import { GamificationProfile } from './domain/gamification-profile';
 import { CreateGamificationProfileDto } from './dto/create-gamification-profile.dto';
 import { UpdateGamificationProfileDto } from './dto/update-gamification-profile.dto';
@@ -14,6 +15,8 @@ const mockGamificationProfile: GamificationProfile = {
   currentMonthlyXp: 0,
   currentYearlyXp: 0,
   gratitudeTokens: 0,
+  isBanned: false,
+  bannerPreset: 'default',
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
 };
@@ -63,6 +66,10 @@ describe('GamificationProfilesService', () => {
           provide: getDataSourceToken(),
           useValue: mockDataSource,
         },
+        {
+          provide: BadgeEvaluatorService,
+          useValue: { evaluate: jest.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
 
@@ -92,10 +99,12 @@ describe('GamificationProfilesService', () => {
       expect(repository.create).toHaveBeenCalledWith({
         userId: 1,
         username: 'johndoe',
+        bannerPreset: 'default',
         totalXp: 0,
         currentMonthlyXp: 0,
         currentYearlyXp: 0,
         gratitudeTokens: 0,
+        isBanned: false,
       });
       expect(result).toEqual(mockGamificationProfile);
     });

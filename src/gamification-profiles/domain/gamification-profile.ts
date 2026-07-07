@@ -47,6 +47,21 @@ export class GamificationProfile {
   })
   gratitudeTokens: number;
 
+  @ApiProperty({ type: Boolean, default: false })
+  isBanned: boolean;
+
+  @ApiProperty({ type: String, required: false, nullable: true })
+  githubUsername?: string | null;
+
+  @ApiProperty({ type: String, default: 'default' })
+  bannerPreset: string = 'default';
+
+  @ApiProperty({ type: String, required: false })
+  firstName?: string;
+
+  @ApiProperty({ type: String, required: false })
+  lastName?: string;
+
   @ApiProperty()
   createdAt: Date;
 

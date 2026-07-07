@@ -31,6 +31,8 @@ export class MailService {
       ]);
     }
 
+    emailConfirmTitle = emailConfirmTitle ?? 'Confirmar e-mail';
+
     const url = new URL(
       this.configService.getOrThrow('app.frontendDomain', {
         infer: true,
@@ -82,6 +84,8 @@ export class MailService {
         i18n.t('reset-password.text4'),
       ]);
     }
+
+    resetPasswordTitle = resetPasswordTitle ?? 'Redefinir senha';
 
     const url = new URL(
       this.configService.getOrThrow('app.frontendDomain', {

@@ -27,6 +27,12 @@ export class GamificationProfileEntity extends EntityRelationalHelper {
   @Column({ type: 'varchar', unique: true })
   username: string;
 
+  @Column({ type: 'varchar', nullable: true, default: null })
+  githubUsername: string | null;
+
+  @Column({ type: 'varchar', length: 50, default: 'default' })
+  bannerPreset: string;
+
   @Column({ type: 'int', default: 0 })
   totalXp: number;
 

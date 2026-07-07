@@ -63,7 +63,7 @@ E coloque o retorno diretamente no seu arquivo `.env`.
 
 ## Sobre a Estratégia JWT
 
-Para maximizar a performance da API do Motor de Engajamento, nós validamos o payload do Token (garantindo que não foi modificado por terceiros) em `src/auth/strategies/jwt.strategy.ts` **SEM** fazer uma consulta (SELECT) no banco de dados verificando o usuário. Os JWTs são _stateless_ (sem estado compartilhado por design). Toda informação essencial (Ex: ID, Nível de Acesso) já deve estar encriptada dentro dele e pode ser consultada via `request.user`.
+A API usa JWTs stateless com curto tempo de expiração. O payload contém as informações essenciais do usuário (ID, role) e é assinado com uma chave secreta. Toda informação necessária para autorização pode ser consultada via `request.user` nos controllers.
 
 ## Fluxo do Refresh Token
 
@@ -81,5 +81,5 @@ O banco de dados do Backend salva ativamente uma tabela de `sessions` atrelando 
 
 ## Perguntas Frequentes
 
-### Posso logar com o JWT mesmo após o usar o Logout?
-Uma vez que o JWT é emitido, ele é fundamentalmente válido (pois não validamos a database para melhor performance a cada milissegundo). Ele perderá a sua validade exclusivamente uma vez que o limite de expiração passar (15 minutos padrão, definido pelo `AUTH_JWT_TOKEN_EXPIRES_IN`). Contudo, o `refreshToken` morre ativamente no cenário de Logout porque as Sessions são deletadas.
+### O que acontece com o JWT após o Logout?
+O `refreshToken` é invalidado imediatamente no Logout (a session é deletada do banco). O JWT de acesso tem um tempo de expiração curto configurado via `AUTH_JWT_TOKEN_EXPIRES_IN`. Após o Logout, o usuário não consegue obter novos tokens.
