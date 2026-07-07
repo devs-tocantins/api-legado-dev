@@ -9,6 +9,8 @@ import { EventSubscriptionRepository } from './infrastructure/persistence/event-
 import { EventsIcsService } from './events-ics.service';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { DataSource } from 'typeorm';
 import { Event } from './domain/event';
 import { EventCategory } from './domain/event-category.enum';
 import { EventModality } from './domain/event-modality.enum';
@@ -49,6 +51,8 @@ describe('EventsService', () => {
   let icsService: Partial<Record<keyof EventsIcsService, jest.Mock>>;
   let usersService: Partial<Record<keyof UsersService, jest.Mock>>;
   let mailService: Partial<Record<keyof MailService, jest.Mock>>;
+  let whatsappService: Partial<Record<keyof WhatsappService, jest.Mock>>;
+  let dataSource: Partial<Record<keyof DataSource, jest.Mock>>;
 
   beforeEach(() => {
     repository = {
@@ -77,6 +81,14 @@ describe('EventsService', () => {
       eventUpdated: jest.fn(),
       eventCancelled: jest.fn(),
     };
+    whatsappService = {
+      sendText: jest.fn(),
+    };
+    dataSource = {
+      getRepository: jest.fn().mockReturnValue({
+        find: jest.fn().mockResolvedValue([]),
+      }),
+    };
 
     service = new EventsService(
       repository as unknown as EventRepository,
@@ -84,6 +96,8 @@ describe('EventsService', () => {
       icsService as unknown as EventsIcsService,
       usersService as unknown as UsersService,
       mailService as unknown as MailService,
+      whatsappService as unknown as WhatsappService,
+      dataSource as unknown as DataSource,
     );
   });
 

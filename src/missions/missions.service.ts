@@ -17,12 +17,14 @@ import { MissionSubmissionEntity } from './infrastructure/persistence/relational
 import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/domain/notification-type.enum';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 
 @Injectable()
 export class MissionsService {
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly notificationsService: NotificationsService,
+    private readonly whatsappService: WhatsappService,
   ) {}
 
   // ── Admin: CRUD ──────────────────────────────────────────────────────────────
@@ -251,13 +253,26 @@ export class MissionsService {
         .getRepository(GamificationProfileEntity)
         .findOne({ where: { id: submission.profileId } });
       if (winnerProfile) {
+        const wonMessage = `Parabéns! Sua participação na missão foi aprovada e você ganhou ${mission.xpReward} XP.`;
         void this.notificationsService.create({
           userId: winnerProfile.userId,
           type: NotificationType.MISSION_WON,
           title: 'Você venceu uma missão!',
-          body: `Parabéns! Sua participação na missão foi aprovada e você ganhou ${mission.xpReward} XP.`,
+          body: wonMessage,
           relatedId: missionId,
         });
+
+        if (winnerProfile.whatsappNumber) {
+          const prefs = await this.notificationsService.getPreferences(
+            winnerProfile.userId,
+          );
+          if (prefs.whatsappOnMissionWon) {
+            void this.whatsappService.sendText(
+              winnerProfile.whatsappNumber,
+              wonMessage,
+            );
+          }
+        }
       }
     }
 

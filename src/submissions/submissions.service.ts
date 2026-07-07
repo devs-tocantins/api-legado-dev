@@ -24,6 +24,7 @@ import { TransactionEntity } from '../transactions/infrastructure/persistence/re
 import { TransactionCategoryEnum } from '../transactions/domain/transaction-category.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/domain/notification-type.enum';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 
 const MODERATOR_REWARD_XP = 10;
 
@@ -35,6 +36,7 @@ export class SubmissionsService {
     private readonly activitiesService: ActivitiesService,
     private readonly badgeEvaluatorService: BadgeEvaluatorService,
     private readonly notificationsService: NotificationsService,
+    private readonly whatsappService: WhatsappService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -289,13 +291,26 @@ export class SubmissionsService {
         .getRepository(GamificationProfileEntity)
         .findOne({ where: { id: submission.profileId } });
       if (ownerProfile) {
+        const approvedMessage = `Sua submissão foi aprovada e você ganhou ${activity.fixedReward} XP.`;
         void this.notificationsService.create({
           userId: ownerProfile.userId,
           type: NotificationType.SUBMISSION_APPROVED,
           title: 'Submissão aprovada!',
-          body: `Sua submissão foi aprovada e você ganhou ${activity.fixedReward} XP.`,
+          body: approvedMessage,
           relatedId: id,
         });
+
+        if (ownerProfile.whatsappNumber) {
+          const prefs = await this.notificationsService.getPreferences(
+            ownerProfile.userId,
+          );
+          if (prefs.whatsappOnSubmissionApproved) {
+            void this.whatsappService.sendText(
+              ownerProfile.whatsappNumber,
+              approvedMessage,
+            );
+          }
+        }
       }
     }
 

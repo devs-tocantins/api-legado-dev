@@ -96,6 +96,7 @@ export class GamificationProfilesService {
     newUsername: string,
     githubUsername?: string | null,
     bannerPreset?: string,
+    whatsappNumber?: string | null,
   ): Promise<GamificationProfile> {
     const profile =
       await this.gamificationProfileRepository.findByUserId(userId);
@@ -111,10 +112,22 @@ export class GamificationProfilesService {
       }
     }
 
+    if (
+      whatsappNumber !== undefined &&
+      whatsappNumber !== null &&
+      profile.whatsappNumber &&
+      profile.whatsappNumber !== whatsappNumber
+    ) {
+      throw new UnprocessableEntityException(
+        'O número de WhatsApp só pode ser definido uma vez. Entre em contato com o suporte para alterá-lo.',
+      );
+    }
+
     return this.gamificationProfileRepository.update(profile.id, {
       username: newUsername,
       ...(githubUsername !== undefined && { githubUsername }),
       ...(bannerPreset !== undefined && { bannerPreset }),
+      ...(whatsappNumber !== undefined && { whatsappNumber }),
     }) as Promise<GamificationProfile>;
   }
 

@@ -121,6 +121,7 @@ export class GamificationProfilesController {
       dto.username,
       dto.githubUsername,
       dto.bannerPreset,
+      dto.whatsappNumber,
     );
   }
 

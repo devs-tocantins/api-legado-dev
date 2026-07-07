@@ -5,6 +5,7 @@ import {
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -46,4 +47,21 @@ export class UpdateMyGamificationProfileDto {
   @IsString()
   @MaxLength(50)
   bannerPreset?: string;
+
+  @ApiProperty({
+    description:
+      'Número de WhatsApp em formato E.164 sem o "+" (com DDI, ex: 5511999999999). Só pode ser definido uma vez; envie null para desvincular.',
+    example: '5511999999999',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @Matches(/^\d{10,15}$/, {
+    message: 'whatsappNumber deve ter entre 10 e 15 dígitos (com DDI)',
+  })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\D/g, '') : value,
+  )
+  whatsappNumber?: string | null;
 }

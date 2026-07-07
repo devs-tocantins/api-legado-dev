@@ -9,6 +9,7 @@ import { GamificationProfilesModule } from '../gamification-profiles/gamificatio
 import { ActivitiesModule } from '../activities/activities.module';
 import { BadgesModule } from '../badges/badges.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { WhatsappModule } from '../whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ActivitiesModule,
     BadgesModule,
     NotificationsModule,
+    WhatsappModule,
   ],
   controllers: [SubmissionsController],
   providers: [SubmissionsService],

@@ -13,4 +13,13 @@ export class NotificationPreferenceEntity {
 
   @Column({ type: 'boolean', default: true })
   emailOnMissionWon: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  whatsappOnSubmissionApproved: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  whatsappOnMissionWon: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  whatsappOnEventChanges: boolean;
 }
