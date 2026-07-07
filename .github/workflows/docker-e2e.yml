@@ -29,3 +29,52 @@ jobs:
         with:
           name: prod-logs
           path: prod.log
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build da imagem para AMD64
+        run: docker buildx build --platform linux/amd64 -t api-legado-dev:latest -f Dockerfile . --load
+
+      - name: Compacta a imagem Docker
+        run: docker save api-legado-dev:latest | gzip > app-image.tar.gz
+
+      - name: Configura chave SSH
+        env:
+          SSH_KEY: ${{ secrets.ORACLE_VM_SSH_KEY }}
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+
+      - name: Envia imagem e configuração para a VM
+        run: |
+          rsync -avP \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            app-image.tar.gz docker-compose.prod.yaml ubuntu@136.248.75.34:~/app/
+
+      - name: Carrega a imagem e reinicia os containers na VM
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@136.248.75.34 \
+            "cd ~/app && \
+             gunzip -c app-image.tar.gz | sudo docker load && \
+             sudo docker compose -f docker-compose.prod.yaml down && \
+             sudo docker compose -f docker-compose.prod.yaml up -d && \
+             rm -f app-image.tar.gz"
+
+      - name: Aguarda a API responder
+        run: |
+          for i in $(seq 1 20); do
+            if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@136.248.75.34 \
+              "curl -sk https://136.248.75.34.nip.io/healthz | grep -q ok"; then
+              echo "API no ar."
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "API não respondeu a tempo."
+          exit 1
