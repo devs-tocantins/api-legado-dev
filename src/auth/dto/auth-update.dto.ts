@@ -19,14 +19,18 @@ export class AuthUpdateDto {
   @IsOptional()
   @IsNotEmpty({ message: 'mustBeNotEmpty' })
   @MaxLength(100)
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : (value?.toString() ?? value),
+  )
   firstName?: string;
 
   @ApiPropertyOptional({ example: 'Doe' })
   @IsOptional()
   @IsNotEmpty({ message: 'mustBeNotEmpty' })
   @MaxLength(100)
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : (value?.toString() ?? value),
+  )
   lastName?: string;
 
   @ApiPropertyOptional({ example: 'new.email@example.com' })
