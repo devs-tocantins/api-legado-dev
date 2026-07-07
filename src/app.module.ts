@@ -45,6 +45,8 @@ import { MissionsModule } from './missions/missions.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ContributionReportsModule } from './contribution-reports/contribution-reports.module';
 
+import { EventsModule } from './events/events.module';
+
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -68,6 +70,7 @@ import { ContributionReportsModule } from './contribution-reports/contribution-r
     SubmissionsModule,
     ActivitiesModule,
     GamificationProfilesModule,
+    EventsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [

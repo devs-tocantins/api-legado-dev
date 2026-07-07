@@ -170,4 +170,71 @@ export class MailService {
       },
     });
   }
+
+  async eventUpdated(
+    mailData: MailData<{
+      eventId: string;
+      eventTitle: string;
+      changesSummary: string;
+    }>,
+  ): Promise<void> {
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + `/eventos/${mailData.data.eventId}`,
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `Atualização no evento: ${mailData.data.eventTitle}`,
+      text: `${url.toString()} Atualização no evento: ${mailData.data.eventTitle}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'event-updated.hbs',
+      ),
+      context: {
+        title: `Atualização no evento: ${mailData.data.eventTitle}`,
+        url: url.toString(),
+        eventTitle: mailData.data.eventTitle,
+        changesSummary: mailData.data.changesSummary,
+        app_name: this.configService.get('app.name', { infer: true }),
+      },
+    });
+  }
+
+  async eventCancelled(
+    mailData: MailData<{ eventTitle: string }>,
+  ): Promise<void> {
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + '/eventos',
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `Evento cancelado: ${mailData.data.eventTitle}`,
+      text: `${url.toString()} Evento cancelado: ${mailData.data.eventTitle}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'event-cancelled.hbs',
+      ),
+      context: {
+        title: `Evento cancelado: ${mailData.data.eventTitle}`,
+        url: url.toString(),
+        eventTitle: mailData.data.eventTitle,
+        app_name: this.configService.get('app.name', { infer: true }),
+      },
+    });
+  }
 }
