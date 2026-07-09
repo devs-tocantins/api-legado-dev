@@ -29,6 +29,7 @@ import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class AuthService {
@@ -39,6 +40,7 @@ export class AuthService {
     private mailService: MailService,
     private configService: ConfigService<AllConfigType>,
     private gamificationProfilesService: GamificationProfilesService,
+    private filesService: FilesService,
   ) {}
 
   private async ensureGamificationProfile(
@@ -549,7 +551,13 @@ export class AuthService {
     delete userDto.email;
     delete userDto.oldPassword;
 
+    const oldPhotoId = currentUser.photo?.id;
+
     await this.usersService.update(userJwtPayload.id, userDto);
+
+    if (userDto.photo && oldPhotoId && oldPhotoId !== userDto.photo.id) {
+      await this.filesService.remove(oldPhotoId);
+    }
 
     return this.usersService.findById(userJwtPayload.id);
   }
