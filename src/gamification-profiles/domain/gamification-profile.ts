@@ -56,6 +56,12 @@ export class GamificationProfile {
   @ApiProperty({ type: String, default: 'default' })
   bannerPreset: string = 'default';
 
+  @ApiProperty({ type: String, required: false, nullable: true })
+  avatarConfig?: string | null;
+
+  @ApiProperty({ type: String, required: false, nullable: true })
+  avatarSvg?: string | null;
+
   @ApiProperty({ type: String, required: false })
   firstName?: string;
 
