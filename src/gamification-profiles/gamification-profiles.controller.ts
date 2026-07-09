@@ -121,6 +121,8 @@ export class GamificationProfilesController {
       dto.username,
       dto.githubUsername,
       dto.bannerPreset,
+      dto.avatarConfig,
+      dto.avatarSvg,
     );
   }
 

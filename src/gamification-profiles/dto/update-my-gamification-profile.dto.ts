@@ -5,6 +5,7 @@ import {
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -46,4 +47,28 @@ export class UpdateMyGamificationProfileDto {
   @IsString()
   @MaxLength(50)
   bannerPreset?: string;
+
+  @ApiProperty({
+    description:
+      'Configuração do avatar gerado (JSON serializado com estilo/opções). Envie null para remover.',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @MaxLength(20000)
+  avatarConfig?: string | null;
+
+  @ApiProperty({
+    description:
+      'SVG do avatar gerado, pronto para exibição. Envie null para remover.',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @MaxLength(50000)
+  avatarSvg?: string | null;
 }
