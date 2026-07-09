@@ -36,9 +36,6 @@ export class GamificationProfileEntity extends EntityRelationalHelper {
   @Column({ type: 'text', nullable: true, default: null })
   avatarConfig: string | null;
 
-  @Column({ type: 'text', nullable: true, default: null })
-  avatarSvg: string | null;
-
   @Column({ type: 'int', default: 0 })
   totalXp: number;
 

@@ -59,16 +59,4 @@ export class UpdateMyGamificationProfileDto {
   @IsString()
   @MaxLength(20000)
   avatarConfig?: string | null;
-
-  @ApiProperty({
-    description:
-      'SVG do avatar gerado, pronto para exibição. Envie null para remover.',
-    required: false,
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateIf((_, value) => value !== null)
-  @IsString()
-  @MaxLength(50000)
-  avatarSvg?: string | null;
 }
