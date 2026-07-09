@@ -46,9 +46,14 @@ export class FileType {
       } else if (
         (fileConfig() as FileConfig).driver === FileDriver.S3_PRESIGNED
       ) {
+        const publicUrl = (fileConfig() as FileConfig).awsS3PublicUrl;
+        if (publicUrl) {
+          return `${publicUrl.replace(/\/$/, '')}/${value}`;
+        }
         const s3 = new S3Client({
           region: (fileConfig() as FileConfig).awsS3Region ?? '',
           endpoint: (fileConfig() as FileConfig).awsS3Endpoint,
+          forcePathStyle: true,
           credentials: {
             accessKeyId: (fileConfig() as FileConfig).accessKeyId ?? '',
             secretAccessKey: (fileConfig() as FileConfig).secretAccessKey ?? '',

@@ -10,6 +10,7 @@ import { MailModule } from '../mail/mail.module';
 import { SessionModule } from '../session/session.module';
 import { UsersModule } from '../users/users.module';
 import { GamificationProfilesModule } from '../gamification-profiles/gamification-profiles.module';
+import { FilesModule } from '../files/files.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { GamificationProfilesModule } from '../gamification-profiles/gamificatio
     MailModule,
     JwtModule.register({}),
     GamificationProfilesModule,
+    FilesModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy, AnonymousStrategy],
