@@ -33,6 +33,7 @@ export class FileType {
         const s3 = new S3Client({
           region: (fileConfig() as FileConfig).awsS3Region ?? '',
           endpoint: (fileConfig() as FileConfig).awsS3Endpoint,
+          forcePathStyle: true,
           credentials: {
             accessKeyId: (fileConfig() as FileConfig).accessKeyId ?? '',
             secretAccessKey: (fileConfig() as FileConfig).secretAccessKey ?? '',
