@@ -1,8 +1,6 @@
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: api-legado-dev:latest
     ports:
       - "3000:3000"
     env_file:
