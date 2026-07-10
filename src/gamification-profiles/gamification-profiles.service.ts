@@ -96,6 +96,7 @@ export class GamificationProfilesService {
     newUsername: string,
     githubUsername?: string | null,
     bannerPreset?: string,
+    avatarConfig?: string | null,
   ): Promise<GamificationProfile> {
     const profile =
       await this.gamificationProfileRepository.findByUserId(userId);
@@ -115,6 +116,7 @@ export class GamificationProfilesService {
       username: newUsername,
       ...(githubUsername !== undefined && { githubUsername }),
       ...(bannerPreset !== undefined && { bannerPreset }),
+      ...(avatarConfig !== undefined && { avatarConfig }),
     }) as Promise<GamificationProfile>;
   }
 

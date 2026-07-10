@@ -13,6 +13,7 @@ export class GamificationProfileMapper {
     domainEntity.gratitudeTokens = raw.gratitudeTokens;
     domainEntity.githubUsername = raw.githubUsername ?? null;
     domainEntity.bannerPreset = raw.bannerPreset ?? 'default';
+    domainEntity.avatarConfig = raw.avatarConfig ?? null;
     domainEntity.isBanned = raw.user?.isBanned ?? false;
     domainEntity.firstName = raw.user?.firstName ?? undefined;
     domainEntity.lastName = raw.user?.lastName ?? undefined;
@@ -40,6 +41,9 @@ export class GamificationProfileMapper {
     }
     if (domainEntity.bannerPreset !== undefined) {
       persistenceEntity.bannerPreset = domainEntity.bannerPreset;
+    }
+    if (domainEntity.avatarConfig !== undefined) {
+      persistenceEntity.avatarConfig = domainEntity.avatarConfig;
     }
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;

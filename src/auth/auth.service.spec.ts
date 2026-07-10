@@ -7,6 +7,7 @@ import { UsersService } from '../users/users.service';
 import { SessionService } from '../session/session.service';
 import { MailService } from '../mail/mail.service';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
+import { FilesService } from '../files/files.service';
 import { AuthProvidersEnum } from './auth-providers.enum';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
@@ -32,6 +33,7 @@ describe('AuthService', () => {
   let gamificationProfilesService: Partial<
     Record<keyof GamificationProfilesService, jest.Mock>
   >;
+  let filesService: Partial<Record<keyof FilesService, jest.Mock>>;
 
   beforeEach(() => {
     usersService = {
@@ -52,6 +54,9 @@ describe('AuthService', () => {
     };
     mailService = {};
     gamificationProfilesService = {};
+    filesService = {
+      remove: jest.fn(),
+    };
 
     service = new AuthService(
       jwtService as unknown as JwtService,
@@ -60,6 +65,7 @@ describe('AuthService', () => {
       mailService as unknown as MailService,
       configService as unknown as ConfigService,
       gamificationProfilesService as unknown as GamificationProfilesService,
+      filesService as unknown as FilesService,
     );
 
     jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
