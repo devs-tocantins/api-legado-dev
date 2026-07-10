@@ -8,6 +8,7 @@ import databaseConfig from './database/config/database.config';
 import authConfig from './auth/config/auth.config';
 import appConfig from './config/app.config';
 import mailConfig from './mail/config/mail.config';
+import whatsappConfig from './whatsapp/config/whatsapp.config';
 import fileConfig from './files/config/file.config';
 import googleConfig from './auth-google/config/google.config';
 import githubConfig from './auth-github/config/github.config';
@@ -24,6 +25,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { AllConfigType } from './config/config.type';
 import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -81,6 +83,7 @@ import { EventsModule } from './events/events.module';
         fileConfig,
         googleConfig,
         githubConfig,
+        whatsappConfig,
       ],
       envFilePath: ['.env'],
     }),
@@ -116,6 +119,7 @@ import { EventsModule } from './events/events.module';
     SessionModule,
     MailModule,
     MailerModule,
+    WhatsappModule,
     HomeModule,
   ],
   providers: [

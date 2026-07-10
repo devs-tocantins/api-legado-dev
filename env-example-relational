@@ -17,6 +17,12 @@ APP_HEADER_LANGUAGE=x-custom-lang
 FRONTEND_DOMAIN=http://localhost:3000
 BACKEND_DOMAIN=http://localhost:3000
 
+# Integracao com WhatsApp (Baileys) - desligada por padrao
+WHATSAPP_ENABLED=false
+WHATSAPP_SESSION_PATH=/usr/src/app/whatsapp-session
+WHATSAPP_SEND_MIN_DELAY_MS=3000
+WHATSAPP_SEND_MAX_DELAY_MS=8000
+
 DATABASE_TYPE=postgres
 DATABASE_HOST=postgres
 DATABASE_PORT=5432
