@@ -40,8 +40,16 @@ ACCESS_KEY_ID=minioadmin
 SECRET_ACCESS_KEY=minioadmin
 AWS_S3_REGION=us-east-1
 AWS_DEFAULT_S3_BUCKET=engajamento-local
-# Custom S3-compatible endpoint (use for MinIO local dev, leave empty for real AWS)
+# Custom S3-compatible endpoint (use for MinIO local dev, or Cloudflare R2 in
+# production, e.g. https://<account_id>.r2.cloudflarestorage.com). Leave empty
+# for real AWS.
 AWS_S3_ENDPOINT=http://localhost:9000
+# Permanent public base URL used to build file links (required for
+# FILE_DRIVER=s3-presigned with Cloudflare R2, since R2 buckets are private by
+# default; without this the app falls back to presigned GET URLs that expire
+# after 1h). Use the R2 bucket's Public Development URL or a custom domain,
+# e.g. https://pub-xxxxxxxx.r2.dev
+AWS_S3_PUBLIC_URL=
 
 # MinIO local S3 simulator (see docs/file-uploading.md for setup instructions)
 MINIO_ROOT_USER=minioadmin
