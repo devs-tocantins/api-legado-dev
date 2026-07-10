@@ -23,6 +23,13 @@ export class FileType {
   })
   @Transform(
     ({ value }) => {
+      if (typeof value === 'string' && /^https?:\/\//i.test(value)) {
+        // Já é uma URL completa (ex: avatar vindo de login social via
+        // GitHub/Google) — não é uma chave de storage, não deve ser
+        // prefixada com o domínio/URL pública do driver de arquivos.
+        return value;
+      }
+
       if ((fileConfig() as FileConfig).driver === FileDriver.LOCAL) {
         return (appConfig() as AppConfig).backendDomain + value;
       } else if ((fileConfig() as FileConfig).driver === FileDriver.S3) {
