@@ -31,6 +31,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private status: WhatsappStatus = 'disabled';
   private currentQr: string | null = null;
   private sendQueue: Promise<void> = Promise.resolve();
+  private recovering = false;
 
   constructor(private readonly configService: ConfigService<AllConfigType>) {}
 
@@ -63,9 +64,24 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.warn(`Erro ao encerrar sessão do WhatsApp: ${error}`);
     }
-    await rm(this.sessionPath(), { recursive: true, force: true });
-    this.currentQr = null;
-    await this.connect();
+    await this.resetSessionAndReconnect();
+  }
+
+  // Limpa a sessão local (credenciais invalidas, sem uso) e gera um novo QR.
+  // Chamado tanto pelo logout manual do admin quanto automaticamente quando
+  // detectamos um logout forcado pelo proprio WhatsApp (ex: revogacao do
+  // aparelho conectado) - sem isso o servico ficava travado em "disconnected"
+  // para sempre, sem nunca gerar um QR novo.
+  private async resetSessionAndReconnect(): Promise<void> {
+    if (this.recovering) return;
+    this.recovering = true;
+    try {
+      await rm(this.sessionPath(), { recursive: true, force: true });
+      this.currentQr = null;
+      await this.connect();
+    } finally {
+      this.recovering = false;
+    }
   }
 
   sendText(e164Phone: string, message: string): Promise<void> {
@@ -167,8 +183,9 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
       if (loggedOut) {
         this.logger.warn(
-          'Sessão do WhatsApp desconectada (logout). É necessário escanear o QR novamente via /admin/logout.',
+          'Sessão do WhatsApp desconectada (logout). Limpando sessão local e gerando novo QR Code...',
         );
+        void this.resetSessionAndReconnect();
         return;
       }
 
