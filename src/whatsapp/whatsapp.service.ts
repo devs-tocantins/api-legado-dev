@@ -82,6 +82,18 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     return this.sendQueue;
   }
 
+  // Usado pelo endpoint de teste do admin: ao contrario de sendText (que
+  // engole erros de proposito, pois e disparado em segundo plano por
+  // gatilhos automaticos), aqui o erro real precisa subir pro chamador
+  // para que o admin saiba se a mensagem de fato foi enviada ou nao.
+  async sendTestMessage(e164Phone: string, message: string): Promise<void> {
+    if (this.status !== 'connected' || !this.sock) {
+      throw new Error('WhatsApp nao esta conectado.');
+    }
+    const jid = `${e164Phone.replace(/\D/g, '')}@s.whatsapp.net`;
+    await this.sock.sendMessage(jid, { text: message });
+  }
+
   private sessionPath(): string {
     return this.configService.getOrThrow('whatsapp.sessionPath', {
       infer: true,
