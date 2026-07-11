@@ -5,7 +5,8 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { rm } from 'fs/promises';
+import { readdir, rm } from 'fs/promises';
+import { join } from 'path';
 import type { WASocket } from 'baileys';
 import { AllConfigType } from '../config/config.type';
 
@@ -76,12 +77,25 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     if (this.recovering) return;
     this.recovering = true;
     try {
-      await rm(this.sessionPath(), { recursive: true, force: true });
+      await this.clearSessionFiles();
       this.currentQr = null;
       await this.connect();
     } finally {
       this.recovering = false;
     }
+  }
+
+  // Limpa o CONTEUDO da pasta de sessao, sem remover a propria pasta: ela e
+  // um ponto de montagem do volume Docker (whatsapp_session), entao um
+  // rm(dir, {recursive:true}) direto no diretorio falha com EBUSY.
+  private async clearSessionFiles(): Promise<void> {
+    const dir = this.sessionPath();
+    const entries = await readdir(dir).catch(() => []);
+    await Promise.all(
+      entries.map((entry) =>
+        rm(join(dir, entry), { recursive: true, force: true }),
+      ),
+    );
   }
 
   sendText(e164Phone: string, message: string): Promise<void> {
@@ -185,12 +199,16 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(
           'Sessão do WhatsApp desconectada (logout). Limpando sessão local e gerando novo QR Code...',
         );
-        void this.resetSessionAndReconnect();
+        this.resetSessionAndReconnect().catch((error) =>
+          this.logger.error(`Falha ao reiniciar sessão do WhatsApp: ${error}`),
+        );
         return;
       }
 
       this.logger.warn('Conexão com o WhatsApp caiu, reconectando...');
-      void this.connect();
+      this.connect().catch((error) =>
+        this.logger.error(`Falha ao reconectar ao WhatsApp: ${error}`),
+      );
     }
   }
 }
