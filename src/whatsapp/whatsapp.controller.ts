@@ -60,6 +60,15 @@ export class WhatsappController {
     const e164Phone =
       digits.length <= 11 && !digits.startsWith('55') ? `55${digits}` : digits;
 
-    await this.whatsappService.sendText(e164Phone, dto.message);
+    try {
+      await this.whatsappService.sendTestMessage(e164Phone, dto.message);
+    } catch (error) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          whatsapp: `sendFailed: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      });
+    }
   }
 }
