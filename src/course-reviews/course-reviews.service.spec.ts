@@ -20,6 +20,7 @@ const mockProfile: GamificationProfile = {
   currentMonthlyXp: 0,
   currentYearlyXp: 0,
   gratitudeTokens: 0,
+  journeyXp: 0,
   isBanned: false,
   bannerPreset: 'default',
   createdAt: new Date('2026-01-01'),

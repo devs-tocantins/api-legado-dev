@@ -48,6 +48,14 @@ export class GamificationProfile {
   })
   gratitudeTokens: number;
 
+  @ApiProperty({
+    type: Number,
+    description:
+      'XP de Jornada (crescimento pessoal via trilhas de aprendizado)',
+    example: 0,
+  })
+  journeyXp: number;
+
   @ApiProperty({ type: Boolean, default: false })
   isBanned: boolean;
 
