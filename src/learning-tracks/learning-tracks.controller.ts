@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Request,
   UseGuards,
   Query,
 } from '@nestjs/common';
@@ -81,6 +82,26 @@ export class LearningTracksController {
   })
   findById(@Param('id') id: string) {
     return this.learningTracksService.findById(id);
+  }
+
+  @Get(':id/overview')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  getOverview(@Param('id') id: string) {
+    return this.learningTracksService.getOverview(id);
+  }
+
+  @Get(':id/progress')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  getProgress(@Param('id') id: string, @Request() req) {
+    return this.learningTracksService.getProgress(id, req.user.id);
   }
 
   @Patch(':id')
