@@ -15,6 +15,7 @@ const mockGamificationProfile: GamificationProfile = {
   currentMonthlyXp: 0,
   currentYearlyXp: 0,
   gratitudeTokens: 0,
+  journeyXp: 0,
   isBanned: false,
   bannerPreset: 'default',
   createdAt: new Date('2026-01-01'),
@@ -104,6 +105,7 @@ describe('GamificationProfilesService', () => {
         currentMonthlyXp: 0,
         currentYearlyXp: 0,
         gratitudeTokens: 0,
+        journeyXp: 0,
         isBanned: false,
       });
       expect(result).toEqual(mockGamificationProfile);

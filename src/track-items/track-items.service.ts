@@ -17,6 +17,8 @@ import { TrackItemCompletionsService } from '../track-item-completions/track-ite
 import { TrackItemCompletionStatus } from '../track-item-completions/domain/track-item-completion-status.enum';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
+import { TrackItemCompletionEntity } from '../track-item-completions/infrastructure/persistence/relational/entities/track-item-completion.entity';
+import { TrackItemCompletionMapper } from '../track-item-completions/infrastructure/persistence/relational/mappers/track-item-completion.mapper';
 
 const AUTO_COMPLETABLE_TYPES = [
   TrackItemType.RESOURCE,
@@ -175,12 +177,17 @@ export class TrackItemsService {
     await queryRunner.startTransaction();
 
     try {
-      const completion = await this.trackItemCompletionsService.create({
-        itemId,
-        profileId: profile.id,
-        status: TrackItemCompletionStatus.COMPLETED,
-        awardedJourneyXp: item.journeyXp,
-      });
+      const savedEntity = await queryRunner.manager.save(
+        TrackItemCompletionEntity,
+        queryRunner.manager.create(TrackItemCompletionEntity, {
+          itemId,
+          profileId: profile.id,
+          status: TrackItemCompletionStatus.COMPLETED,
+          submissionId: null,
+          awardedJourneyXp: item.journeyXp,
+          completedAt: new Date(),
+        }),
+      );
 
       if (item.journeyXp > 0) {
         await queryRunner.manager.increment(
@@ -192,7 +199,7 @@ export class TrackItemsService {
       }
 
       await queryRunner.commitTransaction();
-      return completion;
+      return TrackItemCompletionMapper.toDomain(savedEntity);
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
