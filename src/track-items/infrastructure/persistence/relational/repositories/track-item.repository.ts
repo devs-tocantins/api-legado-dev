@@ -72,6 +72,16 @@ export class TrackItemRelationalRepository implements TrackItemRepository {
     return entities.map((entity) => TrackItemMapper.toDomain(entity));
   }
 
+  async findByCourseId(
+    courseId: NonNullable<TrackItem['courseId']>,
+  ): Promise<TrackItem[]> {
+    const entities = await this.trackItemRepository.find({
+      where: { courseId },
+    });
+
+    return entities.map((entity) => TrackItemMapper.toDomain(entity));
+  }
+
   async update(
     id: TrackItem['id'],
     payload: Partial<TrackItem>,

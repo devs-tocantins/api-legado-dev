@@ -12,6 +12,7 @@ import {
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { ReviewCourseDto } from './dto/review-course.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -21,6 +22,9 @@ import {
 } from '@nestjs/swagger';
 import { Course } from './domain/course';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
@@ -46,6 +50,32 @@ export class CoursesController {
     return this.coursesService.create(createCourseDto);
   }
 
+  @Get('pending')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(Course),
+  })
+  async findPending(
+    @Query() query: FindAllCoursesDto,
+  ): Promise<InfinityPaginationResponseDto<Course>> {
+    const page = query?.page ?? 1;
+    let limit = query?.limit ?? 10;
+    if (limit > 50) {
+      limit = 50;
+    }
+
+    return infinityPagination(
+      await this.coursesService.findPendingWithPagination({
+        paginationOptions: {
+          page,
+          limit,
+        },
+      }),
+      { page, limit },
+    );
+  }
+
   @Get()
   @ApiOkResponse({
     type: InfinityPaginationResponse(Course),
@@ -60,7 +90,7 @@ export class CoursesController {
     }
 
     return infinityPagination(
-      await this.coursesService.findAllWithPagination({
+      await this.coursesService.findVerifiedWithPagination({
         paginationOptions: {
           page,
           limit,
@@ -81,6 +111,21 @@ export class CoursesController {
   })
   findById(@Param('id') id: string) {
     return this.coursesService.findById(id);
+  }
+
+  @Patch(':id/review')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Course,
+  })
+  review(@Param('id') id: string, @Body() reviewCourseDto: ReviewCourseDto) {
+    return this.coursesService.review(id, reviewCourseDto);
   }
 
   @Patch(':id')
