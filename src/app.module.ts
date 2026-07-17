@@ -49,8 +49,29 @@ import { ContributionReportsModule } from './contribution-reports/contribution-r
 
 import { EventsModule } from './events/events.module';
 
+import { LearningTracksModule } from './learning-tracks/learning-tracks.module';
+
+import { TrackSectionsModule } from './track-sections/track-sections.module';
+
+import { TrackItemsModule } from './track-items/track-items.module';
+
+import { CoursesModule } from './courses/courses.module';
+
+import { CourseReviewsModule } from './course-reviews/course-reviews.module';
+
+import { TrackEnrollmentsModule } from './track-enrollments/track-enrollments.module';
+
+import { TrackItemCompletionsModule } from './track-item-completions/track-item-completions.module';
+
 @Module({
   imports: [
+    TrackItemCompletionsModule,
+    TrackEnrollmentsModule,
+    CourseReviewsModule,
+    CoursesModule,
+    TrackItemsModule,
+    TrackSectionsModule,
+    LearningTracksModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
