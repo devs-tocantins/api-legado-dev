@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Request,
   UseGuards,
   Query,
 } from '@nestjs/common';
@@ -81,6 +82,16 @@ export class TrackItemsController {
   })
   findById(@Param('id') id: string) {
     return this.trackItemsService.findById(id);
+  }
+
+  @Post(':id/complete')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  completeAuto(@Param('id') id: string, @Request() req) {
+    return this.trackItemsService.completeAuto(id, req.user.id);
   }
 
   @Patch(':id')
