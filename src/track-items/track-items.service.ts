@@ -19,6 +19,10 @@ import { GamificationProfilesService } from '../gamification-profiles/gamificati
 import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
 import { TrackItemCompletionEntity } from '../track-item-completions/infrastructure/persistence/relational/entities/track-item-completion.entity';
 import { TrackItemCompletionMapper } from '../track-item-completions/infrastructure/persistence/relational/mappers/track-item-completion.mapper';
+import { TrackSectionsService } from '../track-sections/track-sections.service';
+import { BadgesService } from '../badges/badges.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/domain/notification-type.enum';
 
 const AUTO_COMPLETABLE_TYPES = [
   TrackItemType.RESOURCE,
@@ -32,6 +36,9 @@ export class TrackItemsService {
     private readonly trackItemRepository: TrackItemRepository,
     private readonly trackItemCompletionsService: TrackItemCompletionsService,
     private readonly gamificationProfilesService: GamificationProfilesService,
+    private readonly trackSectionsService: TrackSectionsService,
+    private readonly badgesService: BadgesService,
+    private readonly notificationsService: NotificationsService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -199,12 +206,56 @@ export class TrackItemsService {
       }
 
       await queryRunner.commitTransaction();
+
+      void this.evaluateSectionCompletion(item.sectionId, profile.id);
+
       return TrackItemCompletionMapper.toDomain(savedEntity);
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  // Concede o selo da etapa (section.badgeId) quando todos os marcos
+  // obrigatórios e ativos daquela etapa estiverem concluídos. Idempotente
+  // (BadgesService.grantByBadgeId já garante isso) — fire-and-forget, igual
+  // ao badge-evaluator em outros fluxos de aprovação desta base de código.
+  async evaluateSectionCompletion(
+    sectionId: TrackItem['sectionId'],
+    profileId: string,
+  ): Promise<void> {
+    const section = await this.trackSectionsService.findById(sectionId);
+    if (!section || !section.badgeId) return;
+
+    const items = await this.trackItemRepository.findBySectionId(sectionId);
+    const requiredItems = items.filter(
+      (i) => !i.isOptional && i.status === TrackItemStatus.ACTIVE,
+    );
+    if (requiredItems.length === 0) return;
+
+    const completions =
+      await this.trackItemCompletionsService.findByProfileId(profileId);
+    const completedIds = new Set(completions.map((c) => c.itemId));
+    const allDone = requiredItems.every((i) => completedIds.has(i.id));
+    if (!allDone) return;
+
+    const granted = await this.badgesService.grantByBadgeId(
+      profileId,
+      section.badgeId,
+    );
+    if (!granted) return;
+
+    const profile = await this.gamificationProfilesService.findById(profileId);
+    if (profile) {
+      void this.notificationsService.create({
+        userId: profile.userId,
+        type: NotificationType.TRACK_BADGE_GRANTED,
+        title: 'Novo selo conquistado!',
+        body: `Você concluiu a etapa "${section.title}" e ganhou um novo selo.`,
+        relatedId: section.badgeId,
+      });
     }
   }
 }

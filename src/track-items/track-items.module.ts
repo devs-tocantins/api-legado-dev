@@ -4,12 +4,18 @@ import { TrackItemsController } from './track-items.controller';
 import { RelationalTrackItemPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { TrackItemCompletionsModule } from '../track-item-completions/track-item-completions.module';
 import { GamificationProfilesModule } from '../gamification-profiles/gamification-profiles.module';
+import { TrackSectionsModule } from '../track-sections/track-sections.module';
+import { BadgesModule } from '../badges/badges.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     RelationalTrackItemPersistenceModule,
     TrackItemCompletionsModule,
     GamificationProfilesModule,
+    TrackSectionsModule,
+    BadgesModule,
+    NotificationsModule,
   ],
   controllers: [TrackItemsController],
   providers: [TrackItemsService],
