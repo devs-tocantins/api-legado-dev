@@ -12,6 +12,7 @@ import { SubmissionStatus } from '../../../../domain/submission-status.enum';
 import { GamificationProfileEntity } from '../../../../../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
 import { ActivityEntity } from '../../../../../activities/infrastructure/persistence/relational/entities/activity.entity';
 import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { TrackItemEntity } from '../../../../../track-items/infrastructure/persistence/relational/entities/track-item.entity';
 
 @Entity({
   name: 'submission',
@@ -33,6 +34,16 @@ export class SubmissionEntity extends EntityRelationalHelper {
   @ManyToOne(() => ActivityEntity, { eager: false })
   @JoinColumn({ name: 'activityId' })
   activity: ActivityEntity;
+
+  @Column({ type: 'uuid', nullable: true, default: null })
+  trackItemId: string | null;
+
+  @ManyToOne(() => TrackItemEntity, { eager: false, nullable: true })
+  @JoinColumn({ name: 'trackItemId' })
+  trackItem: TrackItemEntity | null;
+
+  @Column({ type: 'boolean', default: false })
+  isTestOut: boolean;
 
   @Column({ type: 'varchar', nullable: true, default: null })
   proofUrl: string | null;
