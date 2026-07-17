@@ -22,6 +22,22 @@ export class Submission {
   @ApiProperty({
     type: String,
     nullable: true,
+    description:
+      'UUID do marco de trilha (track_item) provado por esta submissão',
+  })
+  trackItemId: string | null;
+
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Se esta submissão é um test-out (prova direta pulando o conteúdo do marco)',
+    default: false,
+  })
+  isTestOut: boolean;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
     description: 'URL do comprovante (print, certificado, etc)',
   })
   proofUrl: string | null;

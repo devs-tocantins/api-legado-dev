@@ -14,6 +14,8 @@ const mockSubmission: Submission = {
   id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
   profileId: 'profile-uuid-0001',
   activityId: 'activity-uuid-0001',
+  trackItemId: null,
+  isTestOut: false,
   proofUrl: null,
   description: null,
   status: SubmissionStatus.PENDING,

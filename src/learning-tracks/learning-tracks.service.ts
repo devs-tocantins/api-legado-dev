@@ -166,4 +166,27 @@ export class LearningTracksService {
       isCompleted: currentItemId === null,
     };
   }
+
+  // Usado pelo test-out: uma etapa é alcançável se for a etapa atual do
+  // usuário ou uma etapa já concluída — nunca uma etapa futura ainda
+  // bloqueada, preservando a ordem das etapas da trilha.
+  async isSectionReachable(
+    trackId: LearningTrack['id'],
+    sectionId: string,
+    userId: number,
+  ): Promise<boolean> {
+    const progress = await this.getProgress(trackId, userId);
+    if (progress.isCompleted) return true;
+    if (!progress.currentSectionId) return false;
+
+    const overview = await this.getOverview(trackId);
+    const currentIndex = overview.sections.findIndex(
+      (s) => s.section.id === progress.currentSectionId,
+    );
+    const targetIndex = overview.sections.findIndex(
+      (s) => s.section.id === sectionId,
+    );
+
+    return targetIndex >= 0 && targetIndex <= currentIndex;
+  }
 }
