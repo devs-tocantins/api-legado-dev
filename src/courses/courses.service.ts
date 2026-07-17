@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { ReviewCourseDto } from './dto/review-course.dto';
 import { CourseRepository } from './infrastructure/persistence/course.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { Course } from './domain/course';
@@ -44,6 +45,28 @@ export class CoursesService {
     return this.courseRepository.findByStatusWithPagination({
       status: CourseStatus.VERIFIED,
       paginationOptions,
+    });
+  }
+
+  findPendingWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }) {
+    return this.courseRepository.findByStatusWithPagination({
+      status: CourseStatus.PENDING,
+      paginationOptions,
+    });
+  }
+
+  async review(id: Course['id'], reviewCourseDto: ReviewCourseDto) {
+    const course = await this.courseRepository.findById(id);
+    if (!course) {
+      throw new NotFoundException('Curso não encontrado.');
+    }
+
+    return this.courseRepository.update(id, {
+      status: reviewCourseDto.status,
     });
   }
 
