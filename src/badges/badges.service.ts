@@ -92,4 +92,27 @@ export class BadgesService {
       grantedBy: adminUserId,
     });
   }
+
+  /**
+   * Grants a specific badge directly (idempotent), bypassing the
+   * SPECIAL/MANUAL category restriction of grantManual — used by
+   * system flows that reference a badge by id (e.g. a track section's
+   * badgeId) rather than an admin-submitted DTO.
+   */
+  async grantByBadgeId(
+    profileId: string,
+    badgeId: string,
+  ): Promise<GamificationProfileBadge | null> {
+    const existing = await this.profileBadgeRepository.findByProfileAndBadge(
+      profileId,
+      badgeId,
+    );
+    if (existing) return existing;
+
+    return this.profileBadgeRepository.create({
+      profileId,
+      badgeId,
+      grantedBy: null,
+    });
+  }
 }

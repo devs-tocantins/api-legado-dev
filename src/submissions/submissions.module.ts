@@ -9,6 +9,9 @@ import { GamificationProfilesModule } from '../gamification-profiles/gamificatio
 import { ActivitiesModule } from '../activities/activities.module';
 import { BadgesModule } from '../badges/badges.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { TrackItemsModule } from '../track-items/track-items.module';
+import { TrackItemCompletionsModule } from '../track-item-completions/track-item-completions.module';
+import { LearningTracksModule } from '../learning-tracks/learning-tracks.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ActivitiesModule,
     BadgesModule,
     NotificationsModule,
+    TrackItemsModule,
+    TrackItemCompletionsModule,
+    LearningTracksModule,
   ],
   controllers: [SubmissionsController],
   providers: [SubmissionsService],
