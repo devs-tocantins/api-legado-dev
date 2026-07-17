@@ -12,6 +12,7 @@ import { ActivitySeedModule } from './activity/activity-seed.module';
 import { EventSeedModule } from './event/event-seed.module';
 import { BadgeSeedModule } from './badge/badge-seed.module';
 import { MissionSeedModule } from './mission/mission-seed.module';
+import { LearningTrackSeedModule } from './learning-track/learning-track-seed.module';
 import databaseConfig from '../../config/database.config';
 import appConfig from '../../../config/app.config';
 
@@ -25,6 +26,7 @@ import appConfig from '../../../config/app.config';
     EventSeedModule,
     BadgeSeedModule,
     MissionSeedModule,
+    LearningTrackSeedModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, appConfig],
