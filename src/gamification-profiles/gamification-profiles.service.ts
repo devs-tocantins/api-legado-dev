@@ -36,6 +36,7 @@ export class GamificationProfilesService {
       currentMonthlyXp: 0,
       currentYearlyXp: 0,
       gratitudeTokens: 0,
+      journeyXp: 0,
       isBanned: false,
       bannerPreset: 'default',
     });
