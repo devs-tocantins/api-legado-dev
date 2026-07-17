@@ -82,6 +82,10 @@ export class TrackItemsService {
     return this.trackItemRepository.findByTrackId(trackId);
   }
 
+  findByCourseId(courseId: NonNullable<TrackItem['courseId']>) {
+    return this.trackItemRepository.findByCourseId(courseId);
+  }
+
   update(id: TrackItem['id'], updateTrackItemDto: UpdateTrackItemDto) {
     return this.trackItemRepository.update(id, {
       ...(updateTrackItemDto.trackId !== undefined && {

@@ -8,6 +8,7 @@ import { ActivitySeedService } from './activity/activity-seed.service';
 import { EventSeedService } from './event/event-seed.service';
 import { BadgeSeedService } from './badge/badge-seed.service';
 import { MissionSeedService } from './mission/mission-seed.service';
+import { LearningTrackSeedService } from './learning-track/learning-track-seed.service';
 
 const runSeed = async () => {
   const app = await NestFactory.create(SeedModule);
@@ -21,6 +22,7 @@ const runSeed = async () => {
   await app.get(EventSeedService).run();
   await app.get(BadgeSeedService).run();
   await app.get(MissionSeedService).run();
+  await app.get(LearningTrackSeedService).run();
 
   await app.close();
 };

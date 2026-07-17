@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean,
   IsNumber,
   IsOptional,
   IsString,
@@ -24,9 +23,4 @@ export class CreateCourseReviewDto {
   @IsOptional()
   @IsString()
   comment?: string | null;
-
-  @ApiPropertyOptional({ default: false })
-  @IsOptional()
-  @IsBoolean()
-  provenCompletion?: boolean;
 }

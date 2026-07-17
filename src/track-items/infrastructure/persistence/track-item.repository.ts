@@ -23,6 +23,10 @@ export abstract class TrackItemRepository {
 
   abstract findByTrackId(trackId: TrackItem['trackId']): Promise<TrackItem[]>;
 
+  abstract findByCourseId(
+    courseId: NonNullable<TrackItem['courseId']>,
+  ): Promise<TrackItem[]>;
+
   abstract update(
     id: TrackItem['id'],
     payload: Partial<TrackItem>,
