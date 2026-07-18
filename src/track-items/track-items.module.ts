@@ -7,6 +7,7 @@ import { GamificationProfilesModule } from '../gamification-profiles/gamificatio
 import { TrackSectionsModule } from '../track-sections/track-sections.module';
 import { BadgesModule } from '../badges/badges.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ActivitiesModule } from '../activities/activities.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     TrackSectionsModule,
     BadgesModule,
     NotificationsModule,
+    ActivitiesModule,
   ],
   controllers: [TrackItemsController],
   providers: [TrackItemsService],

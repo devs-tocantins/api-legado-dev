@@ -40,6 +40,7 @@ const mockCourseCompletionItem: TrackItem = {
   allowsTestOut: false,
   journeyXp: 20,
   grantsCommunityXp: false,
+  communityXpReward: 0,
   activityId: null,
   missionId: null,
   courseId: 'course-1',
