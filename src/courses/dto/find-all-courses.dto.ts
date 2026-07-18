@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class FindAllCoursesDto {
@@ -14,4 +14,11 @@ export class FindAllCoursesDto {
   @IsNumber()
   @IsOptional()
   limit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filtra cursos verificados sugeridos para este marco',
+  })
+  @IsOptional()
+  @IsUUID()
+  trackItemId?: string;
 }
