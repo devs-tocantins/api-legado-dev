@@ -23,6 +23,7 @@ import { TrackSectionsService } from '../track-sections/track-sections.service';
 import { BadgesService } from '../badges/badges.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/domain/notification-type.enum';
+import { ActivitiesService } from '../activities/activities.service';
 
 const AUTO_COMPLETABLE_TYPES = [
   TrackItemType.RESOURCE,
@@ -39,10 +40,33 @@ export class TrackItemsService {
     private readonly trackSectionsService: TrackSectionsService,
     private readonly badgesService: BadgesService,
     private readonly notificationsService: NotificationsService,
+    private readonly activitiesService: ActivitiesService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
-  create(createTrackItemDto: CreateTrackItemDto) {
+  // Marcos PROOF precisam de uma Activity para o fluxo de submissão/moderação
+  // existente. Em vez de reaproveitar uma Activity genérica do catálogo (que
+  // ficaria visível em /activities e misturaria XP de fontes diferentes),
+  // cada marco PROOF ganha sua própria Activity oculta (isHidden), a menos
+  // que um activityId já tenha sido informado explicitamente.
+  async create(createTrackItemDto: CreateTrackItemDto) {
+    let activityId = createTrackItemDto.activityId ?? null;
+    const communityXpReward = createTrackItemDto.communityXpReward ?? 0;
+
+    if (!activityId && createTrackItemDto.type === TrackItemType.PROOF) {
+      const grantsCommunityXp = createTrackItemDto.grantsCommunityXp ?? false;
+      const activity = await this.activitiesService.create({
+        title: `Prova: ${createTrackItemDto.title}`,
+        description: `Comprovação exclusiva do marco de trilha "${createTrackItemDto.title}".`,
+        fixedReward: grantsCommunityXp ? communityXpReward : 0,
+        isHidden: true,
+        requiresProof: true,
+        requiresDescription: false,
+        cooldownHours: 0,
+      });
+      activityId = activity.id;
+    }
+
     return this.trackItemRepository.create({
       trackId: createTrackItemDto.trackId,
       sectionId: createTrackItemDto.sectionId,
@@ -55,7 +79,8 @@ export class TrackItemsService {
       allowsTestOut: createTrackItemDto.allowsTestOut ?? false,
       journeyXp: createTrackItemDto.journeyXp ?? 0,
       grantsCommunityXp: createTrackItemDto.grantsCommunityXp ?? false,
-      activityId: createTrackItemDto.activityId ?? null,
+      communityXpReward,
+      activityId,
       missionId: createTrackItemDto.missionId ?? null,
       courseId: createTrackItemDto.courseId ?? null,
       config: createTrackItemDto.config ?? null,
@@ -129,6 +154,9 @@ export class TrackItemsService {
       }),
       ...(updateTrackItemDto.grantsCommunityXp !== undefined && {
         grantsCommunityXp: updateTrackItemDto.grantsCommunityXp,
+      }),
+      ...(updateTrackItemDto.communityXpReward !== undefined && {
+        communityXpReward: updateTrackItemDto.communityXpReward,
       }),
       ...(updateTrackItemDto.activityId !== undefined && {
         activityId: updateTrackItemDto.activityId,

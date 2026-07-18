@@ -60,6 +60,7 @@ const mockProofItem: TrackItem = {
   allowsTestOut: false,
   journeyXp: 40,
   grantsCommunityXp: false,
+  communityXpReward: 0,
   activityId: 'activity-1',
   missionId: null,
   courseId: null,

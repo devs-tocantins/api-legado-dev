@@ -58,6 +58,14 @@ export class TrackItem {
   })
   grantsCommunityXp: boolean;
 
+  @ApiProperty({
+    type: Number,
+    default: 0,
+    description:
+      'XP de Comunidade concedido quando grantsCommunityXp é true (usado na atividade exclusiva criada para marcos PROOF)',
+  })
+  communityXpReward: number;
+
   @ApiProperty({ type: String, nullable: true })
   activityId: string | null;
 

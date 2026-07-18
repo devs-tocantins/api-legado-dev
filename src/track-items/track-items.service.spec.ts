@@ -7,6 +7,7 @@ import { GamificationProfilesService } from '../gamification-profiles/gamificati
 import { TrackSectionsService } from '../track-sections/track-sections.service';
 import { BadgesService } from '../badges/badges.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ActivitiesService } from '../activities/activities.service';
 import { TrackItem } from './domain/track-item';
 import { TrackItemType } from './domain/track-item-type.enum';
 import { TrackItemStatus } from './domain/track-item-status.enum';
@@ -29,6 +30,7 @@ function makeItem(overrides: Partial<TrackItem> = {}): TrackItem {
     allowsTestOut: false,
     journeyXp: 10,
     grantsCommunityXp: false,
+    communityXpReward: 0,
     activityId: null,
     missionId: null,
     courseId: null,
@@ -78,6 +80,9 @@ describe('TrackItemsService — evaluateSectionCompletion', () => {
     Record<keyof TrackSectionsService, jest.Mock>
   >;
   let mockBadgesService: Partial<Record<keyof BadgesService, jest.Mock>>;
+  let mockActivitiesService: Partial<
+    Record<keyof ActivitiesService, jest.Mock>
+  >;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -89,6 +94,10 @@ describe('TrackItemsService — evaluateSectionCompletion', () => {
           makeItem({ id: 'item-1' }),
           makeItem({ id: 'item-2' }),
         ]),
+      create: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+    };
+    mockActivitiesService = {
+      create: jest.fn().mockResolvedValue({ id: 'activity-auto-1' }),
     };
     mockTrackItemCompletionsService = {
       findByProfileId: jest.fn().mockResolvedValue([
@@ -141,6 +150,7 @@ describe('TrackItemsService — evaluateSectionCompletion', () => {
           provide: NotificationsService,
           useValue: { create: jest.fn().mockResolvedValue(undefined) },
         },
+        { provide: ActivitiesService, useValue: mockActivitiesService },
         {
           provide: getDataSourceToken(),
           useValue: { createQueryRunner: jest.fn() },
@@ -216,5 +226,80 @@ describe('TrackItemsService — evaluateSectionCompletion', () => {
       'profile-1',
       'badge-1',
     );
+  });
+
+  describe('create', () => {
+    it('should auto-create a hidden activity for a PROOF item without activityId', async () => {
+      await service.create({
+        trackId: 'track-1',
+        sectionId: 'section-1',
+        type: TrackItemType.PROOF,
+        title: 'Suba uma API REST em produção',
+        position: 10,
+        grantsCommunityXp: true,
+        communityXpReward: 50,
+      });
+
+      expect(mockActivitiesService.create).toHaveBeenCalledWith({
+        title: 'Prova: Suba uma API REST em produção',
+        description:
+          'Comprovação exclusiva do marco de trilha "Suba uma API REST em produção".',
+        fixedReward: 50,
+        isHidden: true,
+        requiresProof: true,
+        requiresDescription: false,
+        cooldownHours: 0,
+      });
+      expect(mockTrackItemRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ activityId: 'activity-auto-1' }),
+      );
+    });
+
+    it('should use fixedReward 0 when the PROOF item does not grant community XP', async () => {
+      await service.create({
+        trackId: 'track-1',
+        sectionId: 'section-1',
+        type: TrackItemType.PROOF,
+        title: 'Modele um schema',
+        position: 10,
+        grantsCommunityXp: false,
+        communityXpReward: 50,
+      });
+
+      expect(mockActivitiesService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ fixedReward: 0 }),
+      );
+    });
+
+    it('should not auto-create an activity when activityId is already provided', async () => {
+      await service.create({
+        trackId: 'track-1',
+        sectionId: 'section-1',
+        type: TrackItemType.PROOF,
+        title: 'Suba uma API REST em produção',
+        position: 10,
+        activityId: 'activity-existing',
+      });
+
+      expect(mockActivitiesService.create).not.toHaveBeenCalled();
+      expect(mockTrackItemRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ activityId: 'activity-existing' }),
+      );
+    });
+
+    it('should not auto-create an activity for non-PROOF items', async () => {
+      await service.create({
+        trackId: 'track-1',
+        sectionId: 'section-1',
+        type: TrackItemType.RESOURCE,
+        title: 'Leia este artigo',
+        position: 10,
+      });
+
+      expect(mockActivitiesService.create).not.toHaveBeenCalled();
+      expect(mockTrackItemRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ activityId: null }),
+      );
+    });
   });
 });
