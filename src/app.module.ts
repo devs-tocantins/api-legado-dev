@@ -63,9 +63,12 @@ import { TrackEnrollmentsModule } from './track-enrollments/track-enrollments.mo
 
 import { TrackItemCompletionsModule } from './track-item-completions/track-item-completions.module';
 
+import { ProfilePortfolioModule } from './profile-portfolio/profile-portfolio.module';
+
 @Module({
   imports: [
     TrackItemCompletionsModule,
+    ProfilePortfolioModule,
     TrackEnrollmentsModule,
     CourseReviewsModule,
     CoursesModule,
