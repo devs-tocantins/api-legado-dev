@@ -42,4 +42,12 @@ export class CreateCourseDto {
   @IsOptional()
   @IsUUID()
   submittedByProfileId?: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Marco de trilha ao qual este curso está sendo sugerido como material sobre o assunto',
+  })
+  @IsOptional()
+  @IsUUID()
+  trackItemId?: string;
 }

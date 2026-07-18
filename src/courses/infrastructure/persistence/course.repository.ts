@@ -17,9 +17,11 @@ export abstract class CourseRepository {
 
   abstract findByStatusWithPagination({
     status,
+    trackItemId,
     paginationOptions,
   }: {
     status: CourseStatus;
+    trackItemId?: string;
     paginationOptions: IPaginationOptions;
   }): Promise<Course[]>;
 
@@ -33,4 +35,10 @@ export abstract class CourseRepository {
   ): Promise<Course | null>;
 
   abstract remove(id: Course['id']): Promise<void>;
+
+  abstract linkToTrackItem(data: {
+    trackItemId: string;
+    courseId: string;
+    submittedByProfileId: string | null;
+  }): Promise<void>;
 }
