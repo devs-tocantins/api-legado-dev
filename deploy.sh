@@ -37,4 +37,8 @@ until ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$REMOTE" \
   sleep 3
 done
 
+echo "==> Limpando imagens antigas..."
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+  "sudo docker image prune -af"
+
 echo "==> Deploy concluído! API no ar."
