@@ -64,7 +64,8 @@ jobs:
              gunzip -c app-image.tar.gz | sudo docker load && \
              sudo docker compose -f docker-compose.prod.yaml down && \
              sudo docker compose -f docker-compose.prod.yaml up -d && \
-             rm -f app-image.tar.gz"
+             rm -f app-image.tar.gz && \
+             sudo docker image prune -af"
 
       - name: Aguarda a API responder
         run: |
