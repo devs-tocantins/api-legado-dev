@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { CourseEntity } from '../entities/course.entity';
+import { TrackItemCourseEntity } from '../entities/track-item-course.entity';
 import { NullableType } from '../../../../../utils/types/nullable.type';
 import { Course } from '../../../../domain/course';
 import { CourseRepository } from '../../course.repository';
@@ -14,6 +15,8 @@ export class CourseRelationalRepository implements CourseRepository {
   constructor(
     @InjectRepository(CourseEntity)
     private readonly courseRepository: Repository<CourseEntity>,
+    @InjectRepository(TrackItemCourseEntity)
+    private readonly trackItemCourseRepository: Repository<TrackItemCourseEntity>,
   ) {}
 
   async create(data: Course): Promise<Course> {
@@ -39,16 +42,30 @@ export class CourseRelationalRepository implements CourseRepository {
 
   async findByStatusWithPagination({
     status,
+    trackItemId,
     paginationOptions,
   }: {
     status: CourseStatus;
+    trackItemId?: string;
     paginationOptions: IPaginationOptions;
   }): Promise<Course[]> {
-    const entities = await this.courseRepository.find({
-      where: { status },
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-    });
+    const qb = this.courseRepository
+      .createQueryBuilder('course')
+      .where('course.status = :status', { status })
+      .skip((paginationOptions.page - 1) * paginationOptions.limit)
+      .take(paginationOptions.limit)
+      .orderBy('course.createdAt', 'DESC');
+
+    if (trackItemId) {
+      qb.innerJoin(
+        'track_item_course',
+        'tic',
+        'tic."courseId" = course.id AND tic."trackItemId" = :trackItemId',
+        { trackItemId },
+      );
+    }
+
+    const entities = await qb.getMany();
 
     return entities.map((entity) => CourseMapper.toDomain(entity));
   }
@@ -92,5 +109,24 @@ export class CourseRelationalRepository implements CourseRepository {
 
   async remove(id: Course['id']): Promise<void> {
     await this.courseRepository.delete(id);
+  }
+
+  async linkToTrackItem(data: {
+    trackItemId: string;
+    courseId: string;
+    submittedByProfileId: string | null;
+  }): Promise<void> {
+    const existing = await this.trackItemCourseRepository.findOne({
+      where: { trackItemId: data.trackItemId, courseId: data.courseId },
+    });
+    if (existing) return;
+
+    await this.trackItemCourseRepository.save(
+      this.trackItemCourseRepository.create({
+        trackItemId: data.trackItemId,
+        courseId: data.courseId,
+        submittedByProfileId: data.submittedByProfileId,
+      }),
+    );
   }
 }
