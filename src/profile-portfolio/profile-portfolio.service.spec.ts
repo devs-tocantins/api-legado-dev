@@ -29,6 +29,7 @@ function makeItem(overrides: Partial<TrackItem> = {}): TrackItem {
     allowsTestOut: false,
     journeyXp: 10,
     grantsCommunityXp: false,
+    communityXpReward: 0,
     activityId: 'activity-1',
     missionId: null,
     courseId: null,

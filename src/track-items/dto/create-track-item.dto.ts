@@ -66,6 +66,15 @@ export class CreateTrackItemDto {
   @IsBoolean()
   grantsCommunityXp?: boolean;
 
+  @ApiPropertyOptional({
+    default: 0,
+    description:
+      'XP de Comunidade concedido quando grantsCommunityXp é true. Usado para configurar a atividade exclusiva criada automaticamente para marcos PROOF sem activityId.',
+  })
+  @IsOptional()
+  @IsNumber()
+  communityXpReward?: number;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()

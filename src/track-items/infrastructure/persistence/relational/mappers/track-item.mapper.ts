@@ -16,6 +16,7 @@ export class TrackItemMapper {
     domainEntity.allowsTestOut = raw.allowsTestOut;
     domainEntity.journeyXp = raw.journeyXp;
     domainEntity.grantsCommunityXp = raw.grantsCommunityXp;
+    domainEntity.communityXpReward = raw.communityXpReward;
     domainEntity.activityId = raw.activityId;
     domainEntity.missionId = raw.missionId;
     domainEntity.courseId = raw.courseId;
@@ -41,6 +42,7 @@ export class TrackItemMapper {
     persistenceEntity.allowsTestOut = domainEntity.allowsTestOut;
     persistenceEntity.journeyXp = domainEntity.journeyXp;
     persistenceEntity.grantsCommunityXp = domainEntity.grantsCommunityXp;
+    persistenceEntity.communityXpReward = domainEntity.communityXpReward;
     persistenceEntity.activityId = domainEntity.activityId;
     persistenceEntity.missionId = domainEntity.missionId;
     persistenceEntity.courseId = domainEntity.courseId;
