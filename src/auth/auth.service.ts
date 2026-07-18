@@ -129,6 +129,8 @@ export class AuthService {
       });
     }
 
+    await this.ensureGamificationProfile(user);
+
     const hash = crypto
       .createHash('sha256')
       .update(randomStringGenerator())

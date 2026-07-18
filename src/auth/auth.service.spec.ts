@@ -53,7 +53,10 @@ describe('AuthService', () => {
       }),
     };
     mailService = {};
-    gamificationProfilesService = {};
+    gamificationProfilesService = {
+      findByUserId: jest.fn().mockResolvedValue({ id: 'profile-1' }),
+      create: jest.fn().mockResolvedValue({ id: 'profile-1' }),
+    };
     filesService = {
       remove: jest.fn(),
     };
@@ -116,6 +119,41 @@ describe('AuthService', () => {
 
       expect(result.token).toBe('signed-token');
       expect(sessionService.create).toHaveBeenCalled();
+    });
+
+    it('should create a gamification profile on email login when the user does not have one yet', async () => {
+      usersService.findByEmail!.mockResolvedValue(
+        buildUser({
+          id: 42,
+          firstName: 'Jane',
+          lastName: 'Doe',
+          status: { id: StatusEnum.active },
+        }),
+      );
+      gamificationProfilesService.findByUserId!.mockResolvedValue(null);
+
+      await service.validateLogin({
+        email: 'user@example.com',
+        password: 'correct',
+      });
+
+      expect(gamificationProfilesService.findByUserId).toHaveBeenCalledWith(42);
+      expect(gamificationProfilesService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 42 }),
+      );
+    });
+
+    it('should not create a gamification profile on email login when one already exists', async () => {
+      usersService.findByEmail!.mockResolvedValue(
+        buildUser({ status: { id: StatusEnum.active } }),
+      );
+
+      await service.validateLogin({
+        email: 'user@example.com',
+        password: 'correct',
+      });
+
+      expect(gamificationProfilesService.create).not.toHaveBeenCalled();
     });
   });
 });
