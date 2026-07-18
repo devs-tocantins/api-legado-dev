@@ -11,8 +11,8 @@ import { CourseStatus } from './domain/course-status.enum';
 export class CoursesService {
   constructor(private readonly courseRepository: CourseRepository) {}
 
-  create(createCourseDto: CreateCourseDto) {
-    return this.courseRepository.create({
+  async create(createCourseDto: CreateCourseDto) {
+    const course = await this.courseRepository.create({
       title: createCourseDto.title,
       provider: createCourseDto.provider ?? null,
       url: createCourseDto.url,
@@ -22,6 +22,16 @@ export class CoursesService {
       submittedByProfileId: createCourseDto.submittedByProfileId ?? null,
       status: CourseStatus.PENDING,
     });
+
+    if (createCourseDto.trackItemId) {
+      await this.courseRepository.linkToTrackItem({
+        trackItemId: createCourseDto.trackItemId,
+        courseId: course.id,
+        submittedByProfileId: createCourseDto.submittedByProfileId ?? null,
+      });
+    }
+
+    return course;
   }
 
   findAllWithPagination({
@@ -38,12 +48,15 @@ export class CoursesService {
   }
 
   findVerifiedWithPagination({
+    trackItemId,
     paginationOptions,
   }: {
+    trackItemId?: string;
     paginationOptions: IPaginationOptions;
   }) {
     return this.courseRepository.findByStatusWithPagination({
       status: CourseStatus.VERIFIED,
+      trackItemId,
       paginationOptions,
     });
   }

@@ -91,6 +91,7 @@ export class CoursesController {
 
     return infinityPagination(
       await this.coursesService.findVerifiedWithPagination({
+        trackItemId: query?.trackItemId,
         paginationOptions: {
           page,
           limit,
