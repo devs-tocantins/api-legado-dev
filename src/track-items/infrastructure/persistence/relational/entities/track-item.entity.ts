@@ -71,6 +71,9 @@ export class TrackItemEntity extends EntityRelationalHelper {
   @Column({ type: 'boolean', default: false })
   grantsCommunityXp: boolean;
 
+  @Column({ type: 'int', default: 0 })
+  communityXpReward: number;
+
   @Column({ type: 'uuid', nullable: true, default: null })
   activityId: string | null;
 
