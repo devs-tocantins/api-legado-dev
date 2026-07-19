@@ -1,13 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
   IsInt,
   IsOptional,
   IsString,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { EffortTier } from '../domain/effort-tier';
 
 export class CreateActivityDto {
   @ApiProperty({ example: 'Artigo Publicado' })
@@ -54,4 +57,24 @@ export class CreateActivityDto {
   @IsInt()
   @Min(0)
   cooldownHours?: number;
+
+  @ApiPropertyOptional({
+    type: [EffortTier],
+    description:
+      'Faixas de esforço (Pequeno/Médio/Grande/Épico). Se informado, o usuário declara a faixa na submissão em vez de usar fixedReward.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => EffortTier)
+  effortTiers?: EffortTier[] | null;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'Marca a atividade-semente de registro livre ("Registrar outra atividade")',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isFreeform?: boolean;
 }
