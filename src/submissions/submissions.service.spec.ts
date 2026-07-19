@@ -273,6 +273,29 @@ describe('SubmissionsService', () => {
       );
     });
 
+    it('should not require proofUrl/description on test-out even when the activity requires them', async () => {
+      mockTrackItemsService.findById!.mockResolvedValue({
+        ...mockProofItem,
+        type: TrackItemType.CHECKPOINT,
+        allowsTestOut: true,
+      });
+      mockActivitiesService.findById!.mockResolvedValue({
+        ...mockActivity,
+        requiresProof: true,
+        requiresDescription: true,
+      });
+
+      await service.create({ trackItemId: 'item-1', isTestOut: true }, 1);
+
+      expect(mockSubmissionRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isTestOut: true,
+          proofUrl: null,
+          description: null,
+        }),
+      );
+    });
+
     it('should reject test-out on an item without allowsTestOut', async () => {
       mockTrackItemsService.findById!.mockResolvedValue({
         ...mockProofItem,
