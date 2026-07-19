@@ -22,6 +22,9 @@ import {
 } from '@nestjs/swagger';
 import { TrackItem } from './domain/track-item';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
@@ -31,7 +34,6 @@ import { FindAllTrackItemsDto } from './dto/find-all-track-items.dto';
 
 @ApiTags('Trackitems')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'track-items',
   version: '1',
@@ -40,6 +42,8 @@ export class TrackItemsController {
   constructor(private readonly trackItemsService: TrackItemsService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiCreatedResponse({
     type: TrackItem,
   })
@@ -48,6 +52,7 @@ export class TrackItemsController {
   }
 
   @Get()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
     type: InfinityPaginationResponse(TrackItem),
   })
@@ -72,6 +77,7 @@ export class TrackItemsController {
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiParam({
     name: 'id',
     type: String,
@@ -85,6 +91,7 @@ export class TrackItemsController {
   }
 
   @Post(':id/complete')
+  @UseGuards(AuthGuard('jwt'))
   @ApiParam({
     name: 'id',
     type: String,
@@ -95,6 +102,8 @@ export class TrackItemsController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiParam({
     name: 'id',
     type: String,
@@ -111,6 +120,8 @@ export class TrackItemsController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiParam({
     name: 'id',
     type: String,

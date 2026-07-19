@@ -21,6 +21,9 @@ import {
 } from '@nestjs/swagger';
 import { TrackSection } from './domain/track-section';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
@@ -30,7 +33,6 @@ import { FindAllTrackSectionsDto } from './dto/find-all-track-sections.dto';
 
 @ApiTags('Tracksections')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'track-sections',
   version: '1',
@@ -39,6 +41,8 @@ export class TrackSectionsController {
   constructor(private readonly trackSectionsService: TrackSectionsService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiCreatedResponse({
     type: TrackSection,
   })
@@ -47,6 +51,7 @@ export class TrackSectionsController {
   }
 
   @Get()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
     type: InfinityPaginationResponse(TrackSection),
   })
@@ -71,6 +76,7 @@ export class TrackSectionsController {
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiParam({
     name: 'id',
     type: String,
@@ -84,6 +90,8 @@ export class TrackSectionsController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiParam({
     name: 'id',
     type: String,
@@ -100,6 +108,8 @@ export class TrackSectionsController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiParam({
     name: 'id',
     type: String,
