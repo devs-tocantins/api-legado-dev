@@ -22,6 +22,9 @@ import {
 } from '@nestjs/swagger';
 import { LearningTrack } from './domain/learning-track';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../roles/roles.guard';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
@@ -31,7 +34,6 @@ import { FindAllLearningTracksDto } from './dto/find-all-learning-tracks.dto';
 
 @ApiTags('Learningtracks')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'learning-tracks',
   version: '1',
@@ -40,6 +42,8 @@ export class LearningTracksController {
   constructor(private readonly learningTracksService: LearningTracksService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiCreatedResponse({
     type: LearningTrack,
   })
@@ -48,6 +52,7 @@ export class LearningTracksController {
   }
 
   @Get()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
     type: InfinityPaginationResponse(LearningTrack),
   })
@@ -72,6 +77,7 @@ export class LearningTracksController {
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiParam({
     name: 'id',
     type: String,
@@ -85,6 +91,7 @@ export class LearningTracksController {
   }
 
   @Get(':id/overview')
+  @UseGuards(AuthGuard('jwt'))
   @ApiParam({
     name: 'id',
     type: String,
@@ -95,6 +102,7 @@ export class LearningTracksController {
   }
 
   @Get(':id/progress')
+  @UseGuards(AuthGuard('jwt'))
   @ApiParam({
     name: 'id',
     type: String,
@@ -105,6 +113,8 @@ export class LearningTracksController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiParam({
     name: 'id',
     type: String,
@@ -121,6 +131,8 @@ export class LearningTracksController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiParam({
     name: 'id',
     type: String,
