@@ -531,4 +531,86 @@ describe('SubmissionsService', () => {
       );
     });
   });
+
+  describe('findPublicDetail', () => {
+    it('should throw NotFoundException when the submission does not exist', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(null);
+
+      await expect(service.findPublicDetail('missing-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw NotFoundException when the submission is not approved', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({ status: SubmissionStatus.PENDING }),
+      );
+
+      await expect(service.findPublicDetail('submission-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw NotFoundException when the related activity is missing', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({ status: SubmissionStatus.APPROVED }),
+      );
+      mockActivitiesService.findById!.mockResolvedValue(null);
+
+      await expect(service.findPublicDetail('submission-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should return the public-safe shape for an approved submission', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({
+          status: SubmissionStatus.APPROVED,
+          description: 'Ajudei a organizar o evento X',
+          proofUrl: 'https://s3.amazonaws.com/bucket/prova.png',
+          awardedXp: 50,
+          reviewedAt: new Date('2026-01-02'),
+        }),
+      );
+
+      const result = await service.findPublicDetail('submission-1');
+
+      expect(result).toEqual({
+        activityTitle: mockActivity.title,
+        activityDescription: mockActivity.description,
+        description: 'Ajudei a organizar o evento X',
+        activityDate: null,
+        awardedXp: 50,
+        hasProof: true,
+        createdAt: expect.any(Date),
+        reviewedAt: new Date('2026-01-02'),
+      });
+    });
+
+    it('should prefer customTitle over the activity title when set', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({
+          status: SubmissionStatus.APPROVED,
+          customTitle: 'Doação de sangue',
+        }),
+      );
+
+      const result = await service.findPublicDetail('submission-1');
+
+      expect(result.activityTitle).toBe('Doação de sangue');
+    });
+
+    it('should report hasProof as false when there is no proofUrl', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({
+          status: SubmissionStatus.APPROVED,
+          proofUrl: null,
+        }),
+      );
+
+      const result = await service.findPublicDetail('submission-1');
+
+      expect(result.hasProof).toBe(false);
+    });
+  });
 });

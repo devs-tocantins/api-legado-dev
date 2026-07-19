@@ -25,6 +25,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Submission } from './domain/submission';
+import { PublicSubmissionDetail } from './domain/public-submission-detail';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../roles/roles.guard';
 import { Roles } from '../roles/roles.decorator';
@@ -38,7 +39,6 @@ import { FindAllSubmissionsDto } from './dto/find-all-submissions.dto';
 
 @ApiTags('Submissions')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'submissions',
   version: '1',
@@ -47,6 +47,7 @@ export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @ApiCreatedResponse({
     type: Submission,
   })
@@ -55,6 +56,7 @@ export class SubmissionsController {
   }
 
   @Post('redeem')
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     type: Submission,
@@ -65,6 +67,7 @@ export class SubmissionsController {
   }
 
   @Get('me')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
     type: InfinityPaginationResponse(Submission),
   })
@@ -88,7 +91,7 @@ export class SubmissionsController {
   }
 
   @Get('pending')
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiOkResponse({
     type: InfinityPaginationResponse(Submission),
@@ -109,7 +112,7 @@ export class SubmissionsController {
   }
 
   @Get()
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin, RoleEnum.moderator)
   @ApiOkResponse({
     type: InfinityPaginationResponse(Submission),
@@ -131,7 +134,23 @@ export class SubmissionsController {
     );
   }
 
+  @Get(':id/public')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: PublicSubmissionDetail,
+    description:
+      'Detalhe público de uma submissão aprovada, exibido no perfil público (/u/:username). Não exige autenticação.',
+  })
+  findPublicDetail(@Param('id') id: string) {
+    return this.submissionsService.findPublicDetail(id);
+  }
+
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   @ApiParam({
     name: 'id',
     type: String,
@@ -145,7 +164,7 @@ export class SubmissionsController {
   }
 
   @Patch(':id/review')
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin, RoleEnum.moderator)
   @HttpCode(HttpStatus.OK)
   @ApiParam({
@@ -165,7 +184,7 @@ export class SubmissionsController {
   }
 
   @Patch(':id')
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
@@ -191,7 +210,7 @@ export class SubmissionsController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
   @ApiParam({
     name: 'id',
