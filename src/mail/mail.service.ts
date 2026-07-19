@@ -237,4 +237,34 @@ export class MailService {
       },
     });
   }
+
+  async legalDocumentUpdated(mailData: MailData<object>): Promise<void> {
+    const appName = this.configService.get('app.name', { infer: true });
+    const title = `Atualizamos nossos termos — ${appName}`;
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + '/legal',
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `${url.toString()} ${title}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'legal-document-updated.hbs',
+      ),
+      context: {
+        title,
+        url: url.toString(),
+        app_name: appName,
+      },
+    });
+  }
 }

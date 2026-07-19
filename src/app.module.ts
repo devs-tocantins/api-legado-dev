@@ -65,8 +65,11 @@ import { TrackItemCompletionsModule } from './track-item-completions/track-item-
 
 import { ProfilePortfolioModule } from './profile-portfolio/profile-portfolio.module';
 
+import { LegalDocumentsModule } from './legal-documents/legal-documents.module';
+
 @Module({
   imports: [
+    LegalDocumentsModule,
     TrackItemCompletionsModule,
     ProfilePortfolioModule,
     TrackEnrollmentsModule,
