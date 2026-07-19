@@ -29,12 +29,24 @@ const mockSubmission: Submission = {
   updatedAt: new Date('2026-01-01'),
 };
 
+const mockPublicDetail = {
+  activityTitle: 'Organização de Evento',
+  activityDescription: 'Descrição da atividade',
+  description: 'Ajudei a organizar o evento X',
+  activityDate: null,
+  awardedXp: 100,
+  hasProof: true,
+  createdAt: new Date('2026-01-01'),
+  reviewedAt: new Date('2026-01-02'),
+};
+
 const mockService: Partial<Record<keyof SubmissionsService, jest.Mock>> = {
   create: jest.fn().mockResolvedValue(mockSubmission),
   findAllWithPagination: jest.fn().mockResolvedValue([mockSubmission]),
   findMySubmissions: jest.fn().mockResolvedValue([mockSubmission]),
   findPending: jest.fn().mockResolvedValue([mockSubmission]),
   findById: jest.fn().mockResolvedValue(mockSubmission),
+  findPublicDetail: jest.fn().mockResolvedValue(mockPublicDetail),
   update: jest.fn().mockResolvedValue(mockSubmission),
   review: jest.fn().mockResolvedValue(mockSubmission),
   remove: jest.fn().mockResolvedValue(undefined),
@@ -165,6 +177,17 @@ describe('SubmissionsController', () => {
 
       expect(service.findById).toHaveBeenCalledWith(id);
       expect(result).toEqual(mockSubmission);
+    });
+  });
+
+  describe('findPublicDetail', () => {
+    it('should return the public detail for an approved submission', async () => {
+      const id = 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
+
+      const result = await controller.findPublicDetail(id);
+
+      expect(service.findPublicDetail).toHaveBeenCalledWith(id);
+      expect(result).toEqual(mockPublicDetail);
     });
   });
 

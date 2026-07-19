@@ -31,6 +31,7 @@ import { TrackItemCompletionsService } from '../track-item-completions/track-ite
 import { TrackItemCompletionStatus } from '../track-item-completions/domain/track-item-completion-status.enum';
 import { LearningTracksService } from '../learning-tracks/learning-tracks.service';
 import { Activity } from '../activities/domain/activity';
+import { PublicSubmissionDetail } from './domain/public-submission-detail';
 
 const MODERATOR_REWARD_XP = 10;
 
@@ -251,6 +252,36 @@ export class SubmissionsService {
 
   findById(id: Submission['id']) {
     return this.submissionRepository.findById(id);
+  }
+
+  // Detalhe público exibido no perfil /u/:username — só para submissões já
+  // aprovadas (não vaza pendentes/rejeitadas) e nunca expõe a proofUrl real,
+  // só se existe (hasProof).
+  async findPublicDetail(
+    id: Submission['id'],
+  ): Promise<PublicSubmissionDetail> {
+    const submission = await this.submissionRepository.findById(id);
+    if (!submission || submission.status !== SubmissionStatus.APPROVED) {
+      throw new NotFoundException('Submissão não encontrada.');
+    }
+
+    const activity = await this.activitiesService.findById(
+      submission.activityId,
+    );
+    if (!activity) {
+      throw new NotFoundException('Atividade não encontrada.');
+    }
+
+    const detail = new PublicSubmissionDetail();
+    detail.activityTitle = submission.customTitle ?? activity.title;
+    detail.activityDescription = activity.description;
+    detail.description = submission.description;
+    detail.activityDate = null;
+    detail.awardedXp = submission.awardedXp;
+    detail.hasProof = !!submission.proofUrl;
+    detail.createdAt = submission.createdAt;
+    detail.reviewedAt = submission.reviewedAt;
+    return detail;
   }
 
   findByIds(ids: Submission['id'][]) {
