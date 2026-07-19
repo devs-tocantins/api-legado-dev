@@ -66,6 +66,12 @@ export class UserEntity extends EntityRelationalHelper {
   @Column({ default: false })
   isBanned: boolean;
 
+  // Versão do conjunto de documentos legais (Termo de Serviço + Política de
+  // Privacidade) que este usuário já foi notificado sobre. Usado pelo cron
+  // de notificação em lote para saber quem ainda precisa ser avisado.
+  @Column({ type: 'int', default: 0 })
+  lastNotifiedLegalVersion: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
