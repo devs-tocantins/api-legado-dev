@@ -117,16 +117,21 @@ export class SubmissionsService {
       throw new NotFoundException('Atividade não encontrada.');
     }
 
-    if (activity.requiresProof && !createSubmissionDto.proofUrl) {
-      throw new BadRequestException(
-        'Esta atividade exige um comprovante (proofUrl).',
-      );
-    }
+    // Test-out é uma autodeclaração de domínio do assunto — não faz sentido
+    // exigir comprovante ou descrição, o moderador decide com base no
+    // contexto da trilha, não numa prova anexada.
+    if (!isTestOut) {
+      if (activity.requiresProof && !createSubmissionDto.proofUrl) {
+        throw new BadRequestException(
+          'Esta atividade exige um comprovante (proofUrl).',
+        );
+      }
 
-    if (activity.requiresDescription && !createSubmissionDto.description) {
-      throw new BadRequestException(
-        'Esta atividade exige uma descrição (description).',
-      );
+      if (activity.requiresDescription && !createSubmissionDto.description) {
+        throw new BadRequestException(
+          'Esta atividade exige uma descrição (description).',
+        );
+      }
     }
 
     if (activity.isFreeform && !createSubmissionDto.customTitle) {
