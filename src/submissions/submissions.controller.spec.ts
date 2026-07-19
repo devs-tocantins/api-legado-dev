@@ -18,6 +18,8 @@ const mockSubmission: Submission = {
   isTestOut: false,
   proofUrl: null,
   description: null,
+  customTitle: null,
+  declaredEffort: null,
   status: SubmissionStatus.PENDING,
   feedback: null,
   awardedXp: 0,

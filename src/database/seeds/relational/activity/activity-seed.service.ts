@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ActivityEntity } from '../../../../activities/infrastructure/persistence/relational/entities/activity.entity';
+import { EffortLevel } from '../../../../activities/domain/effort-level.enum';
 
 const SEED_ACTIVITIES = [
   {
@@ -94,6 +95,47 @@ const SEED_ACTIVITIES = [
     secretCode: null,
     requiresProof: false,
     cooldownHours: 0,
+  },
+  {
+    title: 'Registrar outra atividade',
+    description:
+      'Fez alguma contribuição voluntária para a comunidade que não está no catálogo? ' +
+      'Descreva o que fez, escolha a faixa de esforço que melhor representa o trabalho ' +
+      '(com um exemplo pra te ajudar a calibrar) e envie um comprovante se tiver. ' +
+      'Vai passar pela mesma moderação de qualquer outra atividade.',
+    fixedReward: 0,
+    isHidden: false,
+    secretCode: null,
+    requiresProof: false,
+    requiresDescription: true,
+    cooldownHours: 0,
+    isFreeform: true,
+    effortTiers: [
+      {
+        level: EffortLevel.P,
+        label: 'Pequeno',
+        example: 'Corrigir um typo, responder uma dúvida rápida',
+        xp: 40,
+      },
+      {
+        level: EffortLevel.M,
+        label: 'Médio',
+        example: 'PR de correção de bug, organizar um pequeno evento',
+        xp: 120,
+      },
+      {
+        level: EffortLevel.G,
+        label: 'Grande',
+        example: 'Feature completa, mentoria continuada de um júnior',
+        xp: 250,
+      },
+      {
+        level: EffortLevel.EPICO,
+        label: 'Épico',
+        example: 'Arquitetura do zero, organizar um evento grande',
+        xp: 400,
+      },
+    ],
   },
 ];
 

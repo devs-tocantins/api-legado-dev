@@ -14,6 +14,8 @@ import { Submission } from './domain/submission';
 import { SubmissionStatus } from './domain/submission-status.enum';
 import { GamificationProfile } from '../gamification-profiles/domain/gamification-profile';
 import { Activity } from '../activities/domain/activity';
+import { EffortLevel } from '../activities/domain/effort-level.enum';
+import { EffortTier } from '../activities/domain/effort-tier';
 import { TrackItem } from '../track-items/domain/track-item';
 import { TrackItemType } from '../track-items/domain/track-item-type.enum';
 import { TrackItemStatus } from '../track-items/domain/track-item-status.enum';
@@ -43,8 +45,24 @@ const mockActivity: Activity = {
   requiresProof: false,
   requiresDescription: false,
   cooldownHours: 0,
+  effortTiers: null,
+  isFreeform: false,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+};
+
+const effortTiers: EffortTier[] = [
+  { level: EffortLevel.P, label: 'Pequeno', example: 'exemplo P', xp: 40 },
+  { level: EffortLevel.M, label: 'Médio', example: 'exemplo M', xp: 120 },
+  { level: EffortLevel.G, label: 'Grande', example: 'exemplo G', xp: 250 },
+  { level: EffortLevel.EPICO, label: 'Épico', example: 'exemplo E', xp: 400 },
+];
+
+const mockFreeformActivity: Activity = {
+  ...mockActivity,
+  id: 'activity-freeform',
+  isFreeform: true,
+  effortTiers,
 };
 
 const mockProofItem: TrackItem = {
@@ -78,6 +96,8 @@ function makeSubmission(overrides: Partial<Submission> = {}): Submission {
     isTestOut: false,
     proofUrl: null,
     description: null,
+    customTitle: null,
+    declaredEffort: null,
     status: SubmissionStatus.PENDING,
     feedback: null,
     awardedXp: 0,
@@ -278,6 +298,64 @@ describe('SubmissionsService', () => {
     });
   });
 
+  describe('create — atividade livre e faixas de esforço', () => {
+    it('should throw BadRequestException when isFreeform and customTitle is missing', async () => {
+      mockActivitiesService.findById!.mockResolvedValue(mockFreeformActivity);
+
+      await expect(
+        service.create(
+          { activityId: 'activity-freeform', effortLevel: EffortLevel.P },
+          1,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should create the submission with customTitle and declaredEffort when valid', async () => {
+      mockActivitiesService.findById!.mockResolvedValue(mockFreeformActivity);
+
+      await service.create(
+        {
+          activityId: 'activity-freeform',
+          customTitle: 'Ajudei a organizar o meetup',
+          effortLevel: EffortLevel.M,
+        },
+        1,
+      );
+
+      expect(mockSubmissionRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customTitle: 'Ajudei a organizar o meetup',
+          declaredEffort: EffortLevel.M,
+        }),
+      );
+    });
+
+    it('should throw BadRequestException when the activity has effortTiers and effortLevel is missing', async () => {
+      mockActivitiesService.findById!.mockResolvedValue({
+        ...mockActivity,
+        effortTiers,
+      });
+
+      await expect(
+        service.create({ activityId: 'activity-1' }, 1),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when effortLevel does not match any tier', async () => {
+      mockActivitiesService.findById!.mockResolvedValue({
+        ...mockActivity,
+        effortTiers: [effortTiers[0]],
+      });
+
+      await expect(
+        service.create(
+          { activityId: 'activity-1', effortLevel: EffortLevel.EPICO },
+          1,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
   describe('review — aprovação de marco de trilha', () => {
     it('should create a track_item_completion and credit journeyXp on approval', async () => {
       mockSubmissionRepository.findById!.mockResolvedValue(
@@ -365,6 +443,68 @@ describe('SubmissionsService', () => {
       expect(mockQueryRunner.manager.save).not.toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ itemId: 'item-1' }),
+      );
+    });
+  });
+
+  describe('review — resolução de XP por faixa de esforço', () => {
+    it('should award the tier xp matching the declared effort when there is no moderator override', async () => {
+      mockActivitiesService.findById!.mockResolvedValue(mockFreeformActivity);
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({
+          activityId: 'activity-freeform',
+          declaredEffort: EffortLevel.M,
+        }),
+      );
+
+      await service.review(
+        'submission-1',
+        { status: SubmissionStatus.APPROVED },
+        2,
+      );
+
+      expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(
+        expect.anything(),
+        'submission-1',
+        expect.objectContaining({ awardedXp: 120 }),
+      );
+    });
+
+    it("should let the moderator's effortLevel override the declared effort", async () => {
+      mockActivitiesService.findById!.mockResolvedValue(mockFreeformActivity);
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({
+          activityId: 'activity-freeform',
+          declaredEffort: EffortLevel.P,
+        }),
+      );
+
+      await service.review(
+        'submission-1',
+        { status: SubmissionStatus.APPROVED, effortLevel: EffortLevel.G },
+        2,
+      );
+
+      expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(
+        expect.anything(),
+        'submission-1',
+        expect.objectContaining({ awardedXp: 250 }),
+      );
+    });
+
+    it('should fall back to fixedReward when the activity has no effortTiers', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(makeSubmission());
+
+      await service.review(
+        'submission-1',
+        { status: SubmissionStatus.APPROVED },
+        2,
+      );
+
+      expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(
+        expect.anything(),
+        'submission-1',
+        expect.objectContaining({ awardedXp: mockActivity.fixedReward }),
       );
     });
   });
