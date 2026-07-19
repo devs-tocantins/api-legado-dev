@@ -13,6 +13,7 @@ import { GamificationProfileEntity } from '../../../../../gamification-profiles/
 import { ActivityEntity } from '../../../../../activities/infrastructure/persistence/relational/entities/activity.entity';
 import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
 import { TrackItemEntity } from '../../../../../track-items/infrastructure/persistence/relational/entities/track-item.entity';
+import { EffortLevel } from '../../../../../activities/domain/effort-level.enum';
 
 @Entity({
   name: 'submission',
@@ -50,6 +51,17 @@ export class SubmissionEntity extends EntityRelationalHelper {
 
   @Column({ type: 'text', nullable: true, default: null })
   description: string | null;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  customTitle: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: EffortLevel,
+    nullable: true,
+    default: null,
+  })
+  declaredEffort: EffortLevel | null;
 
   @Column({
     type: 'enum',

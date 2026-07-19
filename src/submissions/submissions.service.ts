@@ -30,6 +30,7 @@ import { TrackItemCompletionEntity } from '../track-item-completions/infrastruct
 import { TrackItemCompletionsService } from '../track-item-completions/track-item-completions.service';
 import { TrackItemCompletionStatus } from '../track-item-completions/domain/track-item-completion-status.enum';
 import { LearningTracksService } from '../learning-tracks/learning-tracks.service';
+import { Activity } from '../activities/domain/activity';
 
 const MODERATOR_REWARD_XP = 10;
 
@@ -128,6 +129,28 @@ export class SubmissionsService {
       );
     }
 
+    if (activity.isFreeform && !createSubmissionDto.customTitle) {
+      throw new BadRequestException(
+        'Esta atividade exige um título (customTitle) descrevendo a contribuição.',
+      );
+    }
+
+    if (activity.effortTiers && activity.effortTiers.length > 0) {
+      if (!createSubmissionDto.effortLevel) {
+        throw new BadRequestException(
+          'Esta atividade exige a faixa de esforço declarada (effortLevel).',
+        );
+      }
+      const validTier = activity.effortTiers.some(
+        (tier) => tier.level === createSubmissionDto.effortLevel,
+      );
+      if (!validTier) {
+        throw new BadRequestException(
+          'effortLevel informado não corresponde a nenhuma faixa desta atividade.',
+        );
+      }
+    }
+
     if (activity.cooldownHours > 0) {
       const since = new Date();
       since.setHours(since.getHours() - activity.cooldownHours);
@@ -153,12 +176,30 @@ export class SubmissionsService {
       isTestOut,
       proofUrl: createSubmissionDto.proofUrl ?? null,
       description: createSubmissionDto.description ?? null,
+      customTitle: createSubmissionDto.customTitle ?? null,
+      declaredEffort: createSubmissionDto.effortLevel ?? null,
       status: SubmissionStatus.PENDING,
       feedback: null,
       awardedXp: 0,
       reviewerId: null,
       reviewedAt: null,
     });
+  }
+
+  // Resolve o XP efetivo: override do moderador ao aprovar > faixa declarada
+  // pelo usuário > fixedReward. Mantém a atividade "confiança + moderação"
+  // descrita no plano: o usuário se autodeclara, o moderador confirma/ajusta.
+  private resolveAwardedXp(
+    activity: Activity,
+    submission: Submission,
+    reviewDto: ReviewSubmissionDto,
+  ): number {
+    if (activity.effortTiers && activity.effortTiers.length > 0) {
+      const effectiveLevel = reviewDto.effortLevel ?? submission.declaredEffort;
+      const tier = activity.effortTiers.find((t) => t.level === effectiveLevel);
+      if (tier) return tier.xp;
+    }
+    return activity.fixedReward;
   }
 
   findAllWithPagination({
@@ -269,7 +310,7 @@ export class SubmissionsService {
     try {
       const awardedXp =
         reviewDto.status === SubmissionStatus.APPROVED
-          ? activity.fixedReward
+          ? this.resolveAwardedXp(activity, submission, reviewDto)
           : 0;
 
       await queryRunner.manager.update(SubmissionEntity, id, {
@@ -469,6 +510,8 @@ export class SubmissionsService {
         isTestOut: false,
         proofUrl: null,
         description: null,
+        customTitle: null,
+        declaredEffort: null,
         status: SubmissionStatus.APPROVED,
         feedback: null,
         awardedXp: activity.fixedReward,
