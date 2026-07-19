@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  Request,
 } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -125,8 +126,12 @@ export class CoursesController {
   @ApiOkResponse({
     type: Course,
   })
-  review(@Param('id') id: string, @Body() reviewCourseDto: ReviewCourseDto) {
-    return this.coursesService.review(id, reviewCourseDto);
+  review(
+    @Param('id') id: string,
+    @Body() reviewCourseDto: ReviewCourseDto,
+    @Request() req,
+  ) {
+    return this.coursesService.review(id, reviewCourseDto, req.user.id);
   }
 
   @Patch(':id')
