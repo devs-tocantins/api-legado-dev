@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { ReviewCourseDto } from './dto/review-course.dto';
@@ -6,10 +10,14 @@ import { CourseRepository } from './infrastructure/persistence/course.repository
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { Course } from './domain/course';
 import { CourseStatus } from './domain/course-status.enum';
+import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 
 @Injectable()
 export class CoursesService {
-  constructor(private readonly courseRepository: CourseRepository) {}
+  constructor(
+    private readonly courseRepository: CourseRepository,
+    private readonly gamificationProfilesService: GamificationProfilesService,
+  ) {}
 
   async create(createCourseDto: CreateCourseDto) {
     const course = await this.courseRepository.create({
@@ -72,10 +80,26 @@ export class CoursesService {
     });
   }
 
-  async review(id: Course['id'], reviewCourseDto: ReviewCourseDto) {
+  async review(
+    id: Course['id'],
+    reviewCourseDto: ReviewCourseDto,
+    reviewerUserId: number,
+  ) {
     const course = await this.courseRepository.findById(id);
     if (!course) {
       throw new NotFoundException('Curso não encontrado.');
+    }
+
+    const reviewerProfile =
+      await this.gamificationProfilesService.findByUserId(reviewerUserId);
+    if (
+      reviewerProfile &&
+      course.submittedByProfileId &&
+      reviewerProfile.id === course.submittedByProfileId
+    ) {
+      throw new ForbiddenException(
+        'Você não pode revisar um curso que você mesmo sugeriu.',
+      );
     }
 
     return this.courseRepository.update(id, {
