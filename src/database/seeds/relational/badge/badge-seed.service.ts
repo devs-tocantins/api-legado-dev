@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BadgeEntity } from '../../../../badges/infrastructure/persistence/relational/entities/badge.entity';
 import { BadgeCriteriaTypeEnum } from '../../../../badges/domain/badge-criteria-type.enum';
 import { BadgeCategoryEnum } from '../../../../badges/domain/badge-category.enum';
+import { AllConfigType } from '../../../../config/config.type';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -13,6 +15,33 @@ const MILESTONE = BadgeCategoryEnum.MILESTONE;
 const RANKING = BadgeCategoryEnum.RANKING;
 const PARTICIPATION = BadgeCategoryEnum.PARTICIPATION;
 const SPECIAL = BadgeCategoryEnum.SPECIAL;
+
+// Nome do badge -> arquivo em front-engajamento/public/badges/. Ranking usa
+// posição (1/2/3) em vez de nome, já que o nome muda por mês/ano.
+const BADGE_IMAGE_FILES: Record<string, string> = {
+  Contribuidor: 'milestone-xp-1-contribuidor.svg',
+  'Colaborador Ativo': 'milestone-xp-2-colaborador-ativo.svg',
+  Referência: 'milestone-xp-3-referencia.svg',
+  Mentor: 'milestone-xp-4-mentor.svg',
+  Lenda: 'milestone-xp-5-lenda.svg',
+  'Primeira Missão': 'milestone-sub-1-primeira-missao.svg',
+  Colaborador: 'milestone-sub-2-colaborador.svg',
+  'Herói da Comunidade': 'milestone-sub-3-heroi-da-comunidade.svg',
+  Grato: 'milestone-tok-1-grato.svg',
+  Generoso: 'milestone-tok-2-generoso.svg',
+  'Membro Fundador': 'participation-1-membro-fundador.svg',
+  Veterano: 'participation-2-veterano.svg',
+  Ancião: 'participation-3-anciao.svg',
+  'Pilar da Comunidade': 'participation-4-pilar-da-comunidade.svg',
+  'Destaque do Mês': 'special-destaque-do-mes.svg',
+  Organizador: 'special-organizador.svg',
+};
+
+const RANKING_POSITION_FILES: Record<number, string> = {
+  1: 'ranking-1-ouro.svg',
+  2: 'ranking-2-prata.svg',
+  3: 'ranking-3-bronze.svg',
+};
 
 const MONTHS_PT = [
   'Janeiro',
@@ -191,23 +220,57 @@ const SPECIAL_BADGES = [
   },
 ];
 
-function buildAllBadges() {
+function badgeImageUrl(frontendDomain: string, file: string): string {
+  return `${frontendDomain}/badges/${file}`;
+}
+
+function buildAllBadges(frontendDomain: string) {
   const all: any[] = [];
 
   for (const b of MILESTONE_BADGES) {
-    all.push({ ...b, category: MILESTONE, imageUrl: null, isActive: true });
+    const file = BADGE_IMAGE_FILES[b.name];
+    all.push({
+      ...b,
+      category: MILESTONE,
+      imageUrl: file ? badgeImageUrl(frontendDomain, file) : null,
+      isActive: true,
+    });
   }
   for (const b of PARTICIPATION_BADGES) {
-    all.push({ ...b, category: PARTICIPATION, imageUrl: null, isActive: true });
+    const file = BADGE_IMAGE_FILES[b.name];
+    all.push({
+      ...b,
+      category: PARTICIPATION,
+      imageUrl: file ? badgeImageUrl(frontendDomain, file) : null,
+      isActive: true,
+    });
   }
   for (const b of buildMonthlyRankingBadges()) {
-    all.push({ ...b, category: RANKING, imageUrl: null, isActive: true });
+    const file = RANKING_POSITION_FILES[b.criteriaConfig.position];
+    all.push({
+      ...b,
+      category: RANKING,
+      imageUrl: file ? badgeImageUrl(frontendDomain, file) : null,
+      isActive: true,
+    });
   }
   for (const b of buildAnnualRankingBadges()) {
-    all.push({ ...b, category: RANKING, imageUrl: null, isActive: true });
+    const file = RANKING_POSITION_FILES[b.criteriaConfig.position];
+    all.push({
+      ...b,
+      category: RANKING,
+      imageUrl: file ? badgeImageUrl(frontendDomain, file) : null,
+      isActive: true,
+    });
   }
   for (const b of SPECIAL_BADGES) {
-    all.push({ ...b, category: SPECIAL, imageUrl: null, isActive: true });
+    const file = BADGE_IMAGE_FILES[b.name];
+    all.push({
+      ...b,
+      category: SPECIAL,
+      imageUrl: file ? badgeImageUrl(frontendDomain, file) : null,
+      isActive: true,
+    });
   }
 
   return all;
@@ -220,13 +283,17 @@ export class BadgeSeedService {
   constructor(
     @InjectRepository(BadgeEntity)
     private readonly repository: Repository<BadgeEntity>,
+    private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
   async run() {
     const count = await this.repository.count();
     if (count > 0) return;
 
-    const badges = buildAllBadges();
+    const frontendDomain = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+    const badges = buildAllBadges(frontendDomain);
     for (const b of badges) {
       await this.repository.save(this.repository.create(b as any));
     }
