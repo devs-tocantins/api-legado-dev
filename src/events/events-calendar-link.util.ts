@@ -16,6 +16,7 @@ export function buildGoogleCalendarUrl(
     | 'endAt'
     | 'modality'
     | 'location'
+    | 'locationMapUrl'
     | 'onlineUrl'
   >,
 ): string {
@@ -27,7 +28,7 @@ export function buildGoogleCalendarUrl(
   const location =
     event.modality === EventModality.ONLINE
       ? (event.onlineUrl ?? '')
-      : (event.location ?? '');
+      : [event.location, event.locationMapUrl].filter(Boolean).join(' - ');
 
   const params = new URLSearchParams({
     action: 'TEMPLATE',

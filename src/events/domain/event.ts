@@ -36,6 +36,14 @@ export class Event {
   @ApiProperty({
     type: String,
     nullable: true,
+    description:
+      'Link do Google Maps (ou outro mapa) apontando para o local do evento',
+  })
+  locationMapUrl?: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
     description: 'Link da transmissão/reunião (ONLINE ou HIBRIDO)',
   })
   onlineUrl: string | null;

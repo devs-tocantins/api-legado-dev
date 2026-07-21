@@ -52,6 +52,9 @@ export class EventEntity extends EntityRelationalHelper {
   location: string | null;
 
   @Column({ type: 'varchar', nullable: true, default: null })
+  locationMapUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
   onlineUrl: string | null;
 
   @Column({ type: 'varchar', nullable: true, default: null })
