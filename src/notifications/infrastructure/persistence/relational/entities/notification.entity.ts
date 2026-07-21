@@ -26,6 +26,9 @@ export class NotificationEntity {
   @Column({ type: 'boolean', default: false })
   isRead: boolean;
 
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  readAt: Date | null;
+
   @Column({ type: 'varchar', nullable: true, default: null })
   relatedId: string | null;
 
