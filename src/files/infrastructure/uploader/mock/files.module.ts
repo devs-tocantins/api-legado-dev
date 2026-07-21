@@ -53,7 +53,7 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
         },
       }),
       limits: {
-        fileSize: 5242880, // 5mb
+        fileSize: 10485760, // 10mb
       },
     }),
   ],

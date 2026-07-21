@@ -45,6 +45,6 @@ export default registerAs<FileConfig>('file', () => {
     awsS3Region: process.env.AWS_S3_REGION,
     awsS3Endpoint: process.env.AWS_S3_ENDPOINT,
     awsS3PublicUrl: process.env.AWS_S3_PUBLIC_URL,
-    maxFileSize: 5242880, // 5mb
+    maxFileSize: 10485760, // 10mb
   };
 });
