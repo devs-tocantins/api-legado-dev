@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api-engajamento",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start:dev"],
+      "port": 3000
+    },
+    {
+      "name": "app-engajamento-web",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d C:\\Users\\leonardo.santos\\WWW\\app-engajamento && npx expo start --web"
+      ],
+      "port": 8081
+    },
+    {
+      "name": "front-engajamento",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d C:\\Users\\leonardo.santos\\WWW\\front-engajamento && npm run dev -- -p 3001"
+      ],
+      "port": 3001
+    }
+  ]
+}

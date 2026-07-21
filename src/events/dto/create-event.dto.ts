@@ -65,6 +65,7 @@ export class CreateEventDto {
   @ApiPropertyOptional({
     type: String,
     description: 'UUID do arquivo de capa, já enviado via /files/upload',
+    nullable: true,
   })
   @IsOptional()
   @IsUUID()
