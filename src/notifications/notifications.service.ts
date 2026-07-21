@@ -6,6 +6,10 @@ import { NotificationPreferenceEntity } from './infrastructure/persistence/relat
 import { NotificationType } from './domain/notification-type.enum';
 import { UpdateNotificationPreferenceDto } from './dto/update-preference.dto';
 
+// Notificações lidas somem da lista depois desse período — não precisam
+// ficar visíveis pra sempre, só as não-lidas (ou lidas recentemente).
+const READ_NOTIFICATION_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class NotificationsService {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
@@ -29,11 +33,19 @@ export class NotificationsService {
   }
 
   async findForUser(userId: number) {
-    return this.dataSource.getRepository(NotificationEntity).find({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-      take: 50,
-    });
+    const cutoff = new Date(Date.now() - READ_NOTIFICATION_RETENTION_MS);
+
+    return this.dataSource
+      .getRepository(NotificationEntity)
+      .createQueryBuilder('notification')
+      .where('notification.userId = :userId', { userId })
+      .andWhere(
+        '(notification.isRead = false OR (notification.readAt IS NOT NULL AND notification.readAt >= :cutoff))',
+        { cutoff },
+      )
+      .orderBy('notification.createdAt', 'DESC')
+      .take(50)
+      .getMany();
   }
 
   async countUnread(userId: number) {
@@ -45,13 +57,13 @@ export class NotificationsService {
   async markRead(id: string, userId: number) {
     await this.dataSource
       .getRepository(NotificationEntity)
-      .update({ id, userId }, { isRead: true });
+      .update({ id, userId }, { isRead: true, readAt: new Date() });
   }
 
   async markAllRead(userId: number) {
     await this.dataSource
       .getRepository(NotificationEntity)
-      .update({ userId, isRead: false }, { isRead: true });
+      .update({ userId, isRead: false }, { isRead: true, readAt: new Date() });
   }
 
   async getPreferences(userId: number): Promise<NotificationPreferenceEntity> {
