@@ -9,6 +9,7 @@ import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TrackItemsService } from '../track-items/track-items.service';
 import { TrackItemCompletionsService } from '../track-item-completions/track-item-completions.service';
+import { TrackItemCompletionStatus } from '../track-item-completions/domain/track-item-completion-status.enum';
 import { LearningTracksService } from '../learning-tracks/learning-tracks.service';
 import { Submission } from './domain/submission';
 import { SubmissionStatus } from './domain/submission-status.enum';
@@ -180,6 +181,8 @@ describe('SubmissionsService', () => {
     };
     mockTrackItemCompletionsService = {
       findByItemAndProfile: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue(undefined),
+      remove: jest.fn().mockResolvedValue(undefined),
     };
     mockLearningTracksService = {
       isSectionReachable: jest.fn().mockResolvedValue(true),
@@ -228,6 +231,64 @@ describe('SubmissionsService', () => {
       );
     });
 
+    it('should stay PENDING but already create an IN_REVIEW completion, so progression is never blocked while awaiting review', async () => {
+      await service.create({ trackItemId: 'item-1' }, 1);
+
+      expect(mockSubmissionRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: SubmissionStatus.PENDING,
+          awardedXp: 0,
+        }),
+      );
+      expect(mockTrackItemCompletionsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          itemId: 'item-1',
+          profileId: 'profile-1',
+          status: TrackItemCompletionStatus.IN_REVIEW,
+          awardedJourneyXp: 0,
+        }),
+      );
+    });
+
+    it('should allow resubmission after a rejection (existing IN_REVIEW completion tied to a REJECTED submission)', async () => {
+      mockTrackItemCompletionsService.findByItemAndProfile!.mockResolvedValue({
+        id: 'completion-1',
+        status: TrackItemCompletionStatus.IN_REVIEW,
+        submissionId: 'old-submission',
+      });
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({
+          id: 'old-submission',
+          status: SubmissionStatus.REJECTED,
+        }),
+      );
+
+      await service.create({ trackItemId: 'item-1' }, 1);
+
+      expect(mockTrackItemCompletionsService.remove).toHaveBeenCalledWith(
+        'completion-1',
+      );
+      expect(mockTrackItemCompletionsService.create).toHaveBeenCalled();
+    });
+
+    it('should block a new submission while the prior one for this item is still PENDING', async () => {
+      mockTrackItemCompletionsService.findByItemAndProfile!.mockResolvedValue({
+        id: 'completion-1',
+        status: TrackItemCompletionStatus.IN_REVIEW,
+        submissionId: 'old-submission',
+      });
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({
+          id: 'old-submission',
+          status: SubmissionStatus.PENDING,
+        }),
+      );
+
+      await expect(
+        service.create({ trackItemId: 'item-1' }, 1),
+      ).rejects.toThrow(BadRequestException);
+    });
+
     it('should reject a non-PROOF item when isTestOut is not set', async () => {
       mockTrackItemsService.findById!.mockResolvedValue({
         ...mockProofItem,
@@ -270,6 +331,31 @@ describe('SubmissionsService', () => {
 
       expect(mockSubmissionRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({ isTestOut: true }),
+      );
+    });
+
+    it('should auto-resolve test-out with no XP and no moderation step — status APPROVED, awardedXp 0, completion SKIPPED_TESTOUT', async () => {
+      mockTrackItemsService.findById!.mockResolvedValue({
+        ...mockProofItem,
+        type: TrackItemType.CHECKPOINT,
+        allowsTestOut: true,
+      });
+
+      await service.create({ trackItemId: 'item-1', isTestOut: true }, 1);
+
+      expect(mockSubmissionRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: SubmissionStatus.APPROVED,
+          awardedXp: 0,
+        }),
+      );
+      expect(mockTrackItemCompletionsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          itemId: 'item-1',
+          profileId: 'profile-1',
+          status: TrackItemCompletionStatus.SKIPPED_TESTOUT,
+          awardedJourneyXp: 0,
+        }),
       );
     });
 
@@ -446,6 +532,42 @@ describe('SubmissionsService', () => {
         { id: 'profile-1' },
         'totalXp',
         mockActivity.fixedReward,
+      );
+    });
+
+    it('should promote the IN_REVIEW completion created at submission time to COMPLETED, instead of inserting a new one', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({ trackItemId: 'item-1' }),
+      );
+      mockTrackItemCompletionsService.findByItemAndProfile!.mockResolvedValue({
+        id: 'completion-1',
+        status: TrackItemCompletionStatus.IN_REVIEW,
+        submissionId: 'submission-1',
+      });
+
+      await service.review(
+        'submission-1',
+        { status: SubmissionStatus.APPROVED },
+        2,
+      );
+
+      expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(
+        expect.anything(),
+        'completion-1',
+        expect.objectContaining({
+          status: TrackItemCompletionStatus.COMPLETED,
+          awardedJourneyXp: 40,
+        }),
+      );
+      expect(mockQueryRunner.manager.save).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ itemId: 'item-1' }),
+      );
+      expect(mockQueryRunner.manager.increment).toHaveBeenCalledWith(
+        expect.anything(),
+        { id: 'profile-1' },
+        'journeyXp',
+        40,
       );
     });
 

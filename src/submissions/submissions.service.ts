@@ -65,6 +65,10 @@ export class SubmissionsService {
 
     let activityId = createSubmissionDto.activityId;
     const isTestOut = createSubmissionDto.isTestOut ?? false;
+    let trackItem: Awaited<ReturnType<TrackItemsService['findById']>> = null;
+    let existingCompletion: Awaited<
+      ReturnType<TrackItemCompletionsService['findByItemAndProfile']>
+    > = null;
 
     if (createSubmissionDto.trackItemId) {
       const item = await this.trackItemsService.findById(
@@ -99,15 +103,31 @@ export class SubmissionsService {
         );
       }
 
-      const existingCompletion =
+      existingCompletion =
         await this.trackItemCompletionsService.findByItemAndProfile(
           item.id,
           profile.id,
         );
       if (existingCompletion) {
-        throw new BadRequestException('Este marco já foi concluído.');
+        if (existingCompletion.status !== TrackItemCompletionStatus.IN_REVIEW) {
+          throw new BadRequestException('Este marco já foi concluído.');
+        }
+        const priorSubmission = existingCompletion.submissionId
+          ? await this.submissionRepository.findById(
+              existingCompletion.submissionId,
+            )
+          : null;
+        if (
+          !priorSubmission ||
+          priorSubmission.status === SubmissionStatus.PENDING
+        ) {
+          throw new BadRequestException(
+            'Sua submissão para este marco ainda está em análise.',
+          );
+        }
       }
 
+      trackItem = item;
       activityId = item.activityId;
     } else if (!activityId) {
       throw new BadRequestException('Informe activityId ou trackItemId.');
@@ -175,7 +195,12 @@ export class SubmissionsService {
       }
     }
 
-    return this.submissionRepository.create({
+    // Test-out é uma autodeclaração — resolve na hora, sem passar por
+    // moderação. A prova/comprovação normal continua PENDING e só desbloqueia
+    // XP quando aprovada, mas já libera o avanço na trilha imediatamente
+    // (ver TrackItemCompletionStatus.IN_REVIEW abaixo).
+    const now = new Date();
+    const submission = await this.submissionRepository.create({
       profileId: profile.id,
       activityId: activity.id,
       trackItemId: createSubmissionDto.trackItemId ?? null,
@@ -184,12 +209,37 @@ export class SubmissionsService {
       description: createSubmissionDto.description ?? null,
       customTitle: createSubmissionDto.customTitle ?? null,
       declaredEffort: createSubmissionDto.effortLevel ?? null,
-      status: SubmissionStatus.PENDING,
+      status: isTestOut ? SubmissionStatus.APPROVED : SubmissionStatus.PENDING,
       feedback: null,
       awardedXp: 0,
       reviewerId: null,
-      reviewedAt: null,
+      reviewedAt: isTestOut ? now : null,
     });
+
+    if (trackItem) {
+      if (existingCompletion) {
+        await this.trackItemCompletionsService.remove(existingCompletion.id);
+      }
+      await this.trackItemCompletionsService.create({
+        itemId: trackItem.id,
+        profileId: profile.id,
+        status: isTestOut
+          ? TrackItemCompletionStatus.SKIPPED_TESTOUT
+          : TrackItemCompletionStatus.IN_REVIEW,
+        submissionId: submission.id,
+        awardedJourneyXp: 0,
+      });
+
+      if (isTestOut) {
+        void this.badgeEvaluatorService.evaluate(profile.id);
+        void this.trackItemsService.evaluateSectionCompletion(
+          trackItem.sectionId,
+          profile.id,
+        );
+      }
+    }
+
+    return submission;
   }
 
   // Resolve o XP efetivo: override do moderador ao aprovar > faixa declarada
@@ -357,7 +407,11 @@ export class SubmissionsService {
         reviewedAt: new Date(),
       });
 
-      if (reviewDto.status === SubmissionStatus.APPROVED && grantsCommunityXp) {
+      if (
+        reviewDto.status === SubmissionStatus.APPROVED &&
+        grantsCommunityXp &&
+        !submission.isTestOut
+      ) {
         await queryRunner.manager.increment(
           GamificationProfileEntity,
           { id: submission.profileId },
@@ -385,21 +439,46 @@ export class SubmissionsService {
         });
       }
 
-      if (reviewDto.status === SubmissionStatus.APPROVED && trackItem) {
+      if (
+        reviewDto.status === SubmissionStatus.APPROVED &&
+        trackItem &&
+        !submission.isTestOut
+      ) {
         const existingCompletion =
           await this.trackItemCompletionsService.findByItemAndProfile(
             trackItem.id,
             submission.profileId,
           );
-        if (!existingCompletion) {
+
+        // A submissão normal já ganha uma completion IN_REVIEW no momento em
+        // que é criada (para não travar o avanço na trilha enquanto aguarda
+        // moderação) — aqui só promovemos ela pra COMPLETED e liberamos o XP
+        // de jornada. Se por algum motivo não existir (dado legado), criamos.
+        if (existingCompletion && existingCompletion.submissionId === id) {
+          await queryRunner.manager.update(
+            TrackItemCompletionEntity,
+            existingCompletion.id,
+            {
+              status: TrackItemCompletionStatus.COMPLETED,
+              awardedJourneyXp: trackItem.journeyXp,
+            },
+          );
+
+          if (trackItem.journeyXp > 0) {
+            await queryRunner.manager.increment(
+              GamificationProfileEntity,
+              { id: submission.profileId },
+              'journeyXp',
+              trackItem.journeyXp,
+            );
+          }
+        } else if (!existingCompletion) {
           await queryRunner.manager.save(
             TrackItemCompletionEntity,
             queryRunner.manager.create(TrackItemCompletionEntity, {
               itemId: trackItem.id,
               profileId: submission.profileId,
-              status: submission.isTestOut
-                ? TrackItemCompletionStatus.SKIPPED_TESTOUT
-                : TrackItemCompletionStatus.COMPLETED,
+              status: TrackItemCompletionStatus.COMPLETED,
               submissionId: id,
               awardedJourneyXp: trackItem.journeyXp,
               completedAt: new Date(),
