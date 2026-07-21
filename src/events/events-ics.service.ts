@@ -29,7 +29,9 @@ export class EventsIcsService {
       location:
         event.modality === EventModality.ONLINE
           ? (event.onlineUrl ?? undefined)
-          : (event.location ?? undefined),
+          : [event.location, event.locationMapUrl]
+              .filter(Boolean)
+              .join(' - ') || undefined,
       url: event.externalUrl ?? undefined,
       status: ICalEventStatus.CONFIRMED,
     });
