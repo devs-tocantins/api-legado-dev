@@ -43,11 +43,10 @@ export class EventMapper {
     let coverImage: FileEntity | undefined | null = undefined;
     if (domainEntity.coverImageId === null) {
       coverImage = null;
-    } else if (
-      domainEntity.coverImage &&
-      domainEntity.coverImage.id === domainEntity.coverImageId
-    ) {
-      coverImage = FileMapper.toPersistence(domainEntity.coverImage);
+    } else if (domainEntity.coverImageId) {
+      const file = new FileEntity();
+      file.id = domainEntity.coverImageId;
+      coverImage = file;
     }
 
     persistenceEntity.title = domainEntity.title;
