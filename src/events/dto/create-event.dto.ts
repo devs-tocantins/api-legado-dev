@@ -67,7 +67,7 @@ export class CreateEventDto {
     description: 'UUID do arquivo de capa, já enviado via /files/upload',
     nullable: true,
   })
-  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== undefined)
   @IsUUID()
-  coverImageId?: string;
+  coverImageId?: string | null;
 }
