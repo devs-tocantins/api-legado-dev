@@ -15,6 +15,7 @@ export class EventMapper {
     domainEntity.startAt = raw.startAt;
     domainEntity.endAt = raw.endAt;
     domainEntity.location = raw.location;
+    domainEntity.locationMapUrl = raw.locationMapUrl;
     domainEntity.onlineUrl = raw.onlineUrl;
     domainEntity.externalUrl = raw.externalUrl;
     domainEntity.status = raw.status;
@@ -53,6 +54,7 @@ export class EventMapper {
     persistenceEntity.startAt = domainEntity.startAt;
     persistenceEntity.endAt = domainEntity.endAt;
     persistenceEntity.location = domainEntity.location;
+    persistenceEntity.locationMapUrl = domainEntity.locationMapUrl ?? null;
     persistenceEntity.onlineUrl = domainEntity.onlineUrl;
     persistenceEntity.externalUrl = domainEntity.externalUrl;
     persistenceEntity.status = domainEntity.status;

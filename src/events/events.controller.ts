@@ -177,8 +177,10 @@ export class EventsController {
       'Detalhe do evento em qualquer status, visível apenas para o organizador ou admin.',
   })
   findForManagement(@Param('id') id: string, @Request() req) {
-    const isAdmin = Number(req.user?.role?.id) === RoleEnum.admin;
-    return this.eventsService.findForManagement(id, req.user.id, isAdmin);
+    const canManageAny =
+      Number(req.user?.role?.id) === RoleEnum.admin ||
+      Number(req.user?.role?.id) === RoleEnum.moderator;
+    return this.eventsService.findForManagement(id, req.user.id, canManageAny);
   }
 
   @Get(':id/ics')
@@ -300,8 +302,15 @@ export class EventsController {
     @Body() updateEventDto: UpdateEventDto,
     @Request() req,
   ) {
-    const isAdmin = Number(req.user?.role?.id) === RoleEnum.admin;
-    return this.eventsService.update(id, updateEventDto, req.user.id, isAdmin);
+    const canManageAny =
+      Number(req.user?.role?.id) === RoleEnum.admin ||
+      Number(req.user?.role?.id) === RoleEnum.moderator;
+    return this.eventsService.update(
+      id,
+      updateEventDto,
+      req.user.id,
+      canManageAny,
+    );
   }
 
   @Delete(':id')

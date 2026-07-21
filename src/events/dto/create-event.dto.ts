@@ -44,6 +44,14 @@ export class CreateEventDto {
   @IsString()
   location?: string;
 
+  @ApiPropertyOptional({
+    example: 'https://maps.app.goo.gl/xyz123',
+    description: 'Link do Google Maps para o local do evento',
+  })
+  @IsOptional()
+  @IsUrl()
+  locationMapUrl?: string;
+
   @ApiPropertyOptional({ example: 'https://meet.google.com/abc-defg-hij' })
   @ValidateIf((o) => o.modality !== EventModality.PRESENCIAL)
   @IsUrl()

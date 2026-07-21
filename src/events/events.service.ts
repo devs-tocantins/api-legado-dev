@@ -24,6 +24,7 @@ const NOTIFIABLE_FIELD_LABELS: Record<string, string> = {
   endAt: 'a data/horário de término',
   modality: 'a modalidade',
   location: 'o local',
+  locationMapUrl: 'o link do mapa',
   onlineUrl: 'o link online',
 };
 
@@ -46,6 +47,7 @@ export class EventsService {
       startAt: new Date(createEventDto.startAt),
       endAt: createEventDto.endAt ? new Date(createEventDto.endAt) : null,
       location: createEventDto.location ?? null,
+      locationMapUrl: createEventDto.locationMapUrl ?? null,
       onlineUrl: createEventDto.onlineUrl ?? null,
       externalUrl: createEventDto.externalUrl ?? null,
       status: EventStatus.PENDING,
@@ -95,13 +97,13 @@ export class EventsService {
   async findForManagement(
     id: Event['id'],
     userId: number,
-    isAdmin: boolean,
+    canManageAny: boolean,
   ): Promise<Event> {
     const event = await this.eventRepository.findById(id);
     if (!event) {
       throw new NotFoundException('Evento não encontrado.');
     }
-    if (event.organizerId !== userId && !isAdmin) {
+    if (event.organizerId !== userId && !canManageAny) {
       throw new ForbiddenException(
         'Você não tem permissão para visualizar este evento.',
       );
@@ -125,13 +127,13 @@ export class EventsService {
     id: Event['id'],
     updateEventDto: UpdateEventDto,
     userId: number,
-    isAdmin: boolean,
+    canManageAny: boolean,
   ) {
     const event = await this.eventRepository.findById(id);
     if (!event) {
       throw new NotFoundException('Evento não encontrado.');
     }
-    if (event.organizerId !== userId && !isAdmin) {
+    if (event.organizerId !== userId && !canManageAny) {
       throw new ForbiddenException(
         'Você não tem permissão para editar este evento.',
       );
@@ -158,6 +160,9 @@ export class EventsService {
       }),
       ...(updateEventDto.location !== undefined && {
         location: updateEventDto.location,
+      }),
+      ...(updateEventDto.locationMapUrl !== undefined && {
+        locationMapUrl: updateEventDto.locationMapUrl,
       }),
       ...(updateEventDto.onlineUrl !== undefined && {
         onlineUrl: updateEventDto.onlineUrl,

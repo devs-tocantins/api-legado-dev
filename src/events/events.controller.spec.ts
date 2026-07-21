@@ -14,6 +14,7 @@ import { FindAllEventsDto } from './dto/find-all-events.dto';
 const mockUserId = 42;
 const mockReq = { user: { id: mockUserId, role: { id: RoleEnum.user } } };
 const mockAdminReq = { user: { id: 1, role: { id: RoleEnum.admin } } };
+const mockModeratorReq = { user: { id: 2, role: { id: RoleEnum.moderator } } };
 
 const mockEvent: Event = {
   id: 'event-uuid-0001',
@@ -171,7 +172,7 @@ describe('EventsController', () => {
   });
 
   describe('findForManagement', () => {
-    it('should return the event for management with isAdmin=false for a regular user', async () => {
+    it('should return the event for management with canManageAny=false for a regular user', async () => {
       const result = await controller.findForManagement(
         mockEvent.id,
         mockReq as any,
@@ -185,12 +186,22 @@ describe('EventsController', () => {
       expect(result).toEqual(mockEvent);
     });
 
-    it('should pass isAdmin=true when the requester is an admin', async () => {
+    it('should pass canManageAny=true when the requester is an admin', async () => {
       await controller.findForManagement(mockEvent.id, mockAdminReq as any);
 
       expect(service.findForManagement).toHaveBeenCalledWith(
         mockEvent.id,
         1,
+        true,
+      );
+    });
+
+    it('should pass canManageAny=true when the requester is a moderator', async () => {
+      await controller.findForManagement(mockEvent.id, mockModeratorReq as any);
+
+      expect(service.findForManagement).toHaveBeenCalledWith(
+        mockEvent.id,
+        2,
         true,
       );
     });
@@ -242,7 +253,7 @@ describe('EventsController', () => {
   });
 
   describe('update', () => {
-    it('should update an event, passing isAdmin=false for a regular user', async () => {
+    it('should update an event, passing canManageAny=false for a regular user', async () => {
       const dto: UpdateEventDto = { title: 'Novo título' };
 
       const result = await controller.update(mockEvent.id, dto, mockReq as any);
@@ -256,12 +267,20 @@ describe('EventsController', () => {
       expect(result).toEqual(mockEvent);
     });
 
-    it('should pass isAdmin=true when the requester is an admin', async () => {
+    it('should pass canManageAny=true when the requester is an admin', async () => {
       const dto: UpdateEventDto = { title: 'Novo título' };
 
       await controller.update(mockEvent.id, dto, mockAdminReq as any);
 
       expect(service.update).toHaveBeenCalledWith(mockEvent.id, dto, 1, true);
+    });
+
+    it('should pass canManageAny=true when the requester is a moderator', async () => {
+      const dto: UpdateEventDto = { title: 'Novo título' };
+
+      await controller.update(mockEvent.id, dto, mockModeratorReq as any);
+
+      expect(service.update).toHaveBeenCalledWith(mockEvent.id, dto, 2, true);
     });
   });
 
@@ -319,6 +338,12 @@ describe('EventsController', () => {
       await controller.cancel(mockEvent.id, mockAdminReq as any);
 
       expect(service.cancel).toHaveBeenCalledWith(mockEvent.id, 1, true);
+    });
+
+    it('should cancel an event as moderator (canManageAny=true)', async () => {
+      await controller.cancel(mockEvent.id, mockModeratorReq as any);
+
+      expect(service.cancel).toHaveBeenCalledWith(mockEvent.id, 2, true);
     });
   });
 });
