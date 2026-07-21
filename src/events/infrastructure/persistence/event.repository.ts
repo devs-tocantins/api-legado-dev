@@ -43,4 +43,11 @@ export abstract class EventRepository {
   ): Promise<Event | null>;
 
   abstract remove(id: Event['id']): Promise<void>;
+
+  /**
+   * Eventos com capa ainda associada cujo término (ou início, se não houver
+   * término) já passou do corte informado — usado pela limpeza agendada de
+   * armazenamento.
+   */
+  abstract findEndedWithCoverImage(cutoff: Date): Promise<Event[]>;
 }

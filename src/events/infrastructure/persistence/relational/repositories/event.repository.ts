@@ -115,4 +115,14 @@ export class EventRelationalRepository implements EventRepository {
   async remove(id: Event['id']): Promise<void> {
     await this.eventRepository.delete(id);
   }
+
+  async findEndedWithCoverImage(cutoff: Date): Promise<Event[]> {
+    const entities = await this.eventRepository
+      .createQueryBuilder('event')
+      .where('event.coverImageId IS NOT NULL')
+      .andWhere('COALESCE(event.endAt, event.startAt) < :cutoff', { cutoff })
+      .getMany();
+
+    return entities.map((entity) => EventMapper.toDomain(entity));
+  }
 }

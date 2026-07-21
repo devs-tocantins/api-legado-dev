@@ -18,6 +18,9 @@ import { EventStatus } from './domain/event-status.enum';
 import { EventsIcsService } from './events-ics.service';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
+import { FilesService } from '../files/files.service';
+
+const COVER_IMAGE_RETENTION_MS = 3 * 24 * 60 * 60 * 1000; // 3 dias após o evento
 
 const NOTIFIABLE_FIELD_LABELS: Record<string, string> = {
   startAt: 'a data/horário de início',
@@ -36,6 +39,7 @@ export class EventsService {
     private readonly eventsIcsService: EventsIcsService,
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
+    private readonly filesService: FilesService,
   ) {}
 
   create(createEventDto: CreateEventDto, organizerId: number) {
@@ -175,7 +179,16 @@ export class EventsService {
       }),
     };
 
+    const oldCoverImageId = event.coverImageId;
     const updatedEvent = await this.eventRepository.update(id, payload);
+
+    if (
+      'coverImageId' in payload &&
+      oldCoverImageId &&
+      oldCoverImageId !== payload.coverImageId
+    ) {
+      await this.filesService.remove(oldCoverImageId);
+    }
 
     if (event.status === EventStatus.APPROVED && updatedEvent) {
       const changedFields = Object.keys(NOTIFIABLE_FIELD_LABELS).filter(
@@ -269,7 +282,10 @@ export class EventsService {
     if (!event) {
       throw new NotFoundException('Evento não encontrado.');
     }
-    return this.eventRepository.remove(id);
+    await this.eventRepository.remove(id);
+    if (event.coverImageId) {
+      await this.filesService.remove(event.coverImageId);
+    }
   }
 
   async generateIcs(id: Event['id'], reminderMinutes: number) {
@@ -323,6 +339,25 @@ export class EventsService {
         }),
       ),
     );
+  }
+
+  /**
+   * Apaga a capa (imagem) de eventos cujo término (ou início, se não houver
+   * término) já passou há mais de 3 dias — libera espaço no storage para
+   * eventos que não vão mais ser exibidos publicamente.
+   */
+  async cleanupEndedCoverImages(): Promise<number> {
+    const cutoff = new Date(Date.now() - COVER_IMAGE_RETENTION_MS);
+    const events = await this.eventRepository.findEndedWithCoverImage(cutoff);
+
+    for (const event of events) {
+      if (event.coverImageId) {
+        await this.filesService.remove(event.coverImageId);
+        await this.eventRepository.update(event.id, { coverImageId: null });
+      }
+    }
+
+    return events.length;
   }
 
   private async getSubscriberEmails(eventId: Event['id']): Promise<string[]> {
