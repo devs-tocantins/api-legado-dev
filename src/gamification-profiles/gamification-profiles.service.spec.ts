@@ -17,6 +17,7 @@ const mockGamificationProfile: GamificationProfile = {
   gratitudeTokens: 0,
   journeyXp: 0,
   isBanned: false,
+  showFullName: false,
   bannerPreset: 'default',
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
@@ -107,6 +108,7 @@ describe('GamificationProfilesService', () => {
         gratitudeTokens: 0,
         journeyXp: 0,
         isBanned: false,
+        showFullName: false,
       });
       expect(result).toEqual(mockGamificationProfile);
     });
@@ -151,6 +153,32 @@ describe('GamificationProfilesService', () => {
         username: 'newhandle',
       });
       expect(result).toEqual(mockGamificationProfile);
+    });
+  });
+
+  describe('updateMyProfile', () => {
+    it('should update showFullName preference when passed', async () => {
+      (repository.findByUserId as jest.Mock).mockResolvedValue(
+        mockGamificationProfile,
+      );
+      (repository.findByUsername as jest.Mock).mockResolvedValue(null);
+
+      await service.updateMyProfile(
+        1,
+        'johndoe',
+        undefined,
+        undefined,
+        undefined,
+        true,
+      );
+
+      expect(repository.update).toHaveBeenCalledWith(
+        mockGamificationProfile.id,
+        {
+          username: 'johndoe',
+          showFullName: true,
+        },
+      );
     });
   });
 
