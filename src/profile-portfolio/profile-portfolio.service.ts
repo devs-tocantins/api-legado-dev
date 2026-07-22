@@ -16,16 +16,14 @@ export class ProfilePortfolioService {
     private readonly learningTracksService: LearningTracksService,
   ) {}
 
-  // Provas reais aprovadas (marcos do tipo PROOF concluídos, via moderação ou
-  // test-out) de um perfil, com título/etapa/trilha já resolvidos — usado pelo
-  // "Portfólio de provas" do perfil público.
+  // Provas reais aprovadas (marcos do tipo PROOF concluídos) de um perfil,
+  // com título/etapa/trilha já resolvidos — usado pelo "Portfólio de provas"
+  // do perfil público.
   async getProofPortfolio(profileId: string): Promise<ProofPortfolioItem[]> {
     const completions =
       await this.trackItemCompletionsService.findByProfileId(profileId);
     const relevant = completions.filter(
-      (c) =>
-        c.status === TrackItemCompletionStatus.COMPLETED ||
-        c.status === TrackItemCompletionStatus.SKIPPED_TESTOUT,
+      (c) => c.status === TrackItemCompletionStatus.COMPLETED,
     );
     if (relevant.length === 0) return [];
 

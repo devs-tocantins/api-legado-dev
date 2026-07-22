@@ -6,6 +6,7 @@ import { BadgeRepository } from './infrastructure/persistence/badge.repository';
 import { GamificationProfileBadgeRepository } from './infrastructure/persistence/gamification-profile-badge.repository';
 import { BadgeCategoryEnum } from './domain/badge-category.enum';
 import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
+import { RankingSnapshotsService } from '../ranking-snapshots/ranking-snapshots.service';
 
 type RankingConfig = {
   type: 'monthly_ranking' | 'annual_ranking';
@@ -22,6 +23,7 @@ export class RankingCronService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly badgeRepository: BadgeRepository,
     private readonly profileBadgeRepository: GamificationProfileBadgeRepository,
+    private readonly rankingSnapshotsService: RankingSnapshotsService,
   ) {}
 
   // Roda às 23:55 do último dia de cada mês
@@ -31,10 +33,18 @@ export class RankingCronService {
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     if (now.getDate() !== lastDay.getDate()) return;
 
-    this.logger.log('Iniciando concessão de badges de ranking mensal...');
-
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
+    const periodKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+
+    this.logger.log('Gerando snapshots de ranking mensal...');
+    try {
+      await this.rankingSnapshotsService.snapshotPeriod('monthly', periodKey);
+    } catch (error) {
+      this.logger.error('Erro ao gerar snapshot de ranking mensal:', error);
+    }
+
+    this.logger.log('Iniciando concessão de badges de ranking mensal...');
 
     const badges = await this.badgeRepository.findAllActive();
     const rankingBadges = badges.filter((b) => {
@@ -88,9 +98,17 @@ export class RankingCronService {
   // Roda às 23:55 do dia 31 de dezembro
   @Cron('55 23 31 12 *')
   async handleAnnualRanking() {
-    this.logger.log('Iniciando concessão de badges de ranking anual...');
-
     const currentYear = new Date().getFullYear();
+    const periodKey = String(currentYear);
+
+    this.logger.log('Gerando snapshots de ranking anual...');
+    try {
+      await this.rankingSnapshotsService.snapshotPeriod('annual', periodKey);
+    } catch (error) {
+      this.logger.error('Erro ao gerar snapshot de ranking anual:', error);
+    }
+
+    this.logger.log('Iniciando concessão de badges de ranking anual...');
 
     const badges = await this.badgeRepository.findAllActive();
     const rankingBadges = badges.filter((b) => {
