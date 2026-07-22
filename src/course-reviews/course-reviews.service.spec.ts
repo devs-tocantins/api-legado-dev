@@ -12,6 +12,7 @@ import { TrackItemCompletionsService } from '../track-item-completions/track-ite
 import { CoursesService } from '../courses/courses.service';
 import { TrackItemType } from '../track-items/domain/track-item-type.enum';
 import { TrackItemStatus } from '../track-items/domain/track-item-status.enum';
+import { TrackItemProofFormat } from '../track-items/domain/track-item-proof-format.enum';
 import { TrackItemCompletionStatus } from '../track-item-completions/domain/track-item-completion-status.enum';
 import { CourseReview } from './domain/course-review';
 import { TrackItem } from '../track-items/domain/track-item';
@@ -59,6 +60,7 @@ const mockCourseCompletionItem: TrackItem = {
   body: null,
   position: 10,
   status: TrackItemStatus.ACTIVE,
+  proofFormat: TrackItemProofFormat.EITHER,
   isOptional: false,
   allowsTestOut: false,
   journeyXp: 20,
