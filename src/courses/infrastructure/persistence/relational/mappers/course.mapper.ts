@@ -6,6 +6,7 @@ export class CourseMapper {
     const domainEntity = new Course();
     domainEntity.id = raw.id;
     domainEntity.title = raw.title;
+    domainEntity.description = raw.description;
     domainEntity.provider = raw.provider;
     domainEntity.url = raw.url;
     domainEntity.isFree = raw.isFree;
@@ -24,6 +25,7 @@ export class CourseMapper {
       persistenceEntity.id = domainEntity.id;
     }
     persistenceEntity.title = domainEntity.title;
+    persistenceEntity.description = domainEntity.description ?? null;
     persistenceEntity.provider = domainEntity.provider;
     persistenceEntity.url = domainEntity.url;
     persistenceEntity.isFree = domainEntity.isFree;

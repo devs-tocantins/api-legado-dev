@@ -9,6 +9,7 @@ import { CourseStatus } from './domain/course-status.enum';
 const mockCourse: Course = {
   id: 'course-1',
   title: 'Curso X',
+  description: 'Descrição do Curso X',
   provider: null,
   url: 'https://example.com',
   isFree: true,
@@ -22,6 +23,14 @@ const mockCourse: Course = {
 
 const mockCourseRepository: Partial<Record<keyof CourseRepository, jest.Mock>> =
   {
+    create: jest.fn().mockImplementation((data) =>
+      Promise.resolve({
+        id: 'course-1',
+        ...data,
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-01'),
+      }),
+    ),
     findById: jest.fn().mockResolvedValue(mockCourse),
     update: jest
       .fn()
@@ -55,10 +64,61 @@ describe('CoursesService', () => {
     service = module.get<CoursesService>(CoursesService);
 
     jest.clearAllMocks();
+    mockCourseRepository.create!.mockImplementation((data) =>
+      Promise.resolve({
+        id: 'course-1',
+        ...data,
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-01'),
+      }),
+    );
     mockCourseRepository.findById!.mockResolvedValue(mockCourse);
     mockCourseRepository.update!.mockImplementation((id, payload) =>
       Promise.resolve({ ...mockCourse, ...payload }),
     );
+  });
+
+  describe('create', () => {
+    it('should create a course with description', async () => {
+      const createDto = {
+        title: 'Curso NestJS',
+        description: 'Descrição completa',
+        url: 'https://example.com/nest',
+        isFree: true,
+      };
+
+      const result = await service.create(createDto);
+
+      expect(mockCourseRepository.create).toHaveBeenCalledWith({
+        title: 'Curso NestJS',
+        description: 'Descrição completa',
+        provider: null,
+        url: 'https://example.com/nest',
+        isFree: true,
+        price: null,
+        language: null,
+        submittedByProfileId: null,
+        status: CourseStatus.PENDING,
+      });
+      expect(result.description).toBe('Descrição completa');
+    });
+
+    it('should default description to null when not provided', async () => {
+      const createDto = {
+        title: 'Curso NestJS',
+        url: 'https://example.com/nest',
+        isFree: true,
+      };
+
+      const result = await service.create(createDto);
+
+      expect(mockCourseRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: null,
+        }),
+      );
+      expect(result.description).toBeNull();
+    });
   });
 
   describe('review', () => {

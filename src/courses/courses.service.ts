@@ -22,6 +22,7 @@ export class CoursesService {
   async create(createCourseDto: CreateCourseDto) {
     const course = await this.courseRepository.create({
       title: createCourseDto.title,
+      description: createCourseDto.description ?? null,
       provider: createCourseDto.provider ?? null,
       url: createCourseDto.url,
       isFree: createCourseDto.isFree,
@@ -119,6 +120,9 @@ export class CoursesService {
     return this.courseRepository.update(id, {
       ...(updateCourseDto.title !== undefined && {
         title: updateCourseDto.title,
+      }),
+      ...(updateCourseDto.description !== undefined && {
+        description: updateCourseDto.description,
       }),
       ...(updateCourseDto.provider !== undefined && {
         provider: updateCourseDto.provider,

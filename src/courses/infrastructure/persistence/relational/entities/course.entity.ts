@@ -21,6 +21,9 @@ export class CourseEntity extends EntityRelationalHelper {
   @Column({ type: 'varchar' })
   title: string;
 
+  @Column({ type: 'text', nullable: true, default: null })
+  description: string | null;
+
   @Column({ type: 'varchar', nullable: true, default: null })
   provider: string | null;
 
