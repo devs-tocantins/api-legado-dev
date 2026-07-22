@@ -81,8 +81,42 @@ describe('GamificationProfileRelationalRepository', () => {
         'u."roleId" != :adminRoleId',
         { adminRoleId: RoleEnum.admin },
       );
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'gp.totalXp',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
+        'gp.gratitudeTokens',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
+        'u.createdAt',
+        'ASC',
+      );
       expect(result).toHaveLength(1);
       expect(result[0].username).toBe('user_regular');
+    });
+
+    it('should apply custom primary sort followed by tie-breaker sorting', async () => {
+      await repository.findAllWithPagination({
+        paginationOptions: { page: 1, limit: 10 },
+        sort: [{ orderBy: 'currentMonthlyXp', order: 'DESC' }],
+      });
+
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'gp.currentMonthlyXp',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenNthCalledWith(
+        1,
+        'gp.gratitudeTokens',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenNthCalledWith(
+        2,
+        'u.createdAt',
+        'ASC',
+      );
     });
   });
 });
