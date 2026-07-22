@@ -15,6 +15,7 @@ export class GamificationProfileSortDto {
       'currentMonthlyXp',
       'currentYearlyXp',
       'gratitudeTokens',
+      'gratitudeTokensReceived',
       'createdAt',
     ],
   })
@@ -24,6 +25,7 @@ export class GamificationProfileSortDto {
     'currentMonthlyXp',
     'currentYearlyXp',
     'gratitudeTokens',
+    'gratitudeTokensReceived',
     'createdAt',
   ])
   orderBy: string;

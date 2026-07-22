@@ -50,6 +50,13 @@ export class GamificationProfile {
 
   @ApiProperty({
     type: Number,
+    description: 'Tokens de gratidão recebidos no total histórico',
+    example: 0,
+  })
+  gratitudeTokensReceived: number;
+
+  @ApiProperty({
+    type: Number,
     description:
       'XP de Jornada (crescimento pessoal via trilhas de aprendizado)',
     example: 0,

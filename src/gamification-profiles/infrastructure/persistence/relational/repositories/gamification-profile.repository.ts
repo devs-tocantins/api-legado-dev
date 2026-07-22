@@ -32,6 +32,7 @@ export class GamificationProfileRelationalRepository
     'currentMonthlyXp',
     'currentYearlyXp',
     'gratitudeTokens',
+    'gratitudeTokensReceived',
     'createdAt',
   ]);
 
@@ -75,7 +76,7 @@ export class GamificationProfileRelationalRepository
       idsQb.orderBy('gp.totalXp', 'DESC');
     }
 
-    idsQb.addOrderBy('gp.gratitudeTokens', 'DESC');
+    idsQb.addOrderBy('gp.gratitudeTokensReceived', 'DESC');
     idsQb.addOrderBy('u.createdAt', 'ASC');
 
     idsQb

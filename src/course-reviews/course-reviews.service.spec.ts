@@ -27,6 +27,7 @@ const mockProfile: GamificationProfile = {
   currentMonthlyXp: 0,
   currentYearlyXp: 0,
   gratitudeTokens: 0,
+  gratitudeTokensReceived: 0,
   journeyXp: 0,
   isBanned: false,
   showFullName: false,
