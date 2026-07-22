@@ -12,6 +12,7 @@ import { TrackItemRepository } from './infrastructure/persistence/track-item.rep
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { TrackItem } from './domain/track-item';
 import { TrackItemStatus } from './domain/track-item-status.enum';
+import { TrackItemProofFormat } from './domain/track-item-proof-format.enum';
 import { TrackItemType } from './domain/track-item-type.enum';
 import { TrackItemCompletionsService } from '../track-item-completions/track-item-completions.service';
 import { TrackItemCompletionStatus } from '../track-item-completions/domain/track-item-completion-status.enum';
@@ -75,6 +76,8 @@ export class TrackItemsService {
       body: createTrackItemDto.body ?? null,
       position: createTrackItemDto.position,
       status: createTrackItemDto.status ?? TrackItemStatus.ACTIVE,
+      proofFormat:
+        createTrackItemDto.proofFormat ?? TrackItemProofFormat.EITHER,
       isOptional: createTrackItemDto.isOptional ?? false,
       allowsTestOut: createTrackItemDto.allowsTestOut ?? false,
       journeyXp: createTrackItemDto.journeyXp ?? 0,
@@ -142,6 +145,9 @@ export class TrackItemsService {
       }),
       ...(updateTrackItemDto.status !== undefined && {
         status: updateTrackItemDto.status,
+      }),
+      ...(updateTrackItemDto.proofFormat !== undefined && {
+        proofFormat: updateTrackItemDto.proofFormat,
       }),
       ...(updateTrackItemDto.isOptional !== undefined && {
         isOptional: updateTrackItemDto.isOptional,

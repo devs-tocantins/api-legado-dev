@@ -20,6 +20,7 @@ import { EffortTier } from '../activities/domain/effort-tier';
 import { TrackItem } from '../track-items/domain/track-item';
 import { TrackItemType } from '../track-items/domain/track-item-type.enum';
 import { TrackItemStatus } from '../track-items/domain/track-item-status.enum';
+import { TrackItemProofFormat } from '../track-items/domain/track-item-proof-format.enum';
 
 const mockProfile: GamificationProfile = {
   id: 'profile-1',
@@ -77,6 +78,7 @@ const mockProofItem: TrackItem = {
   body: null,
   position: 20,
   status: TrackItemStatus.ACTIVE,
+  proofFormat: TrackItemProofFormat.EITHER,
   isOptional: false,
   allowsTestOut: false,
   journeyXp: 40,

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TrackItemType } from './track-item-type.enum';
 import { TrackItemStatus } from './track-item-status.enum';
+import { TrackItemProofFormat } from './track-item-proof-format.enum';
 
 export class TrackItem {
   @ApiProperty({ type: String })
@@ -33,6 +34,9 @@ export class TrackItem {
 
   @ApiProperty({ enum: TrackItemStatus })
   status: TrackItemStatus;
+
+  @ApiProperty({ enum: TrackItemProofFormat })
+  proofFormat: TrackItemProofFormat;
 
   @ApiProperty({ type: Boolean, default: false })
   isOptional: boolean;

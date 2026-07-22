@@ -15,6 +15,7 @@ import { MissionEntity } from '../../../../../missions/infrastructure/persistenc
 import { CourseEntity } from '../../../../../courses/infrastructure/persistence/relational/entities/course.entity';
 import { TrackItemType } from '../../../../domain/track-item-type.enum';
 import { TrackItemStatus } from '../../../../domain/track-item-status.enum';
+import { TrackItemProofFormat } from '../../../../domain/track-item-proof-format.enum';
 
 @Entity({
   name: 'track_item',
@@ -58,6 +59,13 @@ export class TrackItemEntity extends EntityRelationalHelper {
     default: TrackItemStatus.ACTIVE,
   })
   status: TrackItemStatus;
+
+  @Column({
+    type: 'enum',
+    enum: TrackItemProofFormat,
+    default: TrackItemProofFormat.EITHER,
+  })
+  proofFormat: TrackItemProofFormat;
 
   @Column({ type: 'boolean', default: false })
   isOptional: boolean;
