@@ -75,6 +75,9 @@ export class GamificationProfileRelationalRepository
       idsQb.orderBy('gp.totalXp', 'DESC');
     }
 
+    idsQb.addOrderBy('gp.gratitudeTokens', 'DESC');
+    idsQb.addOrderBy('u.createdAt', 'ASC');
+
     idsQb
       .skip((paginationOptions.page - 1) * paginationOptions.limit)
       .take(paginationOptions.limit);
