@@ -15,6 +15,14 @@ export class CreateCourseDto {
   @MaxLength(200)
   title: string;
 
+  @ApiPropertyOptional({
+    example: 'Curso completo cobrindo conceitos fundamentais e práticos.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  description?: string | null;
+
   @ApiPropertyOptional({ example: 'University of Helsinki' })
   @IsOptional()
   @IsString()
