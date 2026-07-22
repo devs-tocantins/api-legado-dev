@@ -300,9 +300,36 @@ describe('SubmissionsService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
+    it('should allow resubmission after test-out (existing SKIPPED_TESTOUT completion), creating a PENDING submission and removing old completion', async () => {
+      mockTrackItemCompletionsService.findByItemAndProfile!.mockResolvedValue({
+        id: 'completion-1',
+        status: TrackItemCompletionStatus.SKIPPED_TESTOUT,
+      });
+
+      await service.create({ trackItemId: 'item-1' }, 1);
+
+      expect(mockTrackItemCompletionsService.remove).toHaveBeenCalledWith(
+        'completion-1',
+      );
+      expect(mockSubmissionRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: SubmissionStatus.PENDING,
+          isTestOut: false,
+        }),
+      );
+      expect(mockTrackItemCompletionsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          itemId: 'item-1',
+          profileId: 'profile-1',
+          status: TrackItemCompletionStatus.IN_REVIEW,
+        }),
+      );
+    });
+
     it('should reject when the item was already completed', async () => {
       mockTrackItemCompletionsService.findByItemAndProfile!.mockResolvedValue({
         id: 'completion-1',
+        status: TrackItemCompletionStatus.COMPLETED,
       });
 
       await expect(
