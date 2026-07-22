@@ -7,6 +7,7 @@ import { GamificationProfile } from '../../../../domain/gamification-profile';
 import { GamificationProfileRepository } from '../../gamification-profile.repository';
 import { GamificationProfileMapper } from '../mappers/gamification-profile.mapper';
 import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { RoleEnum } from '../../../../../roles/roles.enum';
 
 @Injectable()
 export class GamificationProfileRelationalRepository
@@ -31,6 +32,7 @@ export class GamificationProfileRelationalRepository
     'currentMonthlyXp',
     'currentYearlyXp',
     'gratitudeTokens',
+    'gratitudeTokensReceived',
     'createdAt',
   ]);
 
@@ -51,7 +53,8 @@ export class GamificationProfileRelationalRepository
       .createQueryBuilder('gp')
       .select('gp.id', 'id')
       .leftJoin('gp.user', 'u')
-      .where('u.isBanned = false');
+      .where('u.isBanned = false')
+      .andWhere('u."roleId" != :adminRoleId', { adminRoleId: RoleEnum.admin });
 
     if (search) {
       idsQb.andWhere(
@@ -72,6 +75,9 @@ export class GamificationProfileRelationalRepository
     } else {
       idsQb.orderBy('gp.totalXp', 'DESC');
     }
+
+    idsQb.addOrderBy('gp.gratitudeTokensReceived', 'DESC');
+    idsQb.addOrderBy('u.createdAt', 'ASC');
 
     idsQb
       .skip((paginationOptions.page - 1) * paginationOptions.limit)
