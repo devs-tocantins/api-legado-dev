@@ -34,6 +34,9 @@ jobs:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
 
     steps:
       - uses: actions/checkout@v5
@@ -54,12 +57,12 @@ jobs:
       - name: Envia imagem e configuração para a VM
         run: |
           rsync -avP \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=10" \
             app-image.tar.gz docker-compose.prod.yaml ubuntu@136.248.75.34:~/app/
 
       - name: Carrega a imagem e reinicia os containers na VM
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@136.248.75.34 \
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=10 ubuntu@136.248.75.34 \
             "cd ~/app && \
              gunzip -c app-image.tar.gz | sudo docker load && \
              sudo docker compose -f docker-compose.prod.yaml down && \
@@ -70,7 +73,7 @@ jobs:
       - name: Aguarda a API responder
         run: |
           for i in $(seq 1 20); do
-            if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@136.248.75.34 \
+            if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=10 ubuntu@136.248.75.34 \
               "curl -sk https://136.248.75.34.nip.io/healthz | grep -q ok"; then
               echo "API no ar."
               exit 0
