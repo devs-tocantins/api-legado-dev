@@ -6,7 +6,7 @@ import { RankingSnapshotRepository } from '../../ranking-snapshot.repository';
 import { RankingSnapshotMapper } from '../mappers/ranking-snapshot.mapper';
 import { RankingSnapshot } from '../../../../domain/ranking-snapshot';
 import { RankingPeriodType } from '../../../../domain/ranking-period-type.enum';
-import { NullableType } from '../../../../utils/types/nullable.type';
+import { NullableType } from '../../../../../utils/types/nullable.type';
 
 @Injectable()
 export class RankingSnapshotRelationalRepository
