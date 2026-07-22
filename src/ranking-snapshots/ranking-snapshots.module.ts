@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { RelationalRankingSnapshotPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { RankingSnapshotsService } from './ranking-snapshots.service';
 import { RankingSnapshotsController } from './ranking-snapshots.controller';
-import { GamificationProfilesModule } from '../gamification-profiles/gamification-profiles.module';
+import { RelationalGamificationProfilePersistenceModule } from '../gamification-profiles/infrastructure/persistence/relational/relational-persistence.module';
 
 @Module({
   imports: [
     RelationalRankingSnapshotPersistenceModule,
-    GamificationProfilesModule,
+    RelationalGamificationProfilePersistenceModule,
   ],
   controllers: [RankingSnapshotsController],
   providers: [RankingSnapshotsService],
