@@ -109,21 +109,28 @@ export class SubmissionsService {
           profile.id,
         );
       if (existingCompletion) {
-        if (existingCompletion.status !== TrackItemCompletionStatus.IN_REVIEW) {
+        if (
+          existingCompletion.status !== TrackItemCompletionStatus.IN_REVIEW &&
+          existingCompletion.status !==
+            TrackItemCompletionStatus.SKIPPED_TESTOUT
+        ) {
           throw new BadRequestException('Este marco já foi concluído.');
         }
-        const priorSubmission = existingCompletion.submissionId
-          ? await this.submissionRepository.findById(
-              existingCompletion.submissionId,
-            )
-          : null;
-        if (
-          !priorSubmission ||
-          priorSubmission.status === SubmissionStatus.PENDING
-        ) {
-          throw new BadRequestException(
-            'Sua submissão para este marco ainda está em análise.',
-          );
+
+        if (existingCompletion.status === TrackItemCompletionStatus.IN_REVIEW) {
+          const priorSubmission = existingCompletion.submissionId
+            ? await this.submissionRepository.findById(
+                existingCompletion.submissionId,
+              )
+            : null;
+          if (
+            !priorSubmission ||
+            priorSubmission.status === SubmissionStatus.PENDING
+          ) {
+            throw new BadRequestException(
+              'Sua submissão para este marco ainda está em análise.',
+            );
+          }
         }
       }
 

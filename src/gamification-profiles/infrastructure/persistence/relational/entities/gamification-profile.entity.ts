@@ -51,6 +51,9 @@ export class GamificationProfileEntity extends EntityRelationalHelper {
   @Column({ type: 'int', default: 0 })
   journeyXp: number;
 
+  @Column({ type: 'boolean', default: false })
+  showFullName: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 
