@@ -9,6 +9,9 @@ export class Course {
   title: string;
 
   @ApiProperty({ type: String, nullable: true })
+  description?: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
   provider: string | null;
 
   @ApiProperty({ type: String })
