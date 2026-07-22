@@ -49,6 +49,9 @@ export class GamificationProfileEntity extends EntityRelationalHelper {
   gratitudeTokens: number;
 
   @Column({ type: 'int', default: 0 })
+  gratitudeTokensReceived: number;
+
+  @Column({ type: 'int', default: 0 })
   journeyXp: number;
 
   @Column({ type: 'boolean', default: false })

@@ -33,6 +33,7 @@ describe('GamificationProfileRelationalRepository', () => {
           currentMonthlyXp: 50,
           currentYearlyXp: 100,
           gratitudeTokens: 10,
+          gratitudeTokensReceived: 0,
           journeyXp: 0,
           isBanned: false,
           showFullName: false,
@@ -86,7 +87,7 @@ describe('GamificationProfileRelationalRepository', () => {
         'DESC',
       );
       expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
-        'gp.gratitudeTokens',
+        'gp.gratitudeTokensReceived',
         'DESC',
       );
       expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
@@ -109,7 +110,7 @@ describe('GamificationProfileRelationalRepository', () => {
       );
       expect(mockQueryBuilder.addOrderBy).toHaveBeenNthCalledWith(
         1,
-        'gp.gratitudeTokens',
+        'gp.gratitudeTokensReceived',
         'DESC',
       );
       expect(mockQueryBuilder.addOrderBy).toHaveBeenNthCalledWith(
