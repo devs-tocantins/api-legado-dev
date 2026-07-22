@@ -68,9 +68,11 @@ import { ProfilePortfolioModule } from './profile-portfolio/profile-portfolio.mo
 import { LegalDocumentsModule } from './legal-documents/legal-documents.module';
 
 import { TrackSuggestionsModule } from './track-suggestions/track-suggestions.module';
+import { RankingSnapshotsModule } from './ranking-snapshots/ranking-snapshots.module';
 
 @Module({
   imports: [
+    RankingSnapshotsModule,
     TrackSuggestionsModule,
     LegalDocumentsModule,
     TrackItemCompletionsModule,
