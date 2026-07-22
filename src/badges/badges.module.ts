@@ -11,11 +11,13 @@ import { BadgeRepository } from './infrastructure/persistence/badge.repository';
 import { BadgeRelationalRepository } from './infrastructure/persistence/relational/repositories/badge.repository';
 import { GamificationProfileBadgeRepository } from './infrastructure/persistence/gamification-profile-badge.repository';
 import { GamificationProfileBadgeRelationalRepository } from './infrastructure/persistence/relational/repositories/gamification-profile-badge.repository';
+import { RankingSnapshotsModule } from '../ranking-snapshots/ranking-snapshots.module';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([BadgeEntity, GamificationProfileBadgeEntity]),
+    RankingSnapshotsModule,
   ],
   controllers: [BadgesController],
   providers: [

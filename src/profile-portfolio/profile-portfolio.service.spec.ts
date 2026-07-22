@@ -130,9 +130,10 @@ describe('ProfilePortfolioService', () => {
     expect(trackItemsService.findByIds).not.toHaveBeenCalled();
   });
 
-  it('should exclude IN_REVIEW completions and non-PROOF items', async () => {
+  it('should exclude IN_REVIEW and SKIPPED_TESTOUT completions and non-PROOF items', async () => {
     trackItemCompletionsService.findByProfileId!.mockResolvedValue([
       makeCompletion({ status: TrackItemCompletionStatus.IN_REVIEW }),
+      makeCompletion({ status: TrackItemCompletionStatus.SKIPPED_TESTOUT }),
       makeCompletion({ id: 'completion-2', itemId: 'item-2' }),
     ]);
     trackItemsService.findByIds!.mockResolvedValue([
@@ -144,9 +145,9 @@ describe('ProfilePortfolioService', () => {
     expect(result).toEqual([]);
   });
 
-  it('should join completions with item/section/track and mark test-out completions', async () => {
+  it('should join completions with item/section/track', async () => {
     trackItemCompletionsService.findByProfileId!.mockResolvedValue([
-      makeCompletion({ status: TrackItemCompletionStatus.SKIPPED_TESTOUT }),
+      makeCompletion({ status: TrackItemCompletionStatus.COMPLETED }),
     ]);
     trackItemsService.findByIds!.mockResolvedValue([makeItem()]);
     trackSectionsService.findByIds!.mockResolvedValue([mockSection]);
@@ -163,7 +164,7 @@ describe('ProfilePortfolioService', () => {
         trackTier: LearningTrackTier.ALICERCE,
         sectionId: 'section-1',
         sectionTitle: 'Etapa 1',
-        isTestOut: true,
+        isTestOut: false,
         completedAt: new Date('2026-02-01'),
       },
     ]);
