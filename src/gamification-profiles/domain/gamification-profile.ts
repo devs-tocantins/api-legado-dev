@@ -59,6 +59,9 @@ export class GamificationProfile {
   @ApiProperty({ type: Boolean, default: false })
   isBanned: boolean;
 
+  @ApiProperty({ type: Boolean, default: false })
+  showFullName: boolean = false;
+
   @ApiProperty({ type: String, required: false, nullable: true })
   githubUsername?: string | null;
 
