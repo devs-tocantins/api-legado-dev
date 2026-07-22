@@ -1,5 +1,6 @@
 import { TrackItem } from '../../../../domain/track-item';
 import { TrackItemEntity } from '../entities/track-item.entity';
+import { TrackItemProofFormat } from '../../../../domain/track-item-proof-format.enum';
 
 export class TrackItemMapper {
   static toDomain(raw: TrackItemEntity): TrackItem {
@@ -12,6 +13,7 @@ export class TrackItemMapper {
     domainEntity.body = raw.body;
     domainEntity.position = raw.position;
     domainEntity.status = raw.status;
+    domainEntity.proofFormat = raw.proofFormat ?? TrackItemProofFormat.EITHER;
     domainEntity.isOptional = raw.isOptional;
     domainEntity.allowsTestOut = raw.allowsTestOut;
     domainEntity.journeyXp = raw.journeyXp;
@@ -38,6 +40,8 @@ export class TrackItemMapper {
     persistenceEntity.body = domainEntity.body;
     persistenceEntity.position = domainEntity.position;
     persistenceEntity.status = domainEntity.status;
+    persistenceEntity.proofFormat =
+      domainEntity.proofFormat ?? TrackItemProofFormat.EITHER;
     persistenceEntity.isOptional = domainEntity.isOptional;
     persistenceEntity.allowsTestOut = domainEntity.allowsTestOut;
     persistenceEntity.journeyXp = domainEntity.journeyXp;

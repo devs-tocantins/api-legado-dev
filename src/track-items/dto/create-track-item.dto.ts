@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { TrackItemType } from '../domain/track-item-type.enum';
 import { TrackItemStatus } from '../domain/track-item-status.enum';
+import { TrackItemProofFormat } from '../domain/track-item-proof-format.enum';
 
 export class CreateTrackItemDto {
   @ApiProperty()
@@ -45,6 +46,11 @@ export class CreateTrackItemDto {
   @IsOptional()
   @IsEnum(TrackItemStatus)
   status?: TrackItemStatus;
+
+  @ApiPropertyOptional({ enum: TrackItemProofFormat })
+  @IsOptional()
+  @IsEnum(TrackItemProofFormat)
+  proofFormat?: TrackItemProofFormat;
 
   @ApiPropertyOptional({ default: false })
   @IsOptional()

@@ -11,6 +11,7 @@ import { ActivitiesService } from '../activities/activities.service';
 import { TrackItem } from './domain/track-item';
 import { TrackItemType } from './domain/track-item-type.enum';
 import { TrackItemStatus } from './domain/track-item-status.enum';
+import { TrackItemProofFormat } from './domain/track-item-proof-format.enum';
 import { TrackSection } from '../track-sections/domain/track-section';
 import { TrackSectionStatus } from '../track-sections/domain/track-section-status.enum';
 import { TrackItemCompletionStatus } from '../track-item-completions/domain/track-item-completion-status.enum';
@@ -26,6 +27,7 @@ function makeItem(overrides: Partial<TrackItem> = {}): TrackItem {
     body: null,
     position: 10,
     status: TrackItemStatus.ACTIVE,
+    proofFormat: TrackItemProofFormat.EITHER,
     isOptional: false,
     allowsTestOut: false,
     journeyXp: 10,

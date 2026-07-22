@@ -8,6 +8,7 @@ import { TrackItemCompletionStatus } from '../track-item-completions/domain/trac
 import { TrackItem } from '../track-items/domain/track-item';
 import { TrackItemType } from '../track-items/domain/track-item-type.enum';
 import { TrackItemStatus } from '../track-items/domain/track-item-status.enum';
+import { TrackItemProofFormat } from '../track-items/domain/track-item-proof-format.enum';
 import { TrackSection } from '../track-sections/domain/track-section';
 import { TrackSectionStatus } from '../track-sections/domain/track-section-status.enum';
 import { LearningTrack } from '../learning-tracks/domain/learning-track';
@@ -25,6 +26,7 @@ function makeItem(overrides: Partial<TrackItem> = {}): TrackItem {
     body: null,
     position: 10,
     status: TrackItemStatus.ACTIVE,
+    proofFormat: TrackItemProofFormat.EITHER,
     isOptional: false,
     allowsTestOut: false,
     journeyXp: 10,
