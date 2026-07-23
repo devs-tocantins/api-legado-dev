@@ -6,6 +6,7 @@ import {
 import { UsersController } from './users.controller';
 
 import { UsersService } from './users.service';
+import { UsersCronService } from './users-cron.service';
 import { RelationalUserPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { FilesModule } from '../files/files.module';
 
@@ -18,7 +19,7 @@ const infrastructurePersistenceModule = RelationalUserPersistenceModule;
     FilesModule,
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, UsersCronService],
   exports: [UsersService, infrastructurePersistenceModule],
 })
 export class UsersModule {}

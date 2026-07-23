@@ -8,6 +8,7 @@ import { GamificationProfileRepository } from '../../gamification-profile.reposi
 import { GamificationProfileMapper } from '../mappers/gamification-profile.mapper';
 import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
 import { RoleEnum } from '../../../../../roles/roles.enum';
+import { StatusEnum } from '../../../../../statuses/statuses.enum';
 
 @Injectable()
 export class GamificationProfileRelationalRepository
@@ -54,6 +55,9 @@ export class GamificationProfileRelationalRepository
       .select('gp.id', 'id')
       .leftJoin('gp.user', 'u')
       .where('u.isBanned = false')
+      .andWhere('u."statusId" = :activeStatusId', {
+        activeStatusId: StatusEnum.active,
+      })
       .andWhere('u."roleId" != :adminRoleId', { adminRoleId: RoleEnum.admin });
 
     if (search) {
