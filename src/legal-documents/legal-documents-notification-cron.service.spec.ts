@@ -15,8 +15,15 @@ describe('LegalDocumentsNotificationCronService', () => {
   >;
   let mockMailService: Partial<Record<keyof MailService, jest.Mock>>;
 
+  const mockQueryRunner = {
+    connect: jest.fn().mockResolvedValue(undefined),
+    query: jest.fn().mockResolvedValue([{ locked: true }]),
+    release: jest.fn().mockResolvedValue(undefined),
+  };
+
   const mockDataSource = {
     getRepository: jest.fn(),
+    createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
   };
 
   beforeEach(async () => {
