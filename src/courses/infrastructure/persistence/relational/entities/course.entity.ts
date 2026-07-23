@@ -61,4 +61,16 @@ export class CourseEntity extends EntityRelationalHelper {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({
+    type: 'numeric',
+    precision: 3,
+    scale: 2,
+    nullable: true,
+    default: null,
+  })
+  averageRating: number | null;
+
+  @Column({ type: 'int', nullable: true, default: null })
+  totalReviews: number | null;
 }

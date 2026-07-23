@@ -88,7 +88,12 @@ const mockReview: CourseReview = {
 const mockRepository: Partial<Record<keyof CourseReviewRepository, jest.Mock>> =
   {
     create: jest.fn().mockResolvedValue(mockReview),
+    findAllWithPagination: jest.fn(),
+    findById: jest.fn(),
     findByCourseId: jest.fn().mockResolvedValue([mockReview]),
+    findByCourseAndProfileId: jest.fn().mockResolvedValue(null),
+    update: jest.fn(),
+    remove: jest.fn(),
   };
 
 const mockGamificationProfilesService: Partial<
@@ -130,6 +135,13 @@ const mockEntityManager = {
     return Promise.resolve({ ...mockReview });
   }),
   increment: jest.fn().mockResolvedValue(undefined),
+  update: jest.fn().mockResolvedValue(undefined),
+  createQueryBuilder: jest.fn().mockReturnValue({
+    select: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn().mockResolvedValue({ avg: '4.50', count: '1' }),
+  }),
 };
 
 const mockQueryRunner = {

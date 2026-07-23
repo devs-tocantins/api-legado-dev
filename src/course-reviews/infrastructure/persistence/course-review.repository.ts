@@ -24,6 +24,11 @@ export abstract class CourseReviewRepository {
     courseId: CourseReview['courseId'],
   ): Promise<CourseReview[]>;
 
+  abstract findByCourseAndProfileId(
+    courseId: string,
+    profileId: string,
+  ): Promise<NullableType<CourseReview>>;
+
   abstract update(
     id: CourseReview['id'],
     payload: DeepPartial<CourseReview>,
