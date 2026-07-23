@@ -18,6 +18,7 @@ import { FileType } from '../files/domain/file';
 import { Role } from '../roles/domain/role';
 import { Status } from '../statuses/domain/status';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CURRENT_LEGAL_DOCUMENTS_VERSION } from '../legal-documents/legal-documents.constants';
 
 @Injectable()
 export class UsersService {
@@ -126,6 +127,7 @@ export class UsersService {
       provider: createUserDto.provider ?? AuthProvidersEnum.email,
       socialId: createUserDto.socialId,
       isBanned: false,
+      lastNotifiedLegalVersion: CURRENT_LEGAL_DOCUMENTS_VERSION,
     });
   }
 
