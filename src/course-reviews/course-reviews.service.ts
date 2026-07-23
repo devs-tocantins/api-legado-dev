@@ -20,6 +20,7 @@ import { TransactionEntity } from '../transactions/infrastructure/persistence/re
 import { TransactionCategoryEnum } from '../transactions/domain/transaction-category.enum';
 import { CourseReviewEntity } from './infrastructure/persistence/relational/entities/course-review.entity';
 import { CourseReviewMapper } from './infrastructure/persistence/relational/mappers/course-review.mapper';
+import { CourseEntity } from '../courses/infrastructure/persistence/relational/entities/course.entity';
 
 const COURSE_REVIEW_XP_REWARD = 10;
 
@@ -84,6 +85,16 @@ export class CourseReviewsService {
       profile.id,
     );
 
+    const existingReview =
+      await this.courseReviewRepository.findByCourseAndProfileId(
+        createCourseReviewDto.courseId,
+        profile.id,
+      );
+
+    if (existingReview) {
+      throw new UnprocessableEntityException('Você já avaliou este curso.');
+    }
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -125,6 +136,21 @@ export class CourseReviewsService {
         description: `Avaliação de curso: ${course.title}`,
       });
 
+      const { avg, count } = await queryRunner.manager
+        .createQueryBuilder(CourseReviewEntity, 'review')
+        .select('AVG(review.rating)', 'avg')
+        .addSelect('COUNT(review.id)', 'count')
+        .where('review.courseId = :courseId', { courseId: course.id })
+        .getRawOne();
+
+      const newAverage = avg !== null ? Number(avg) : null;
+      const newTotal = count !== null ? Number(count) : 0;
+
+      await queryRunner.manager.update(CourseEntity, course.id, {
+        averageRating: newAverage,
+        totalReviews: newTotal,
+      });
+
       await queryRunner.commitTransaction();
 
       return CourseReviewMapper.toDomain(savedEntity);
@@ -151,6 +177,19 @@ export class CourseReviewsService {
 
   findByCourseId(courseId: CourseReview['courseId']) {
     return this.courseReviewRepository.findByCourseId(courseId);
+  }
+
+  async findByCourseAndUser(courseId: string, userId: number) {
+    const profile = await this.gamificationProfilesService.findByUserId(userId);
+    if (!profile) {
+      throw new UnprocessableEntityException(
+        'Perfil de gamificação não encontrado.',
+      );
+    }
+    return this.courseReviewRepository.findByCourseAndProfileId(
+      courseId,
+      profile.id,
+    );
   }
 
   findById(id: CourseReview['id']) {

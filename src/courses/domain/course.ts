@@ -37,4 +37,10 @@ export class Course {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiProperty({ type: Number, nullable: true })
+  averageRating?: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  totalReviews?: number | null;
 }
