@@ -1,5 +1,6 @@
 import { CourseReview } from '../../../../domain/course-review';
 import { CourseReviewEntity } from '../entities/course-review.entity';
+import { UserMapper } from '../../../../../users/infrastructure/persistence/relational/mappers/user.mapper';
 
 export class CourseReviewMapper {
   static toDomain(raw: CourseReviewEntity): CourseReview {
@@ -12,6 +13,9 @@ export class CourseReviewMapper {
     domainEntity.provenCompletion = raw.provenCompletion;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
+    if (raw.profile?.user) {
+      domainEntity.user = UserMapper.toDomain(raw.profile.user);
+    }
     return domainEntity;
   }
 

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { User } from '../../users/domain/user';
 
 export class CourseReview {
   @ApiProperty({ type: String })
@@ -27,4 +28,7 @@ export class CourseReview {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiProperty({ type: () => User, nullable: true })
+  user?: User | null;
 }
