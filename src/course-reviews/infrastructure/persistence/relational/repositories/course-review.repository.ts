@@ -59,6 +59,8 @@ export class CourseReviewRelationalRepository
   ): Promise<CourseReview[]> {
     const entities = await this.courseReviewRepository.find({
       where: { courseId },
+      relations: ['profile', 'profile.user', 'profile.user.photo'],
+      order: { createdAt: 'DESC' },
     });
 
     return entities.map((entity) => CourseReviewMapper.toDomain(entity));

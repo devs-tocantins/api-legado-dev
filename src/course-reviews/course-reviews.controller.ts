@@ -8,9 +8,11 @@ import {
   Request,
   UseGuards,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { CourseReviewsService } from './course-reviews.service';
 import { CreateCourseReviewDto } from './dto/create-course-review.dto';
+import { UpdateCourseReviewDto } from './dto/update-course-review.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -114,7 +116,28 @@ export class CourseReviewsController {
     type: String,
     required: true,
   })
-  remove(@Param('id') id: string) {
-    return this.courseReviewsService.remove(id);
+  remove(@Param('id') id: string, @Request() req) {
+    return this.courseReviewsService.remove(id, req.user);
+  }
+
+  @Patch(':id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: CourseReview,
+  })
+  update(
+    @Param('id') id: string,
+    @Body() updateCourseReviewDto: UpdateCourseReviewDto,
+    @Request() req,
+  ) {
+    return this.courseReviewsService.update(
+      id,
+      updateCourseReviewDto,
+      req.user,
+    );
   }
 }

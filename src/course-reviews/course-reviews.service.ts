@@ -2,10 +2,13 @@ import {
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
+  ForbiddenException,
 } from '@nestjs/common';
+import { RoleEnum } from '../roles/roles.enum';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { CreateCourseReviewDto } from './dto/create-course-review.dto';
+import { UpdateCourseReviewDto } from './dto/update-course-review.dto';
 import { CourseReviewRepository } from './infrastructure/persistence/course-review.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { CourseReview } from './domain/course-review';
@@ -200,7 +203,146 @@ export class CourseReviewsService {
     return this.courseReviewRepository.findByIds(ids);
   }
 
-  remove(id: CourseReview['id']) {
-    return this.courseReviewRepository.remove(id);
+  async update(
+    id: CourseReview['id'],
+    updateDto: UpdateCourseReviewDto,
+    user: any,
+  ) {
+    const review = await this.courseReviewRepository.findById(id);
+    if (!review) {
+      throw new NotFoundException('Avaliação não encontrada.');
+    }
+
+    const profile = await this.gamificationProfilesService.findByUserId(
+      user.id,
+    );
+    const isOwner = profile && profile.id === review.profileId;
+    const isAdminOrMod =
+      user.role?.id === RoleEnum.admin || user.role?.id === RoleEnum.moderator;
+
+    if (!isOwner && !isAdminOrMod) {
+      throw new ForbiddenException('Sem permissão para editar esta avaliação.');
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      if (updateDto.rating !== undefined) {
+        review.rating = updateDto.rating;
+      }
+      if (updateDto.comment !== undefined) {
+        review.comment = updateDto.comment;
+      }
+
+      await queryRunner.manager.save(
+        CourseReviewEntity,
+        CourseReviewMapper.toPersistence(review),
+      );
+
+      if (updateDto.rating !== undefined) {
+        const { avg, count } = await queryRunner.manager
+          .createQueryBuilder(CourseReviewEntity, 'review')
+          .select('AVG(review.rating)', 'avg')
+          .addSelect('COUNT(review.id)', 'count')
+          .where('review.courseId = :courseId', { courseId: review.courseId })
+          .getRawOne();
+
+        const newAverage = avg !== null ? Number(avg) : null;
+        const newTotal = count !== null ? Number(count) : 0;
+
+        await queryRunner.manager.update(CourseEntity, review.courseId, {
+          averageRating: newAverage,
+          totalReviews: newTotal,
+        });
+      }
+
+      await queryRunner.commitTransaction();
+      return review;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async remove(id: CourseReview['id'], user: any) {
+    const review = await this.courseReviewRepository.findById(id);
+    if (!review) {
+      throw new NotFoundException('Avaliação não encontrada.');
+    }
+
+    const profile = await this.gamificationProfilesService.findByUserId(
+      user.id,
+    );
+    const isOwner = profile && profile.id === review.profileId;
+    const isAdminOrMod =
+      user.role?.id === RoleEnum.admin || user.role?.id === RoleEnum.moderator;
+
+    if (!isOwner && !isAdminOrMod) {
+      throw new ForbiddenException(
+        'Sem permissão para remover esta avaliação.',
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      await queryRunner.manager.delete(CourseReviewEntity, review.id);
+
+      if (review.profileId) {
+        await queryRunner.manager.decrement(
+          GamificationProfileEntity,
+          { id: review.profileId },
+          'totalXp',
+          COURSE_REVIEW_XP_REWARD,
+        );
+        await queryRunner.manager.decrement(
+          GamificationProfileEntity,
+          { id: review.profileId },
+          'currentMonthlyXp',
+          COURSE_REVIEW_XP_REWARD,
+        );
+        await queryRunner.manager.decrement(
+          GamificationProfileEntity,
+          { id: review.profileId },
+          'currentYearlyXp',
+          COURSE_REVIEW_XP_REWARD,
+        );
+
+        await queryRunner.manager.save(TransactionEntity, {
+          profile: { id: review.profileId },
+          category: TransactionCategoryEnum.XP_REWARD,
+          amount: -COURSE_REVIEW_XP_REWARD,
+          description: `Remoção de avaliação de curso`,
+        });
+      }
+
+      const { avg, count } = await queryRunner.manager
+        .createQueryBuilder(CourseReviewEntity, 'review')
+        .select('AVG(review.rating)', 'avg')
+        .addSelect('COUNT(review.id)', 'count')
+        .where('review.courseId = :courseId', { courseId: review.courseId })
+        .getRawOne();
+
+      const newAverage = avg !== null ? Number(avg) : null;
+      const newTotal = count !== null ? Number(count) : 0;
+
+      await queryRunner.manager.update(CourseEntity, review.courseId, {
+        averageRating: newAverage,
+        totalReviews: newTotal,
+      });
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }
