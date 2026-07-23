@@ -16,6 +16,10 @@ export class CourseMapper {
     domainEntity.status = raw.status;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
+    domainEntity.averageRating = raw.averageRating
+      ? Number(raw.averageRating)
+      : null;
+    domainEntity.totalReviews = raw.totalReviews;
     return domainEntity;
   }
 
@@ -35,6 +39,8 @@ export class CourseMapper {
     persistenceEntity.status = domainEntity.status;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
+    persistenceEntity.averageRating = domainEntity.averageRating ?? null;
+    persistenceEntity.totalReviews = domainEntity.totalReviews ?? null;
     return persistenceEntity;
   }
 }

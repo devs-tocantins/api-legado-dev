@@ -82,6 +82,19 @@ export class CourseReviewsController {
     return this.courseReviewsService.findByCourseId(courseId);
   }
 
+  @Get('my-review/:courseId')
+  @ApiParam({
+    name: 'courseId',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: CourseReview,
+  })
+  findMyReviewByCourseId(@Param('courseId') courseId: string, @Request() req) {
+    return this.courseReviewsService.findByCourseAndUser(courseId, req.user.id);
+  }
+
   @Get(':id')
   @ApiParam({
     name: 'id',
