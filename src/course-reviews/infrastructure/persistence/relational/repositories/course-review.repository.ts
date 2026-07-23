@@ -64,6 +64,16 @@ export class CourseReviewRelationalRepository
     return entities.map((entity) => CourseReviewMapper.toDomain(entity));
   }
 
+  async findByCourseAndProfileId(
+    courseId: string,
+    profileId: string,
+  ): Promise<NullableType<CourseReview>> {
+    const entity = await this.courseReviewRepository.findOne({
+      where: { courseId, profileId },
+    });
+    return entity ? CourseReviewMapper.toDomain(entity) : null;
+  }
+
   async update(
     id: CourseReview['id'],
     payload: Partial<CourseReview>,
