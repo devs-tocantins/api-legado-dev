@@ -75,7 +75,7 @@ erDiagram
         boolean requiresProof "Se exige proofUrl na submissao"
         boolean requiresDescription "Se exige descricao na submissao"
         int cooldownHours "Anti-farming"
-        enum effortTier "Nullable - SMALL, MEDIUM, LARGE"
+        json effortTiers "Nullable - array de {level: P|M|G|EPICO, label, example, xp}"
         boolean isFreeform "Default: false"
         datetime createdAt
         datetime updatedAt
@@ -395,7 +395,7 @@ Atividades pré-mapeadas disponíveis para submissão.
 - `requiresProof` (Boolean) — se exige proofUrl na submissão
 - `requiresDescription` (Boolean) — se exige descrição textual na submissão
 - `cooldownHours` (Int) — sistema anti-farming; bloqueia nova submissão da mesma atividade pelo mesmo perfil
-- `effortTier` (Enum, Nullable) — `SMALL`, `MEDIUM`, `LARGE`; categoriza o esforço da atividade
+- `effortTiers` (JSON, Nullable) — array de faixas de esforço `{ level: 'P'|'M'|'G'|'EPICO', label, example, xp }`; se `null`, a atividade usa XP fixo (`fixedReward`)
 - `isFreeform` (Boolean) — se `true`, é a atividade genérica de formato livre
 
 ---
