@@ -6,6 +6,11 @@ import { TrackItemType } from '../track-items/domain/track-item-type.enum';
 import { TrackSectionsService } from '../track-sections/track-sections.service';
 import { LearningTracksService } from '../learning-tracks/learning-tracks.service';
 import { ProofPortfolioItem } from './domain/proof-portfolio-item';
+import { ModerationHistoryItem } from './domain/moderation-history-item';
+import { DataSource } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { TransactionEntity } from '../transactions/infrastructure/persistence/relational/entities/transaction.entity';
+import { TransactionCategoryEnum } from '../transactions/domain/transaction-category.enum';
 
 @Injectable()
 export class ProfilePortfolioService {
@@ -14,6 +19,7 @@ export class ProfilePortfolioService {
     private readonly trackItemsService: TrackItemsService,
     private readonly trackSectionsService: TrackSectionsService,
     private readonly learningTracksService: LearningTracksService,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   // Provas reais aprovadas (marcos do tipo PROOF concluídos) de um perfil,
@@ -69,5 +75,26 @@ export class ProfilePortfolioService {
     return portfolio.sort(
       (a, b) => b.completedAt.getTime() - a.completedAt.getTime(),
     );
+  }
+
+  async getModerationHistory(
+    profileId: string,
+  ): Promise<ModerationHistoryItem[]> {
+    const transactions = await this.dataSource
+      .getRepository(TransactionEntity)
+      .find({
+        where: {
+          profile: { id: profileId },
+          category: TransactionCategoryEnum.AUDITOR_REWARD,
+        },
+        order: { createdAt: 'DESC' },
+      });
+
+    return transactions.map((t) => ({
+      id: t.id,
+      amount: t.amount,
+      description: t.description ?? '',
+      createdAt: t.createdAt,
+    }));
   }
 }

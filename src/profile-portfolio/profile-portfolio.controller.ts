@@ -2,6 +2,7 @@ import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ProfilePortfolioService } from './profile-portfolio.service';
 import { ProofPortfolioItem } from './domain/proof-portfolio-item';
+import { ModerationHistoryItem } from './domain/moderation-history-item';
 
 @ApiTags('Profileportfolio')
 @Controller({
@@ -21,5 +22,15 @@ export class ProfilePortfolioController {
     @Param('profileId') profileId: string,
   ): Promise<ProofPortfolioItem[]> {
     return this.profilePortfolioService.getProofPortfolio(profileId);
+  }
+
+  // Histórico de moderação (AUDITOR_REWARD)
+  @Get(':profileId/moderation-history')
+  @ApiParam({ name: 'profileId', type: String })
+  @ApiOkResponse({ type: [ModerationHistoryItem] })
+  getModerationHistory(
+    @Param('profileId') profileId: string,
+  ): Promise<ModerationHistoryItem[]> {
+    return this.profilePortfolioService.getModerationHistory(profileId);
   }
 }

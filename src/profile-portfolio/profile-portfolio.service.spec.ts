@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getDataSourceToken } from '@nestjs/typeorm';
 import { ProfilePortfolioService } from './profile-portfolio.service';
 import { TrackItemCompletionsService } from '../track-item-completions/track-item-completions.service';
 import { TrackItemsService } from '../track-items/track-items.service';
@@ -113,6 +114,21 @@ describe('ProfilePortfolioService', () => {
         { provide: TrackItemsService, useValue: trackItemsService },
         { provide: TrackSectionsService, useValue: trackSectionsService },
         { provide: LearningTracksService, useValue: learningTracksService },
+        {
+          provide: getDataSourceToken(),
+          useValue: {
+            getRepository: jest.fn().mockReturnValue({
+              find: jest.fn().mockResolvedValue([
+                {
+                  id: 'tx-1',
+                  amount: 3,
+                  description: 'Revisão de submissão: Atividade 1',
+                  createdAt: new Date('2026-01-01'),
+                },
+              ]),
+            }),
+          },
+        },
       ],
     }).compile();
 
@@ -195,5 +211,19 @@ describe('ProfilePortfolioService', () => {
     const result = await service.getProofPortfolio('profile-1');
 
     expect(result.map((r) => r.itemId)).toEqual(['item-2', 'item-1']);
+  });
+
+  describe('getModerationHistory', () => {
+    it('should return the mapped transactions', async () => {
+      const result = await service.getModerationHistory('profile-1');
+      expect(result).toEqual([
+        {
+          id: 'tx-1',
+          amount: 3,
+          description: 'Revisão de submissão: Atividade 1',
+          createdAt: new Date('2026-01-01'),
+        },
+      ]);
+    });
   });
 });
