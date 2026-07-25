@@ -101,8 +101,7 @@ erDiagram
         uuid id PK
         uuid profileId FK
         int amount "Positivo ou negativo"
-        enum type "SUBMISSION_APPROVED | GRATITUDE_RECEIVED | GRATITUDE_SENT | AUDIT_REWARD | PENALTY | MONTHLY_RESET | MISSION_WON"
-        uuid referenceId "Nullable - ID polimorfico"
+        enum category "XP_REWARD | TOKEN_REWARD | TOKEN_TRANSFER | AUDITOR_REWARD | PENALTY | MANUAL_ADJUSTMENT | STORE_PURCHASE"
         string description "Nullable - motivo legivel"
         datetime createdAt
     }
@@ -407,7 +406,7 @@ Quando o usuário executa uma `Activity` e solicita reconhecimento.
 - `awardedXp` (Int) — XP concedido (geralmente herda de `Activity.fixedReward`, mas o moderador pode sobrescrever)
 - `reviewerId` (Int, FK -> User) — ID do moderador que revisou
 - `trackItemId` (UUID, FK -> TrackItem, Nullable) — quando a submissão é feita no contexto de um marco de trilha
-- Ao **aprovar**: gera `Transaction(SUBMISSION_APPROVED)` para o submitter, credita XP no perfil, gera `Transaction(AUDIT_REWARD)` para o moderador (+10 XP)
+- Ao **aprovar**: gera `Transaction(XP_REWARD)` para o submitter, credita XP no perfil, gera `Transaction(AUDITOR_REWARD)` para o moderador
 
 ---
 
@@ -415,15 +414,15 @@ Quando o usuário executa uma `Activity` e solicita reconhecimento.
 Motor financeiro dos pontos. Toda mutação no perfil gera uma Transaction.
 
 - `amount` (Int) — positivo (crédito) ou negativo (débito)
-- `type` (Enum):
-  - `SUBMISSION_APPROVED` — XP de atividade aprovada
-  - `GRATITUDE_RECEIVED` — tokens recebidos de outro membro (+1 XP por token recebido, afeta `currentMonthlyXp` e `totalXp`)
-  - `GRATITUDE_SENT` — débito no `gratitudeTokens` do remetente (não afeta XP)
-  - `AUDIT_REWARD` — +10 XP ganho pelo moderador ao revisar submissão
+- `category` (Enum `TransactionCategoryEnum`):
+  - `XP_REWARD` — XP de atividade/curso aprovado
+  - `TOKEN_REWARD` — XP ganho ao receber tokens de gratidão de outro membro
+  - `TOKEN_TRANSFER` — débito/crédito de `gratitudeTokens` na transferência entre membros
+  - `AUDITOR_REWARD` — XP ganho pelo moderador ao revisar uma submissão
   - `PENALTY` — XP deduzido pelo admin via modal de penalidade
-  - `MONTHLY_RESET` — log do reset mensal de tokens/XP mensal (via cron)
-  - `MISSION_WON` — XP de missão vencida
-- `referenceId` (UUID, Nullable) — chave polimórfica apontando para a entidade de origem (Submission, Transaction da contraparte, etc.)
+  - `MANUAL_ADJUSTMENT` — ajuste manual de XP/tokens pelo admin
+  - `STORE_PURCHASE` — reservado para uma futura loja de resgate de tokens (categoria existe no enum, sem uso ativo hoje)
+- `description` (String, Nullable) — motivo legível da transação
 
 ---
 
@@ -458,7 +457,7 @@ Desafio com recompensa de alto valor e vencedor único.
 - `status` (Enum): `OPEN` (aceitando submissões) | `CLOSED` (encerrada)
 - `winnerId` (UUID, Nullable) — profileId do vencedor; preenchido ao aprovar uma submissão
 - `isSecret` (Boolean) — se `true`, não aparece em `GET /missions`
-- Ao **aprovar** uma submissão: define `winnerId`, seta `status: CLOSED`, gera `Transaction(MISSION_WON)`, rejeita automaticamente todas as outras submissões pendentes da missão
+- Ao **aprovar** uma submissão: define `winnerId`, seta `status: CLOSED`, credita `xpReward` diretamente em `totalXp`/`currentMonthlyXp` do vencedor (sem gerar registro em `Transaction`), dispara `Notification(MISSION_WON)`, e rejeita automaticamente todas as outras submissões pendentes da missão
 
 ---
 
@@ -467,7 +466,7 @@ Análoga à `Submission`, mas vinculada a uma `Mission` em vez de uma `Activity`
 
 - `description` (String, Nullable) — markdown sanitizado, max 2000 chars
 - `awardedXp` (Int) — herda de `Mission.xpReward` ao aprovar
-- Ao aprovar: gera `Transaction(MISSION_WON)` para o vencedor com o XP da missão
+- Ao aprovar: credita o XP da missão diretamente no perfil do vencedor e dispara `Notification(MISSION_WON)` (sem registro em `Transaction`)
 
 ---
 
