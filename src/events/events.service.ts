@@ -1,8 +1,10 @@
 import {
   BadRequestException,
   ForbiddenException,
+  HttpStatus,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -42,7 +44,20 @@ export class EventsService {
     private readonly filesService: FilesService,
   ) {}
 
-  create(createEventDto: CreateEventDto, organizerId: number) {
+  private validateStartAtNotInPast(startAt?: string) {
+    if (startAt && new Date(startAt).getTime() < Date.now()) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          startAt: 'A data do evento não pode ser no passado.',
+        },
+      });
+    }
+  }
+
+  async create(createEventDto: CreateEventDto, organizerId: number) {
+    this.validateStartAtNotInPast(createEventDto.startAt);
+
     return this.eventRepository.create({
       title: createEventDto.title,
       description: createEventDto.description,
@@ -141,6 +156,10 @@ export class EventsService {
       throw new ForbiddenException(
         'Você não tem permissão para editar este evento.',
       );
+    }
+
+    if (updateEventDto.startAt !== undefined) {
+      this.validateStartAtNotInPast(updateEventDto.startAt);
     }
 
     const payload = {

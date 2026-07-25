@@ -55,7 +55,7 @@ export class CreateSubmissionDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(1000)
+  @MaxLength(2000)
   @Transform(({ value }) => value?.trim() ?? null)
   description?: string | null;
 
