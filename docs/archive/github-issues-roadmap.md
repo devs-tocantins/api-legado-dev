@@ -1,3 +1,5 @@
+> **📦 Arquivado em 2026-07-25 — este documento reflete uma fase de planejamento já superada e não deve ser tratado como referência do estado atual do sistema.**
+
 # Roadmap de Issues (GitHub) - Motor de Engajamento
 
 Este documento lista as *Issues* estruturadas para coordenar o desenvolvimento do projeto através da comunidade Open Source.

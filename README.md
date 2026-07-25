@@ -28,7 +28,7 @@ Familiarize-se com a estrutura do sistema visitando a nossa **Pasta Oficial de D
 * [Design da API Base](docs/api-design.md)
 * [Modelagem de Dados (Banco Relacional)](docs/data-model.md)
 * [Autenticação e Sessões JWT](docs/auth.md)
-* [Upload de Comprovantes (AWS S3 / Storage)](docs/file-uploading.md)
+* [Upload de Comprovantes (AWS S3 / Storage)](docs/archive/file-uploading.md)
 * [Arquitetura Hexagonal](docs/architecture.md)
 * [Geradores de Componentes por CLI](docs/cli.md)
 * [Internacionalização / Traduções](docs/translations.md)

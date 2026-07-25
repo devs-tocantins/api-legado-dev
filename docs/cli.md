@@ -13,7 +13,7 @@
 
 Gerar um "recurso" via CLI significa criar as camadas `Controller`, `Service`, `Repository`, `DTOs` e `Entities` que gerenciam uma respectiva regra de negócio de uma vez, poupando minutos ou horas fazendo Boilerplate.
 
-No Motor de Engajamento, usamos banco de dados Relacional via TypeORM. Para construir o "esqueleto" de coisas novas (Ex: "Projeto", "Badge", "Equipe") utilize o comando a seguir:
+No legado.dev, usamos banco de dados Relacional via TypeORM. Para construir o "esqueleto" de coisas novas (Ex: "Projeto", "Badge", "Equipe") utilize o comando a seguir:
 
 ```bash
 npm run generate:resource:relational -- --name NomeDoRecurso

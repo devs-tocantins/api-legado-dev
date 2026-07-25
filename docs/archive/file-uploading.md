@@ -1,3 +1,5 @@
+> **📦 Arquivado em 2026-07-25 — este documento reflete uma fase de planejamento já superada e não deve ser tratado como referência do estado atual do sistema.**
+
 # Upload de Arquivos
 
 ---
