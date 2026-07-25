@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { EventRepository } from './infrastructure/persistence/event.repository';
@@ -115,6 +116,21 @@ describe('EventsService', () => {
           reviewerId: null,
           reviewedAt: null,
         }),
+      );
+    });
+
+    it('should throw UnprocessableEntityException when startAt is in the past', async () => {
+      const dto: CreateEventDto = {
+        title: 'Meetup de TI',
+        description: 'desc',
+        category: EventCategory.MEETUP,
+        modality: EventModality.PRESENCIAL,
+        startAt: '2020-01-01T00:00:00.000Z',
+        location: 'Rua Exemplo, 123',
+      };
+
+      await expect(service.create(dto, 42)).rejects.toThrow(
+        UnprocessableEntityException,
       );
     });
   });
@@ -293,6 +309,19 @@ describe('EventsService', () => {
       );
 
       expect(mailService.eventUpdated).not.toHaveBeenCalled();
+    });
+
+    it('should throw UnprocessableEntityException when updating startAt to a date in the past', async () => {
+      repository.findById!.mockResolvedValue(buildEvent({ organizerId: 42 }));
+
+      await expect(
+        service.update(
+          'event-uuid-0001',
+          { startAt: '2020-01-01T00:00:00.000Z' },
+          42,
+          false,
+        ),
+      ).rejects.toThrow(UnprocessableEntityException);
     });
   });
 
