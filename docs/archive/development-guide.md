@@ -1,3 +1,5 @@
+> **📦 Arquivado em 2026-07-25 — este documento reflete uma fase de planejamento já superada e não deve ser tratado como referência do estado atual do sistema.**
+
 # 📖 Documento de Contexto e Guia de Desenvolvimento: API Devs Tocantins
 
 Olá, dev! Bem-vindo ao motor de gamificação da comunidade Devs Tocantins. Nosso objetivo é rastrear, registrar e recompensar todo o esforço colaborativo da comunidade. O mantra aqui é: "Se gerou valor para a comunidade, vale ponto".

@@ -1,3 +1,5 @@
+> **📦 Arquivado em 2026-07-25 — este documento reflete uma fase de planejamento já superada e não deve ser tratado como referência do estado atual do sistema.**
+
 # Guia de Gestão Comunitária do GitHub 🛡️
 
 Como Lider Técnico (Mantenedor) da organização *Devs Tocantins*, este guia serve para você configurar o repositório de forma blindada, permitindo escalar o projeto com dezenas de voluntários sem risco de "quebrarem" o código de Produção.

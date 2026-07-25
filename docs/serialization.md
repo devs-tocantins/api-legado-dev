@@ -1,6 +1,6 @@
 # Serialização (Manipulação de Saída de Dados na Rede)
 
-O Motor de Engajamento conta com uma estrutura central super útil importada do mundo React/Angular para lidar com Retornos da API ("Serializar Carga"): A ferramenta `class-transformer` em conjunto ao NestJS formam o ecossistema perfeito no uso dos *Decoradores de Classes*.
+O legado.dev conta com uma estrutura central super útil importada do mundo React/Angular para lidar com Retornos da API ("Serializar Carga"): A ferramenta `class-transformer` em conjunto ao NestJS formam o ecossistema perfeito no uso dos *Decoradores de Classes*.
 
 ---
 
