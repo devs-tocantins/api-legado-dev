@@ -621,6 +621,69 @@ describe('SubmissionsService', () => {
         expect.objectContaining({ itemId: 'item-1' }),
       );
     });
+
+    it('should award 3 XP to the moderator on approval', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({ trackItemId: 'item-1' }),
+      );
+
+      await service.review(
+        'submission-1',
+        { status: SubmissionStatus.APPROVED },
+        2,
+      );
+
+      expect(mockQueryRunner.manager.increment).toHaveBeenCalledWith(
+        expect.anything(),
+        { id: 'moderator-profile' },
+        'totalXp',
+        3,
+      );
+      expect(mockQueryRunner.manager.increment).toHaveBeenCalledWith(
+        expect.anything(),
+        { id: 'moderator-profile' },
+        'currentMonthlyXp',
+        3,
+      );
+      expect(mockQueryRunner.manager.increment).toHaveBeenCalledWith(
+        expect.anything(),
+        { id: 'moderator-profile' },
+        'currentYearlyXp',
+        3,
+      );
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          profile: { id: 'moderator-profile' },
+          category: 'AUDITOR_REWARD',
+          amount: 3,
+          description: `Revisão de submissão: ${mockActivity.title}`,
+        }),
+      );
+    });
+
+    it('should NOT award XP to the moderator on rejection', async () => {
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({ trackItemId: 'item-1' }),
+      );
+
+      await service.review(
+        'submission-1',
+        { status: SubmissionStatus.REJECTED, feedback: 'Rejeitado.' },
+        2,
+      );
+
+      expect(mockQueryRunner.manager.increment).not.toHaveBeenCalledWith(
+        expect.anything(),
+        { id: 'moderator-profile' },
+        'totalXp',
+        expect.anything(),
+      );
+      expect(mockQueryRunner.manager.save).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ category: 'AUDITOR_REWARD' }),
+      );
+    });
   });
 
   describe('review — resolução de XP por faixa de esforço', () => {

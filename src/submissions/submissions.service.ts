@@ -33,7 +33,7 @@ import { LearningTracksService } from '../learning-tracks/learning-tracks.servic
 import { Activity } from '../activities/domain/activity';
 import { PublicSubmissionDetail } from './domain/public-submission-detail';
 
-const MODERATOR_REWARD_XP = 10;
+const MODERATOR_REWARD_XP = 3;
 
 @Injectable()
 export class SubmissionsService {
@@ -503,34 +503,36 @@ export class SubmissionsService {
         }
       }
 
-      const moderatorProfile =
-        await this.gamificationProfilesService.findByUserId(reviewerUserId);
-      if (moderatorProfile) {
-        await queryRunner.manager.increment(
-          GamificationProfileEntity,
-          { id: moderatorProfile.id },
-          'totalXp',
-          MODERATOR_REWARD_XP,
-        );
-        await queryRunner.manager.increment(
-          GamificationProfileEntity,
-          { id: moderatorProfile.id },
-          'currentMonthlyXp',
-          MODERATOR_REWARD_XP,
-        );
-        await queryRunner.manager.increment(
-          GamificationProfileEntity,
-          { id: moderatorProfile.id },
-          'currentYearlyXp',
-          MODERATOR_REWARD_XP,
-        );
+      if (reviewDto.status === SubmissionStatus.APPROVED) {
+        const moderatorProfile =
+          await this.gamificationProfilesService.findByUserId(reviewerUserId);
+        if (moderatorProfile) {
+          await queryRunner.manager.increment(
+            GamificationProfileEntity,
+            { id: moderatorProfile.id },
+            'totalXp',
+            MODERATOR_REWARD_XP,
+          );
+          await queryRunner.manager.increment(
+            GamificationProfileEntity,
+            { id: moderatorProfile.id },
+            'currentMonthlyXp',
+            MODERATOR_REWARD_XP,
+          );
+          await queryRunner.manager.increment(
+            GamificationProfileEntity,
+            { id: moderatorProfile.id },
+            'currentYearlyXp',
+            MODERATOR_REWARD_XP,
+          );
 
-        await queryRunner.manager.save(TransactionEntity, {
-          profile: { id: moderatorProfile.id },
-          category: TransactionCategoryEnum.AUDITOR_REWARD,
-          amount: MODERATOR_REWARD_XP,
-          description: 'Recompensa por auditoria de submissão',
-        });
+          await queryRunner.manager.save(TransactionEntity, {
+            profile: { id: moderatorProfile.id },
+            category: TransactionCategoryEnum.AUDITOR_REWARD,
+            amount: MODERATOR_REWARD_XP,
+            description: `Revisão de submissão: ${activity.title}`,
+          });
+        }
       }
 
       await queryRunner.commitTransaction();
