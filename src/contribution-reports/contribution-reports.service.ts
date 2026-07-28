@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -21,6 +22,8 @@ import { SubmissionStatus } from '../submissions/domain/submission-status.enum';
 
 @Injectable()
 export class ContributionReportsService {
+  private readonly logger = new Logger(ContributionReportsService.name);
+
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly notificationsService: NotificationsService,
@@ -160,15 +163,24 @@ export class ContributionReportsService {
         .getRepository(GamificationProfileEntity)
         .findOne({ where: { id: submission.profileId } });
       if (ownerProfile) {
-        await this.notificationsService.create({
-          userId: ownerProfile.userId,
-          type: NotificationType.CONTRIBUTION_REPORT_UPHELD,
-          title: 'Contribuição removida',
-          body: dto.adminNote
-            ? `Uma contribuição sua foi removida após revisão. Motivo: ${dto.adminNote}`
-            : 'Uma contribuição sua foi removida após revisão de um report.',
-          relatedId: submission.id,
-        });
+        try {
+          await this.notificationsService.create({
+            userId: ownerProfile.userId,
+            type: NotificationType.CONTRIBUTION_REPORT_UPHELD,
+            title: 'Contribuição removida',
+            body: dto.adminNote
+              ? `Uma contribuição sua foi removida após revisão. Motivo: ${dto.adminNote}`
+              : 'Uma contribuição sua foi removida após revisão de um report.',
+            relatedId: submission.id,
+            link: '/submissions',
+            payload: { submissionId: submission.id },
+          });
+        } catch (err) {
+          this.logger.error(
+            'Error sending CONTRIBUTION_REPORT_UPHELD notification',
+            err,
+          );
+        }
       }
     } else {
       await this.dataSource

@@ -8,6 +8,7 @@ import { RelationalEventPersistenceModule } from './infrastructure/persistence/r
 import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
 import { FilesModule } from '../files/files.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { FilesModule } from '../files/files.module';
     UsersModule,
     MailModule,
     FilesModule,
+    NotificationsModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [EventsController],

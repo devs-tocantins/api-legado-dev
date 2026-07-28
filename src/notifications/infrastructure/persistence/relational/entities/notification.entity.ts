@@ -32,6 +32,12 @@ export class NotificationEntity {
   @Column({ type: 'varchar', nullable: true, default: null })
   relatedId: string | null;
 
+  @Column({ type: 'jsonb', nullable: true, default: null })
+  payload: Record<string, unknown> | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true, default: null })
+  link: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

@@ -44,3 +44,9 @@ lerna-debug.log*
 # Deploy secrets
 *.key
 app-image.tar.gz
+
+# Arquivos locais de sessao/briefing - nunca commitar
+GEMINI.md
+.agy-*.txt
+docs/antigravity-cli-playbook.md
+docs/relatorio-seguranca-vm.md
