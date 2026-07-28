@@ -6,6 +6,7 @@ import {
   Body,
   Request,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { NotificationsService } from './notifications.service';
@@ -19,8 +20,21 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get()
-  findAll(@Request() req) {
-    return this.notificationsService.findForUser(req.user.id);
+  findAll(
+    @Request() req,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('all') all?: string,
+  ) {
+    const pageNumber = page ? parseInt(page, 10) : 1;
+    const limitNumber = limit ? parseInt(limit, 10) : 50;
+    const allBoolean = all === 'true';
+    return this.notificationsService.findForUser(
+      req.user.id,
+      pageNumber,
+      limitNumber,
+      allBoolean,
+    );
   }
 
   @Get('unread-count')

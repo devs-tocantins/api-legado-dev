@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3f4f6; padding: 40px 0;">
+        <tr>
+            <td align="center">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin: 0 auto;">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="background-color: #ffffff; padding: 30px 0; border-bottom: 1px solid #e2e8f0;">
+                            <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">
+                                <span style="color: #000000;">legado</span><span style="color: #f97316;">.dev</span>
+                            </h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px; color: #334155; font-size: 16px; line-height: 1.6;">
+                            <p style="margin: 0 0 16px 0;">Parabéns! Você completou a missão <strong style="color: #0f172a;">{{missionTitle}}</strong>.</p>
+                            
+                            <p style="margin: 0 0 24px 0;">Continue o excelente trabalho. Você conquistou <strong style="color: #10b981;">{{xp}} XP</strong> por esta missão!</p>
+                            
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{url}}" style="display: inline-block; padding: 14px 32px; background-color: #2563eb; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 6px; font-size: 16px;">
+                                            Ver Voluntariado
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+                            <p style="margin: 0; color: #64748b; font-size: 14px;">
+                                &copy; {{#if app_name}}{{app_name}}{{else}}legado.dev{{/if}}. Todos os direitos reservados.
+                            </p>
+                            <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 12px;">
+                                Este é um e-mail automático, por favor não responda. Você pode ajustar suas preferências de notificação no seu perfil.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

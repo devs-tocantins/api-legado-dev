@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
+  Logger,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -32,11 +33,16 @@ import { TrackItemCompletionStatus } from '../track-item-completions/domain/trac
 import { LearningTracksService } from '../learning-tracks/learning-tracks.service';
 import { Activity } from '../activities/domain/activity';
 import { PublicSubmissionDetail } from './domain/public-submission-detail';
+import { MailService } from '../mail/mail.service';
+import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
+import { NotificationPreferenceEntity } from '../notifications/infrastructure/persistence/relational/entities/notification-preference.entity';
 
 const MODERATOR_REWARD_XP = 3;
 
 @Injectable()
 export class SubmissionsService {
+  private readonly logger = new Logger(SubmissionsService.name);
+
   constructor(
     private readonly submissionRepository: SubmissionRepository,
     private readonly gamificationProfilesService: GamificationProfilesService,
@@ -46,6 +52,7 @@ export class SubmissionsService {
     private readonly trackItemsService: TrackItemsService,
     private readonly trackItemCompletionsService: TrackItemCompletionsService,
     private readonly learningTracksService: LearningTracksService,
+    private readonly mailService: MailService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -559,22 +566,89 @@ export class SubmissionsService {
 
       if (ownerProfile) {
         if (trackItem) {
-          void this.notificationsService.create({
-            userId: ownerProfile.userId,
-            type: NotificationType.TRACK_MILESTONE_APPROVED,
-            title: 'Marco de trilha aprovado!',
-            body: `Sua prova foi aprovada${trackItem.journeyXp > 0 ? ` e você ganhou ${trackItem.journeyXp} XP de Jornada` : ''}.`,
-            relatedId: id,
-          });
+          void this.notificationsService
+            .create({
+              userId: ownerProfile.userId,
+              type: NotificationType.TRACK_MILESTONE_APPROVED,
+              title: 'Marco de trilha aprovado!',
+              body: `Sua prova foi aprovada${trackItem.journeyXp > 0 ? ` e você ganhou ${trackItem.journeyXp} XP de Jornada` : ''}.`,
+              relatedId: id,
+              link: `/trilhas/${trackItem.trackId}/marcos/${trackItem.id}`,
+              payload: {
+                trackId: trackItem.trackId,
+                trackItemId: trackItem.id,
+                submissionId: id,
+              },
+            })
+            .catch((err) =>
+              this.logger.error(
+                'Error sending TRACK_MILESTONE_APPROVED notification',
+                err,
+              ),
+            );
         } else {
-          void this.notificationsService.create({
-            userId: ownerProfile.userId,
-            type: NotificationType.SUBMISSION_APPROVED,
-            title: 'Submissão aprovada!',
-            body: `Sua submissão foi aprovada e você ganhou ${activity.fixedReward} XP.`,
-            relatedId: id,
-          });
+          void this.notificationsService
+            .create({
+              userId: ownerProfile.userId,
+              type: NotificationType.SUBMISSION_APPROVED,
+              title: 'Submissão aprovada!',
+              body: `Sua submissão foi aprovada e você ganhou ${activity.fixedReward} XP.`,
+              relatedId: id,
+              link: `/submissions?open=${id}`,
+              payload: { submissionId: id },
+            })
+            .catch((err) =>
+              this.logger.error(
+                'Error sending SUBMISSION_APPROVED notification',
+                err,
+              ),
+            );
         }
+
+        try {
+          const user = await this.dataSource
+            .getRepository(UserEntity)
+            .findOne({ where: { id: ownerProfile.userId } });
+          const pref = await this.dataSource
+            .getRepository(NotificationPreferenceEntity)
+            .findOne({ where: { userId: ownerProfile.userId } });
+          if (user && user.email && pref?.emailOnSubmissionApproved !== false) {
+            await this.mailService.submissionApproved({
+              to: user.email,
+              data: {
+                submissionId: id,
+                activityTitle: activity.title,
+              },
+            });
+          }
+        } catch (err) {
+          this.logger.error('Error sending submissionApproved email', err);
+        }
+      }
+    } else if (reviewDto.status === SubmissionStatus.REJECTED) {
+      const ownerProfile = await this.dataSource
+        .getRepository(GamificationProfileEntity)
+        .findOne({ where: { id: submission.profileId } });
+
+      if (ownerProfile) {
+        void this.notificationsService
+          .create({
+            userId: ownerProfile.userId,
+            type: NotificationType.SUBMISSION_REJECTED,
+            title: 'Submissão rejeitada',
+            body: reviewDto.feedback
+              ? `Sua submissão foi rejeitada com o seguinte feedback: ${reviewDto.feedback}`
+              : 'Sua submissão foi rejeitada.',
+            relatedId: id,
+            link: `/submissions?open=${id}`,
+            payload: { submissionId: id },
+          })
+          .catch((err) =>
+            this.logger.error(
+              'Error sending SUBMISSION_REJECTED notification',
+              err,
+            ),
+          );
       }
     }
 

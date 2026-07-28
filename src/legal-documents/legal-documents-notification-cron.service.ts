@@ -70,6 +70,8 @@ export class LegalDocumentsNotificationCronService {
             title: 'Atualizamos nossos termos',
             body: 'Revisamos a Política de Privacidade e o Termo de Serviço do legado.dev. Dê uma olhada quando puder.',
             relatedId: 'legal-documents',
+            link: '/legal',
+            payload: { version: CURRENT_LEGAL_DOCUMENTS_VERSION },
           });
 
           if (user.email) {
