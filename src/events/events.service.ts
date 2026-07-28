@@ -21,6 +21,8 @@ import { EventsIcsService } from './events-ics.service';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
 import { FilesService } from '../files/files.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
 
 const COVER_IMAGE_RETENTION_MS = 3 * 24 * 60 * 60 * 1000; // 3 dias após o evento
 
@@ -42,6 +44,7 @@ export class EventsService {
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
     private readonly filesService: FilesService,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   private validateStartAtNotInPast(startAt?: string) {
@@ -258,7 +261,7 @@ export class EventsService {
       );
     }
 
-    return this.eventRepository.update(id, {
+    const updated = await this.eventRepository.update(id, {
       status: reviewEventDto.status,
       rejectionReason:
         reviewEventDto.status === EventStatus.REJECTED
@@ -267,6 +270,23 @@ export class EventsService {
       reviewerId,
       reviewedAt: new Date(),
     });
+
+    void this.auditLogsService.record({
+      actorUserId: reviewerId,
+      action:
+        reviewEventDto.status === EventStatus.APPROVED
+          ? AuditActionEnum.EVENT_APPROVED
+          : AuditActionEnum.EVENT_REJECTED,
+      entityType: 'event',
+      entityId: id,
+      targetUserId: event.organizerId,
+      metadata:
+        reviewEventDto.status === EventStatus.REJECTED
+          ? { rejectionReason: reviewEventDto.rejectionReason }
+          : {},
+    });
+
+    return updated;
   }
 
   async cancel(id: Event['id'], userId: number, canManageAny: boolean) {
@@ -291,6 +311,13 @@ export class EventsService {
 
     if (cancelledEvent) {
       await this.notifySubscribersOfCancellation(cancelledEvent);
+      void this.auditLogsService.record({
+        actorUserId: userId,
+        action: AuditActionEnum.EVENT_CANCELLED,
+        entityType: 'event',
+        entityId: id,
+        targetUserId: event.organizerId,
+      });
     }
 
     return cancelledEvent;

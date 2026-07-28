@@ -18,12 +18,15 @@ import { NotificationType } from '../notifications/domain/notification-type.enum
 import { CreateContributionReportDto } from './dto/create-report.dto';
 import { ReviewContributionReportDto } from './dto/review-report.dto';
 import { SubmissionStatus } from '../submissions/domain/submission-status.enum';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
 
 @Injectable()
 export class ContributionReportsService {
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly notificationsService: NotificationsService,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   async create(dto: CreateContributionReportDto, reporterUserId: number) {
@@ -180,6 +183,14 @@ export class ContributionReportsService {
           reviewedAt: new Date(),
         });
     }
+
+    void this.auditLogsService.record({
+      actorUserId: reviewerUserId,
+      action: AuditActionEnum.CONTRIBUTION_REPORT_REVIEWED,
+      entityType: 'contribution_report',
+      entityId: reportId,
+      metadata: { status: dto.status, adminNote: dto.adminNote },
+    });
 
     return this.dataSource
       .getRepository(ContributionReportEntity)

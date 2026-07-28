@@ -19,12 +19,15 @@ import { Role } from '../roles/domain/role';
 import { Status } from '../statuses/domain/status';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CURRENT_LEGAL_DOCUMENTS_VERSION } from '../legal-documents/legal-documents.constants';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -176,6 +179,10 @@ export class UsersService {
     id: User['id'],
     updateUserDto: UpdateUserDto,
   ): Promise<User | null> {
+    const oldUserObject = await this.usersRepository.findById(id);
+    const oldRole = oldUserObject?.role?.id;
+    const oldIsBanned = oldUserObject?.isBanned;
+
     // Do not remove comment below.
     // <updating-property />
 
@@ -270,7 +277,7 @@ export class UsersService {
       };
     }
 
-    return this.usersRepository.update(id, {
+    const updatedUser = await this.usersRepository.update(id, {
       // Do not remove comment below.
       // <updating-property-payload />
       firstName: updateUserDto.firstName,
@@ -284,6 +291,36 @@ export class UsersService {
       provider: updateUserDto.provider,
       socialId: updateUserDto.socialId,
     });
+
+    if (updatedUser) {
+      if (
+        updateUserDto.role?.id !== undefined &&
+        oldRole !== updateUserDto.role.id
+      ) {
+        void this.auditLogsService.record({
+          actorUserId: null,
+          action: AuditActionEnum.USER_ROLE_CHANGED,
+          entityType: 'user',
+          entityId: String(id),
+          metadata: { oldRole, newRole: updateUserDto.role.id },
+        });
+      }
+      if (
+        updateUserDto.isBanned !== undefined &&
+        oldIsBanned !== updateUserDto.isBanned
+      ) {
+        void this.auditLogsService.record({
+          actorUserId: null,
+          action: updateUserDto.isBanned
+            ? AuditActionEnum.USER_BANNED
+            : AuditActionEnum.USER_UNBANNED,
+          entityType: 'user',
+          entityId: String(id),
+        });
+      }
+    }
+
+    return updatedUser;
   }
 
   async remove(id: User['id']): Promise<void> {

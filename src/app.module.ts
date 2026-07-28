@@ -69,9 +69,11 @@ import { LegalDocumentsModule } from './legal-documents/legal-documents.module';
 
 import { TrackSuggestionsModule } from './track-suggestions/track-suggestions.module';
 import { RankingSnapshotsModule } from './ranking-snapshots/ranking-snapshots.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
 
 @Module({
   imports: [
+    AuditLogsModule,
     RankingSnapshotsModule,
     TrackSuggestionsModule,
     LegalDocumentsModule,
