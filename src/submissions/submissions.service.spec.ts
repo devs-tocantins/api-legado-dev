@@ -3,6 +3,7 @@ import { getDataSourceToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import { SubmissionRepository } from './infrastructure/persistence/submission.repository';
+import { MailService } from '../mail/mail.service';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 import { ActivitiesService } from '../activities/activities.service';
 import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
@@ -192,6 +193,9 @@ describe('SubmissionsService', () => {
     mockLearningTracksService = {
       isSectionReachable: jest.fn().mockResolvedValue(true),
     };
+    const mockMailService = {
+      submissionApproved: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -220,6 +224,7 @@ describe('SubmissionsService', () => {
           useValue: mockTrackItemCompletionsService,
         },
         { provide: LearningTracksService, useValue: mockLearningTracksService },
+        { provide: MailService, useValue: mockMailService },
         { provide: getDataSourceToken(), useValue: mockDataSource },
       ],
     }).compile();

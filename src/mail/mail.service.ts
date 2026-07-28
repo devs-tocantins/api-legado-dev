@@ -267,4 +267,67 @@ export class MailService {
       },
     });
   }
+
+  async submissionApproved(
+    mailData: MailData<{ submissionId: string; activityTitle: string }>,
+  ): Promise<void> {
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + `/submissions?open=${mailData.data.submissionId}`,
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `Submissão aprovada: ${mailData.data.activityTitle}`,
+      text: `${url.toString()} Submissão aprovada: ${mailData.data.activityTitle}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'submission-approved.hbs',
+      ),
+      context: {
+        title: `Submissão aprovada: ${mailData.data.activityTitle}`,
+        url: url.toString(),
+        activityTitle: mailData.data.activityTitle,
+        app_name: this.configService.get('app.name', { infer: true }),
+      },
+    });
+  }
+
+  async missionWon(
+    mailData: MailData<{ missionTitle: string; xp: number }>,
+  ): Promise<void> {
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + '/voluntariado',
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `Missão concluída: ${mailData.data.missionTitle}`,
+      text: `${url.toString()} Missão concluída: ${mailData.data.missionTitle}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'mission-won.hbs',
+      ),
+      context: {
+        title: `Missão concluída: ${mailData.data.missionTitle}`,
+        url: url.toString(),
+        missionTitle: mailData.data.missionTitle,
+        xp: mailData.data.xp,
+        app_name: this.configService.get('app.name', { infer: true }),
+      },
+    });
+  }
 }

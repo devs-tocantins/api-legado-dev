@@ -8,6 +8,7 @@ import { EventsService } from './events.service';
 import { EventRepository } from './infrastructure/persistence/event.repository';
 import { EventSubscriptionRepository } from './infrastructure/persistence/event-subscription.repository';
 import { EventsIcsService } from './events-ics.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -53,6 +54,9 @@ describe('EventsService', () => {
   let usersService: Partial<Record<keyof UsersService, jest.Mock>>;
   let mailService: Partial<Record<keyof MailService, jest.Mock>>;
   let filesService: Partial<Record<keyof FilesService, jest.Mock>>;
+  let notificationsService: Partial<
+    Record<keyof NotificationsService, jest.Mock>
+  >;
 
   beforeEach(() => {
     repository = {
@@ -85,6 +89,9 @@ describe('EventsService', () => {
     filesService = {
       remove: jest.fn(),
     };
+    notificationsService = {
+      create: jest.fn().mockResolvedValue(undefined),
+    };
 
     service = new EventsService(
       repository as unknown as EventRepository,
@@ -93,6 +100,7 @@ describe('EventsService', () => {
       usersService as unknown as UsersService,
       mailService as unknown as MailService,
       filesService as unknown as FilesService,
+      notificationsService as unknown as NotificationsService,
       {
         record: jest.fn().mockResolvedValue(undefined),
       } as unknown as AuditLogsService,

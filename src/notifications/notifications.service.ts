@@ -20,6 +20,8 @@ export class NotificationsService {
     title: string;
     body: string;
     relatedId?: string;
+    payload?: Record<string, unknown>;
+    link?: string;
   }) {
     const repo = this.dataSource.getRepository(NotificationEntity);
     const notification = repo.create({
@@ -28,23 +30,35 @@ export class NotificationsService {
       title: data.title,
       body: data.body,
       relatedId: data.relatedId ?? null,
+      payload: data.payload ?? null,
+      link: data.link ?? null,
     });
     return repo.save(notification);
   }
 
-  async findForUser(userId: number) {
+  async findForUser(
+    userId: number,
+    page: number = 1,
+    limit: number = 50,
+    all: boolean = false,
+  ) {
     const cutoff = new Date(Date.now() - READ_NOTIFICATION_RETENTION_MS);
-
-    return this.dataSource
+    const query = this.dataSource
       .getRepository(NotificationEntity)
       .createQueryBuilder('notification')
-      .where('notification.userId = :userId', { userId })
-      .andWhere(
+      .where('notification.userId = :userId', { userId });
+
+    if (!all) {
+      query.andWhere(
         '(notification.isRead = false OR (notification.readAt IS NOT NULL AND notification.readAt >= :cutoff))',
         { cutoff },
-      )
+      );
+    }
+
+    return query
       .orderBy('notification.createdAt', 'DESC')
-      .take(50)
+      .skip((page - 1) * limit)
+      .take(limit)
       .getMany();
   }
 

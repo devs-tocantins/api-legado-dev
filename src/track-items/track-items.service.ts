@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
+  Logger,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -34,6 +35,8 @@ const AUTO_COMPLETABLE_TYPES = [
 
 @Injectable()
 export class TrackItemsService {
+  private readonly logger = new Logger(TrackItemsService.name);
+
   constructor(
     private readonly trackItemRepository: TrackItemRepository,
     private readonly trackItemCompletionsService: TrackItemCompletionsService,
@@ -283,13 +286,22 @@ export class TrackItemsService {
 
     const profile = await this.gamificationProfilesService.findById(profileId);
     if (profile) {
-      void this.notificationsService.create({
-        userId: profile.userId,
-        type: NotificationType.TRACK_BADGE_GRANTED,
-        title: 'Novo selo conquistado!',
-        body: `Você concluiu a etapa "${section.title}" e ganhou um novo selo.`,
-        relatedId: section.badgeId,
-      });
+      void this.notificationsService
+        .create({
+          userId: profile.userId,
+          type: NotificationType.TRACK_BADGE_GRANTED,
+          title: 'Novo selo conquistado!',
+          body: `Você concluiu a etapa "${section.title}" e ganhou um novo selo.`,
+          relatedId: section.badgeId,
+          link: `/trilhas/${section.trackId}/conquista/${section.id}`,
+          payload: { trackId: section.trackId, sectionId: section.id },
+        })
+        .catch((err) =>
+          this.logger.error(
+            'Error sending TRACK_BADGE_GRANTED notification',
+            err,
+          ),
+        );
     }
   }
 }

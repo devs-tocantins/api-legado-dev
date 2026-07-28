@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
+  Logger,
 } from '@nestjs/common';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -23,6 +24,8 @@ import { MailService } from '../mail/mail.service';
 import { FilesService } from '../files/files.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/domain/notification-type.enum';
 
 const COVER_IMAGE_RETENTION_MS = 3 * 24 * 60 * 60 * 1000; // 3 dias após o evento
 
@@ -37,6 +40,8 @@ const NOTIFIABLE_FIELD_LABELS: Record<string, string> = {
 
 @Injectable()
 export class EventsService {
+  private readonly logger = new Logger(EventsService.name);
+
   constructor(
     private readonly eventRepository: EventRepository,
     private readonly eventSubscriptionRepository: EventSubscriptionRepository,
@@ -44,6 +49,7 @@ export class EventsService {
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
     private readonly filesService: FilesService,
+    private readonly notificationsService: NotificationsService,
     private readonly auditLogsService: AuditLogsService,
   ) {}
 
@@ -222,7 +228,11 @@ export class EventsService {
           ),
       );
       if (changedFields.length > 0) {
-        await this.notifySubscribersOfUpdate(updatedEvent, changedFields);
+        try {
+          await this.notifySubscribersOfUpdate(updatedEvent, changedFields);
+        } catch (err) {
+          this.logger.error('Error notifying subscribers of event update', err);
+        }
       }
     }
 
@@ -310,7 +320,14 @@ export class EventsService {
     });
 
     if (cancelledEvent) {
-      await this.notifySubscribersOfCancellation(cancelledEvent);
+      try {
+        await this.notifySubscribersOfCancellation(cancelledEvent);
+      } catch (err) {
+        this.logger.error(
+          'Error notifying subscribers of event cancellation',
+          err,
+        );
+      }
       void this.auditLogsService.record({
         actorUserId: userId,
         action: AuditActionEnum.EVENT_CANCELLED,
@@ -356,35 +373,89 @@ export class EventsService {
     event: Event,
     changedFields: string[],
   ): Promise<void> {
-    const subscriberEmails = await this.getSubscriberEmails(event.id);
-    if (subscriberEmails.length === 0) return;
+    const subscriberIds =
+      await this.eventSubscriptionRepository.findSubscriberUserIds(event.id);
+    if (subscriberIds.length === 0) return;
+
+    const users = await this.usersService.findByIds(subscriberIds);
+    if (users.length === 0) return;
 
     const changesSummary = `Foi alterado(a): ${changedFields
       .map((field) => NOTIFIABLE_FIELD_LABELS[field])
       .join(', ')}.`;
 
-    await Promise.all(
-      subscriberEmails.map((email) =>
-        this.mailService.eventUpdated({
-          to: email,
-          data: { eventId: event.id, eventTitle: event.title, changesSummary },
-        }),
-      ),
+    const results = await Promise.allSettled(
+      users.map(async (user) => {
+        await this.notificationsService.create({
+          userId: user.id as number,
+          type: NotificationType.EVENT_UPDATED,
+          title: `Atualização no evento: ${event.title}`,
+          body: changesSummary,
+          relatedId: event.id,
+          link: `/eventos/${event.id}`,
+          payload: { eventId: event.id },
+        });
+
+        if (user.email) {
+          await this.mailService.eventUpdated({
+            to: user.email,
+            data: {
+              eventId: event.id,
+              eventTitle: event.title,
+              changesSummary,
+            },
+          });
+        }
+      }),
     );
+
+    results.forEach((res, index) => {
+      if (res.status === 'rejected') {
+        this.logger.error(
+          `Error notifying user ${users[index].id} of event update`,
+          res.reason,
+        );
+      }
+    });
   }
 
   private async notifySubscribersOfCancellation(event: Event): Promise<void> {
-    const subscriberEmails = await this.getSubscriberEmails(event.id);
-    if (subscriberEmails.length === 0) return;
+    const subscriberIds =
+      await this.eventSubscriptionRepository.findSubscriberUserIds(event.id);
+    if (subscriberIds.length === 0) return;
 
-    await Promise.all(
-      subscriberEmails.map((email) =>
-        this.mailService.eventCancelled({
-          to: email,
-          data: { eventTitle: event.title },
-        }),
-      ),
+    const users = await this.usersService.findByIds(subscriberIds);
+    if (users.length === 0) return;
+
+    const results = await Promise.allSettled(
+      users.map(async (user) => {
+        await this.notificationsService.create({
+          userId: user.id as number,
+          type: NotificationType.EVENT_CANCELLED,
+          title: `Evento cancelado: ${event.title}`,
+          body: `O evento "${event.title}" foi cancelado.`,
+          relatedId: event.id,
+          link: `/eventos/${event.id}`,
+          payload: { eventId: event.id },
+        });
+
+        if (user.email) {
+          await this.mailService.eventCancelled({
+            to: user.email,
+            data: { eventTitle: event.title },
+          });
+        }
+      }),
     );
+
+    results.forEach((res, index) => {
+      if (res.status === 'rejected') {
+        this.logger.error(
+          `Error notifying user ${users[index].id} of event cancellation`,
+          res.reason,
+        );
+      }
+    });
   }
 
   /**

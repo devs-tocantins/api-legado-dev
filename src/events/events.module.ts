@@ -9,6 +9,7 @@ import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
 import { FilesModule } from '../files/files.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
     UsersModule,
     MailModule,
     FilesModule,
+    NotificationsModule,
     ScheduleModule.forRoot(),
     AuditLogsModule,
   ],
