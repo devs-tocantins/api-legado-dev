@@ -11,6 +11,7 @@ import { TrackItemsService } from '../track-items/track-items.service';
 import { TrackItemCompletionsService } from '../track-item-completions/track-item-completions.service';
 import { TrackItemCompletionStatus } from '../track-item-completions/domain/track-item-completion-status.enum';
 import { LearningTracksService } from '../learning-tracks/learning-tracks.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { Submission } from './domain/submission';
 import { SubmissionStatus } from './domain/submission-status.enum';
 import { GamificationProfile } from '../gamification-profiles/domain/gamification-profile';
@@ -208,6 +209,10 @@ describe('SubmissionsService', () => {
         {
           provide: NotificationsService,
           useValue: { create: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: AuditLogsService,
+          useValue: { record: jest.fn().mockResolvedValue(undefined) },
         },
         { provide: TrackItemsService, useValue: mockTrackItemsService },
         {

@@ -10,6 +10,7 @@ import { EventSubscriptionRepository } from './infrastructure/persistence/event-
 import { EventsIcsService } from './events-ics.service';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { FilesService } from '../files/files.service';
 import { Event } from './domain/event';
 import { EventCategory } from './domain/event-category.enum';
@@ -92,6 +93,9 @@ describe('EventsService', () => {
       usersService as unknown as UsersService,
       mailService as unknown as MailService,
       filesService as unknown as FilesService,
+      {
+        record: jest.fn().mockResolvedValue(undefined),
+      } as unknown as AuditLogsService,
     );
   });
 
