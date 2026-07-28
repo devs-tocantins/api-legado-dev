@@ -8,6 +8,7 @@ import { RelationalEventPersistenceModule } from './infrastructure/persistence/r
 import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
 import { FilesModule } from '../files/files.module';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { FilesModule } from '../files/files.module';
     MailModule,
     FilesModule,
     ScheduleModule.forRoot(),
+    AuditLogsModule,
   ],
   controllers: [EventsController],
   providers: [EventsService, EventsIcsService, EventsCleanupCronService],
