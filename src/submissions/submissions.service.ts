@@ -587,7 +587,9 @@ export class SubmissionsService {
     ) {
       const isApproved = reviewDto.status === SubmissionStatus.APPROVED;
       let targetUserId: number | null = null;
-      const fallbackProfile = await this.dataSource.getRepository(GamificationProfileEntity).findOne({ where: { id: submission.profileId } });
+      const fallbackProfile = await this.dataSource
+        .getRepository(GamificationProfileEntity)
+        .findOne({ where: { id: submission.profileId } });
       if (fallbackProfile) targetUserId = fallbackProfile.userId;
 
       void this.auditLogsService.record({

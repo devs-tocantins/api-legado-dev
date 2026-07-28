@@ -28,18 +28,24 @@ export class AuditLogRelationalRepository implements AuditLogRepository {
     filters: FindAllAuditLogsDto,
   ): Promise<AuditLog[]> {
     const qb = this.auditLogRepository.createQueryBuilder('audit_log');
-    
+
     if (filters.action) {
       qb.andWhere('audit_log.action = :action', { action: filters.action });
     }
     if (filters.entityType) {
-      qb.andWhere('audit_log.entityType = :entityType', { entityType: filters.entityType });
+      qb.andWhere('audit_log.entityType = :entityType', {
+        entityType: filters.entityType,
+      });
     }
     if (filters.actorUserId !== undefined) {
-      qb.andWhere('audit_log.actorUserId = :actorUserId', { actorUserId: filters.actorUserId });
+      qb.andWhere('audit_log.actorUserId = :actorUserId', {
+        actorUserId: filters.actorUserId,
+      });
     }
     if (filters.targetUserId !== undefined) {
-      qb.andWhere('audit_log.targetUserId = :targetUserId', { targetUserId: filters.targetUserId });
+      qb.andWhere('audit_log.targetUserId = :targetUserId', {
+        targetUserId: filters.targetUserId,
+      });
     }
 
     qb.orderBy('audit_log.createdAt', 'DESC');
