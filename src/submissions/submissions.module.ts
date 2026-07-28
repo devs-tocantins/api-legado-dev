@@ -12,6 +12,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { TrackItemsModule } from '../track-items/track-items.module';
 import { TrackItemCompletionsModule } from '../track-item-completions/track-item-completions.module';
 import { LearningTracksModule } from '../learning-tracks/learning-tracks.module';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
@@ -25,6 +26,7 @@ import { MailModule } from '../mail/mail.module';
     TrackItemsModule,
     TrackItemCompletionsModule,
     LearningTracksModule,
+    AuditLogsModule,
     MailModule,
   ],
   controllers: [SubmissionsController],

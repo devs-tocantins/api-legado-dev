@@ -33,6 +33,8 @@ import { TrackItemCompletionStatus } from '../track-item-completions/domain/trac
 import { LearningTracksService } from '../learning-tracks/learning-tracks.service';
 import { Activity } from '../activities/domain/activity';
 import { PublicSubmissionDetail } from './domain/public-submission-detail';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
 import { MailService } from '../mail/mail.service';
 import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
 import { NotificationPreferenceEntity } from '../notifications/infrastructure/persistence/relational/entities/notification-preference.entity';
@@ -53,6 +55,7 @@ export class SubmissionsService {
     private readonly trackItemCompletionsService: TrackItemCompletionsService,
     private readonly learningTracksService: LearningTracksService,
     private readonly mailService: MailService,
+    private readonly auditLogsService: AuditLogsService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -650,6 +653,34 @@ export class SubmissionsService {
             ),
           );
       }
+    }
+
+    if (
+      reviewDto.status === SubmissionStatus.APPROVED ||
+      reviewDto.status === SubmissionStatus.REJECTED
+    ) {
+      const isApproved = reviewDto.status === SubmissionStatus.APPROVED;
+      let targetUserId: number | null = null;
+      const fallbackProfile = await this.dataSource
+        .getRepository(GamificationProfileEntity)
+        .findOne({ where: { id: submission.profileId } });
+      if (fallbackProfile) targetUserId = fallbackProfile.userId;
+
+      void this.auditLogsService.record({
+        actorUserId: reviewerUserId,
+        action: isApproved
+          ? AuditActionEnum.SUBMISSION_APPROVED
+          : AuditActionEnum.SUBMISSION_REJECTED,
+        entityType: 'submission',
+        entityId: id,
+        targetUserId: targetUserId,
+        metadata: {
+          awardedXp: isApproved
+            ? this.resolveAwardedXp(activity, submission, reviewDto)
+            : 0,
+          feedback: reviewDto.feedback ?? null,
+        },
+      });
     }
 
     return this.submissionRepository.findById(id);

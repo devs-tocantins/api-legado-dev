@@ -11,6 +11,7 @@ import { EventsIcsService } from './events-ics.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { FilesService } from '../files/files.service';
 import { Event } from './domain/event';
 import { EventCategory } from './domain/event-category.enum';
@@ -100,6 +101,9 @@ describe('EventsService', () => {
       mailService as unknown as MailService,
       filesService as unknown as FilesService,
       notificationsService as unknown as NotificationsService,
+      {
+        record: jest.fn().mockResolvedValue(undefined),
+      } as unknown as AuditLogsService,
     );
   });
 
