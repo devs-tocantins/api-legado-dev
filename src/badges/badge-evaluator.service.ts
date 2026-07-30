@@ -6,6 +6,7 @@ import { GamificationProfileBadgeRepository } from './infrastructure/persistence
 import { BadgeCriteriaTypeEnum } from './domain/badge-criteria-type.enum';
 import { SubmissionEntity } from '../submissions/infrastructure/persistence/relational/entities/submission.entity';
 import { SubmissionStatus } from '../submissions/domain/submission-status.enum';
+import { SubmissionContributionKind } from '../submissions/domain/submission-contribution-kind.enum';
 import { TransactionEntity } from '../transactions/infrastructure/persistence/relational/entities/transaction.entity';
 import { TransactionCategoryEnum } from '../transactions/domain/transaction-category.enum';
 import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
@@ -89,13 +90,22 @@ export class BadgeEvaluatorService {
     }
   }
 
+  // Só conta submissões que são contribuição real à comunidade — nunca
+  // progresso pessoal de trilha (nem prova aprovada nem test-out), mesmo que
+  // status seja APPROVED. Um test-out chega a criar uma submission APPROVED
+  // com 0 XP; sem esse filtro, pular uma prova já "conta" como contribuição.
   private async checkSubmissionsApproved(
     profileId: string,
     threshold: number,
   ): Promise<boolean> {
-    const count = await this.dataSource
-      .getRepository(SubmissionEntity)
-      .count({ where: { profileId, status: SubmissionStatus.APPROVED } });
+    const count = await this.dataSource.getRepository(SubmissionEntity).count({
+      where: {
+        profileId,
+        status: SubmissionStatus.APPROVED,
+        isTestOut: false,
+        contributionKind: SubmissionContributionKind.COMMUNITY_ACTIVITY,
+      },
+    });
     return count >= threshold;
   }
 

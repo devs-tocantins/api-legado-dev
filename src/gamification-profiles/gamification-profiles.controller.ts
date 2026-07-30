@@ -38,6 +38,9 @@ import { FindAllGamificationProfilesDto } from './dto/find-all-gamification-prof
 import { UpdateMyGamificationProfileDto } from './dto/update-my-gamification-profile.dto';
 import { SubmissionRepository } from '../submissions/infrastructure/persistence/submission.repository';
 import { Submission } from '../submissions/domain/submission';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { CourseReviewEntity } from '../course-reviews/infrastructure/persistence/relational/entities/course-review.entity';
 
 @ApiTags('Gamification Profiles')
 @Controller({
@@ -48,6 +51,7 @@ export class GamificationProfilesController {
   constructor(
     private readonly gamificationProfilesService: GamificationProfilesService,
     private readonly submissionRepository: SubmissionRepository,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   @Post()
@@ -212,6 +216,42 @@ export class GamificationProfilesController {
       }),
       { page: Number(page), limit: safeLimit },
     );
+  }
+
+  // Feed enxuto de avaliações de curso feitas pelo perfil, pra timeline
+  // pública mostrar como categoria própria e discreta ("avaliou o curso X").
+  // Consulta direto via DataSource (padrão já usado em profile-portfolio)
+  // pra não criar uma dependência de módulo circular com CourseReviewsModule
+  // (que já depende de GamificationProfilesModule).
+  @Get(':id/course-reviews')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  async findCourseReviews(@Param('id') id: string) {
+    const rows = await this.dataSource
+      .getRepository(CourseReviewEntity)
+      .createQueryBuilder('review')
+      .innerJoin('review.course', 'course')
+      .select([
+        'review.id AS id',
+        'review.courseId AS "courseId"',
+        'course.title AS "courseTitle"',
+        'review.rating AS rating',
+        'review.createdAt AS "createdAt"',
+      ])
+      .where('review.profileId = :id', { id })
+      .orderBy('review.createdAt', 'DESC')
+      .getRawMany();
+
+    return rows.map((r) => ({
+      id: r.id,
+      courseId: r.courseId,
+      courseTitle: r.courseTitle,
+      rating: Number(r.rating),
+      createdAt: r.createdAt,
+    }));
   }
 
   @Post(':id/penalty')

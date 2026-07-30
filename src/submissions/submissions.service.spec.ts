@@ -15,6 +15,7 @@ import { LearningTracksService } from '../learning-tracks/learning-tracks.servic
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { Submission } from './domain/submission';
 import { SubmissionStatus } from './domain/submission-status.enum';
+import { SubmissionContributionKind } from './domain/submission-contribution-kind.enum';
 import { GamificationProfile } from '../gamification-profiles/domain/gamification-profile';
 import { Activity } from '../activities/domain/activity';
 import { EffortLevel } from '../activities/domain/effort-level.enum';
@@ -101,6 +102,7 @@ function makeSubmission(overrides: Partial<Submission> = {}): Submission {
     activityId: 'activity-1',
     trackItemId: null,
     isTestOut: false,
+    contributionKind: SubmissionContributionKind.COMMUNITY_ACTIVITY,
     proofUrl: null,
     description: null,
     customTitle: null,

@@ -16,6 +16,7 @@ import { SubmissionRepository } from './infrastructure/persistence/submission.re
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { Submission } from './domain/submission';
 import { SubmissionStatus } from './domain/submission-status.enum';
+import { SubmissionContributionKind } from './domain/submission-contribution-kind.enum';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 import { ActivitiesService } from '../activities/activities.service';
 import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
@@ -222,6 +223,9 @@ export class SubmissionsService {
       activityId: activity.id,
       trackItemId: createSubmissionDto.trackItemId ?? null,
       isTestOut,
+      contributionKind: trackItem
+        ? SubmissionContributionKind.TRACK_PROGRESS
+        : SubmissionContributionKind.COMMUNITY_ACTIVITY,
       proofUrl: createSubmissionDto.proofUrl ?? null,
       description: createSubmissionDto.description ?? null,
       customTitle: createSubmissionDto.customTitle ?? null,
@@ -737,6 +741,7 @@ export class SubmissionsService {
         activityId: activity.id,
         trackItemId: null,
         isTestOut: false,
+        contributionKind: SubmissionContributionKind.COMMUNITY_ACTIVITY,
         proofUrl: null,
         description: null,
         customTitle: null,
