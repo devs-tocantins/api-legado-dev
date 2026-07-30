@@ -93,6 +93,8 @@ erDiagram
         int reviewerId FK "Nullable -> User"
         datetime reviewedAt "Nullable"
         uuid trackItemId FK "Nullable - marco de trilha vinculado"
+        boolean isTestOut "Default: false - pulou o marco autodeclarando dominio"
+        enum contributionKind "COMMUNITY_ACTIVITY | TRACK_PROGRESS"
         datetime createdAt
         datetime updatedAt
     }
@@ -400,13 +402,20 @@ Atividades pré-mapeadas disponíveis para submissão.
 ---
 
 ### `Submission` (Solicitação de Pontos do Usuário)
-Quando o usuário executa uma `Activity` e solicita reconhecimento.
+Quando o usuário executa uma `Activity` e solicita reconhecimento. A mesma
+tabela também registra provas/test-out de marcos de trilha (`trackItemId`
+preenchido) — o pipeline de moderação é compartilhado, mas as duas coisas
+são semanticamente diferentes (ver `contributionKind` abaixo).
 
 - `description` (String, Nullable) — markdown sanitizado (max 2000 chars); aceita apenas ASCII imprimível + Latin Extended (sem emojis/Unicode especial)
 - `awardedXp` (Int) — XP concedido (geralmente herda de `Activity.fixedReward`, mas o moderador pode sobrescrever)
 - `reviewerId` (Int, FK -> User) — ID do moderador que revisou
 - `trackItemId` (UUID, FK -> TrackItem, Nullable) — quando a submissão é feita no contexto de um marco de trilha
-- Ao **aprovar**: gera `Transaction(XP_REWARD)` para o submitter, credita XP no perfil, gera `Transaction(AUDITOR_REWARD)` para o moderador
+- `isTestOut` (Boolean) — `true` quando o usuário pulou o marco autodeclarando domínio (nunca gera XP, sempre `status = APPROVED` imediatamente, sem moderação)
+- `contributionKind` (Enum `SubmissionContributionKind`) — formaliza a distinção que antes só existia implicitamente pela nulidade de `trackItemId`:
+  - `COMMUNITY_ACTIVITY` — contribuição real à comunidade (`trackItemId` nulo). Conta para selos de contribuição (ex: "Primeira Missão") e aparece na categoria "Voluntariado" do perfil público.
+  - `TRACK_PROGRESS` — progresso pessoal de uma trilha de aprendizado (prova aprovada ou test-out). XP é para o próprio usuário, **não** é contribuição para a comunidade — nunca deve contar para selos de contribuição, mesmo quando `status = APPROVED`.
+- Ao **aprovar** uma submissão `COMMUNITY_ACTIVITY`: gera `Transaction(XP_REWARD)` para o submitter, credita XP no perfil, gera `Transaction(AUDITOR_REWARD)` para o moderador
 
 ---
 
@@ -442,6 +451,7 @@ Motor financeiro dos pontos. Toda mutação no perfil gera uma Transaction.
   { "type": "total_xp", "threshold": 500 }
   { "type": "monthly_ranking_top", "threshold": 3 }
   ```
+  - `submissions_approved` conta **apenas** `Submission` com `status = APPROVED`, `isTestOut = false` **e** `contributionKind = COMMUNITY_ACTIVITY` (`badge-evaluator.service.ts`). Test-out e provas de trilha aprovadas nunca contam para esse critério — não são contribuição para a comunidade, mesmo que gerem XP pessoal.
 
 ---
 

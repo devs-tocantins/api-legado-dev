@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
 import { SubmissionStatus } from '../../../../domain/submission-status.enum';
+import { SubmissionContributionKind } from '../../../../domain/submission-contribution-kind.enum';
 import { GamificationProfileEntity } from '../../../../../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
 import { ActivityEntity } from '../../../../../activities/infrastructure/persistence/relational/entities/activity.entity';
 import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
@@ -45,6 +46,16 @@ export class SubmissionEntity extends EntityRelationalHelper {
 
   @Column({ type: 'boolean', default: false })
   isTestOut: boolean;
+
+  // Distingue contribuição real à comunidade de progresso pessoal de trilha —
+  // não pode ser inferido só pela nulidade de trackItemId em regras de
+  // negócio (selo "Primeira Missão" já contou test-out por isso).
+  @Column({
+    type: 'enum',
+    enum: SubmissionContributionKind,
+    default: SubmissionContributionKind.COMMUNITY_ACTIVITY,
+  })
+  contributionKind: SubmissionContributionKind;
 
   @Column({ type: 'varchar', nullable: true, default: null })
   proofUrl: string | null;

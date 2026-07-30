@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { SubmissionStatus } from './submission-status.enum';
+import { SubmissionContributionKind } from './submission-contribution-kind.enum';
 import { EffortLevel } from '../../activities/domain/effort-level.enum';
 
 export class Submission {
@@ -35,6 +36,13 @@ export class Submission {
     default: false,
   })
   isTestOut: boolean;
+
+  @ApiProperty({
+    enum: SubmissionContributionKind,
+    description:
+      'Se é uma contribuição real à comunidade (COMMUNITY_ACTIVITY) ou progresso pessoal de trilha (TRACK_PROGRESS)',
+  })
+  contributionKind: SubmissionContributionKind;
 
   @ApiProperty({
     type: String,

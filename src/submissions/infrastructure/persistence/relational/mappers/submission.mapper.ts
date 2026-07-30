@@ -9,6 +9,7 @@ export class SubmissionMapper {
     domainEntity.activityId = raw.activityId;
     domainEntity.trackItemId = raw.trackItemId;
     domainEntity.isTestOut = raw.isTestOut;
+    domainEntity.contributionKind = raw.contributionKind;
     domainEntity.proofUrl = raw.proofUrl;
     domainEntity.description = raw.description;
     domainEntity.customTitle = raw.customTitle;
@@ -33,6 +34,7 @@ export class SubmissionMapper {
     persistenceEntity.activityId = domainEntity.activityId;
     persistenceEntity.trackItemId = domainEntity.trackItemId;
     persistenceEntity.isTestOut = domainEntity.isTestOut;
+    persistenceEntity.contributionKind = domainEntity.contributionKind;
     persistenceEntity.proofUrl = domainEntity.proofUrl;
     persistenceEntity.description = domainEntity.description;
     persistenceEntity.customTitle = domainEntity.customTitle;

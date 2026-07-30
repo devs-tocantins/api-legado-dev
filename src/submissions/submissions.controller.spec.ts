@@ -3,6 +3,7 @@ import { SubmissionsController } from './submissions.controller';
 import { SubmissionsService } from './submissions.service';
 import { Submission } from './domain/submission';
 import { SubmissionStatus } from './domain/submission-status.enum';
+import { SubmissionContributionKind } from './domain/submission-contribution-kind.enum';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { FindAllSubmissionsDto } from './dto/find-all-submissions.dto';
@@ -16,6 +17,7 @@ const mockSubmission: Submission = {
   activityId: 'activity-uuid-0001',
   trackItemId: null,
   isTestOut: false,
+  contributionKind: SubmissionContributionKind.COMMUNITY_ACTIVITY,
   proofUrl: null,
   description: null,
   customTitle: null,
