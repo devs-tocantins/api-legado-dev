@@ -17,7 +17,7 @@ export class AddSubmissionContributionKind1785424960820
     // trackItemId — formalizamos isso como coluna explícita para não
     // depender mais dessa inferência implícita em regras de negócio.
     await queryRunner.query(
-      `UPDATE "submission" SET "contributionKind" = CASE WHEN "trackItemId" IS NULL THEN 'COMMUNITY_ACTIVITY' ELSE 'TRACK_PROGRESS' END`,
+      `UPDATE "submission" SET "contributionKind" = (CASE WHEN "trackItemId" IS NULL THEN 'COMMUNITY_ACTIVITY' ELSE 'TRACK_PROGRESS' END)::"public"."submission_contributionkind_enum"`,
     );
 
     await queryRunner.query(
