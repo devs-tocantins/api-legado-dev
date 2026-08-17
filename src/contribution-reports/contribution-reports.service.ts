@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -18,12 +19,17 @@ import { NotificationType } from '../notifications/domain/notification-type.enum
 import { CreateContributionReportDto } from './dto/create-report.dto';
 import { ReviewContributionReportDto } from './dto/review-report.dto';
 import { SubmissionStatus } from '../submissions/domain/submission-status.enum';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
 
 @Injectable()
 export class ContributionReportsService {
+  private readonly logger = new Logger(ContributionReportsService.name);
+
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly notificationsService: NotificationsService,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   async create(dto: CreateContributionReportDto, reporterUserId: number) {
@@ -160,15 +166,24 @@ export class ContributionReportsService {
         .getRepository(GamificationProfileEntity)
         .findOne({ where: { id: submission.profileId } });
       if (ownerProfile) {
-        await this.notificationsService.create({
-          userId: ownerProfile.userId,
-          type: NotificationType.CONTRIBUTION_REPORT_UPHELD,
-          title: 'Contribuição removida',
-          body: dto.adminNote
-            ? `Uma contribuição sua foi removida após revisão. Motivo: ${dto.adminNote}`
-            : 'Uma contribuição sua foi removida após revisão de um report.',
-          relatedId: submission.id,
-        });
+        try {
+          await this.notificationsService.create({
+            userId: ownerProfile.userId,
+            type: NotificationType.CONTRIBUTION_REPORT_UPHELD,
+            title: 'Contribuição removida',
+            body: dto.adminNote
+              ? `Uma contribuição sua foi removida após revisão. Motivo: ${dto.adminNote}`
+              : 'Uma contribuição sua foi removida após revisão de um report.',
+            relatedId: submission.id,
+            link: '/submissions',
+            payload: { submissionId: submission.id },
+          });
+        } catch (err) {
+          this.logger.error(
+            'Error sending CONTRIBUTION_REPORT_UPHELD notification',
+            err,
+          );
+        }
       }
     } else {
       await this.dataSource
@@ -180,6 +195,14 @@ export class ContributionReportsService {
           reviewedAt: new Date(),
         });
     }
+
+    void this.auditLogsService.record({
+      actorUserId: reviewerUserId,
+      action: AuditActionEnum.CONTRIBUTION_REPORT_REVIEWED,
+      entityType: 'contribution_report',
+      entityId: reportId,
+      metadata: { status: dto.status, adminNote: dto.adminNote },
+    });
 
     return this.dataSource
       .getRepository(ContributionReportEntity)

@@ -7,8 +7,13 @@ export class SubmissionMapper {
     domainEntity.id = raw.id;
     domainEntity.profileId = raw.profileId;
     domainEntity.activityId = raw.activityId;
+    domainEntity.trackItemId = raw.trackItemId;
+    domainEntity.isTestOut = raw.isTestOut;
+    domainEntity.contributionKind = raw.contributionKind;
     domainEntity.proofUrl = raw.proofUrl;
     domainEntity.description = raw.description;
+    domainEntity.customTitle = raw.customTitle;
+    domainEntity.declaredEffort = raw.declaredEffort;
     domainEntity.status = raw.status;
     domainEntity.feedback = raw.feedback;
     domainEntity.awardedXp = raw.awardedXp;
@@ -27,8 +32,13 @@ export class SubmissionMapper {
     }
     persistenceEntity.profileId = domainEntity.profileId;
     persistenceEntity.activityId = domainEntity.activityId;
+    persistenceEntity.trackItemId = domainEntity.trackItemId;
+    persistenceEntity.isTestOut = domainEntity.isTestOut;
+    persistenceEntity.contributionKind = domainEntity.contributionKind;
     persistenceEntity.proofUrl = domainEntity.proofUrl;
     persistenceEntity.description = domainEntity.description;
+    persistenceEntity.customTitle = domainEntity.customTitle;
+    persistenceEntity.declaredEffort = domainEntity.declaredEffort;
     persistenceEntity.status = domainEntity.status;
     persistenceEntity.feedback = domainEntity.feedback;
     persistenceEntity.awardedXp = domainEntity.awardedXp;

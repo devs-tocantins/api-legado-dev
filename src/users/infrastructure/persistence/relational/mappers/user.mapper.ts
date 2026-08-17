@@ -21,6 +21,7 @@ export class UserMapper {
     domainEntity.role = raw.role;
     domainEntity.status = raw.status;
     domainEntity.isBanned = raw.isBanned ?? false;
+    domainEntity.lastNotifiedLegalVersion = raw.lastNotifiedLegalVersion ?? 0;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
     domainEntity.deletedAt = raw.deletedAt;
@@ -66,6 +67,8 @@ export class UserMapper {
     persistenceEntity.role = role;
     persistenceEntity.status = status;
     persistenceEntity.isBanned = domainEntity.isBanned ?? false;
+    persistenceEntity.lastNotifiedLegalVersion =
+      domainEntity.lastNotifiedLegalVersion ?? 0;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
     persistenceEntity.deletedAt = domainEntity.deletedAt;

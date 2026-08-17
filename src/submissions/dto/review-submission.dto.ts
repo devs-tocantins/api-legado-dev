@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { SubmissionStatus } from '../domain/submission-status.enum';
+import { EffortLevel } from '../../activities/domain/effort-level.enum';
 
 const allowedStatuses = [SubmissionStatus.APPROVED, SubmissionStatus.REJECTED];
 
@@ -27,4 +28,13 @@ export class ReviewSubmissionDto {
   @MaxLength(500)
   @Transform(({ value }) => value?.trim())
   feedback?: string;
+
+  @ApiPropertyOptional({
+    enum: EffortLevel,
+    description:
+      'Override do moderador para a faixa de esforço, ao aprovar. Se ausente, usa a faixa declarada pelo usuário.',
+  })
+  @IsOptional()
+  @IsEnum(EffortLevel)
+  effortLevel?: EffortLevel;
 }

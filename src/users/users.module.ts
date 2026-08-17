@@ -6,8 +6,10 @@ import {
 import { UsersController } from './users.controller';
 
 import { UsersService } from './users.service';
+import { UsersCronService } from './users-cron.service';
 import { RelationalUserPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { FilesModule } from '../files/files.module';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
 import { GamificationProfilesModule } from '../gamification-profiles/gamification-profiles.module';
 
@@ -18,10 +20,10 @@ const infrastructurePersistenceModule = RelationalUserPersistenceModule;
     // import modules, etc.
     infrastructurePersistenceModule,
     FilesModule,
-    GamificationProfilesModule,
+    AuditLogsModule,
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, UsersCronService],
   exports: [UsersService, infrastructurePersistenceModule],
 })
 export class UsersModule {}

@@ -39,8 +39,14 @@ lerna-debug.log*
 .env
 .env.prod
 /ormconfig.json
-.codegpt*.key
-*.key
+.codegpt
 
-# Documentação local — não vai pro repositório
-docs-local/
+# Deploy secrets
+*.key
+app-image.tar.gz
+
+# Arquivos locais de sessao/briefing - nunca commitar
+GEMINI.md
+.agy-*.txt
+docs/antigravity-cli-playbook.md
+docs/relatorio-seguranca-vm.md

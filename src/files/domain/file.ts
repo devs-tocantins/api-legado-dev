@@ -23,7 +23,10 @@ export class FileType {
   })
   @Transform(
     ({ value }) => {
-      if (value?.startsWith('http://') || value?.startsWith('https://')) {
+      if (typeof value === 'string' && /^https?:\/\//i.test(value)) {
+        // Já é uma URL completa (ex: avatar vindo de login social via
+        // GitHub/Google) — não é uma chave de storage, não deve ser
+        // prefixada com o domínio/URL pública do driver de arquivos.
         return value;
       }
 
@@ -37,6 +40,7 @@ export class FileType {
         const s3 = new S3Client({
           region: (fileConfig() as FileConfig).awsS3Region ?? '',
           endpoint: (fileConfig() as FileConfig).awsS3Endpoint,
+          forcePathStyle: true,
           credentials: {
             accessKeyId: (fileConfig() as FileConfig).accessKeyId ?? '',
             secretAccessKey: (fileConfig() as FileConfig).secretAccessKey ?? '',
@@ -50,9 +54,14 @@ export class FileType {
       } else if (
         (fileConfig() as FileConfig).driver === FileDriver.S3_PRESIGNED
       ) {
+        const publicUrl = (fileConfig() as FileConfig).awsS3PublicUrl;
+        if (publicUrl) {
+          return `${publicUrl.replace(/\/$/, '')}/${value}`;
+        }
         const s3 = new S3Client({
           region: (fileConfig() as FileConfig).awsS3Region ?? '',
           endpoint: (fileConfig() as FileConfig).awsS3Endpoint,
+          forcePathStyle: true,
           credentials: {
             accessKeyId: (fileConfig() as FileConfig).accessKeyId ?? '',
             secretAccessKey: (fileConfig() as FileConfig).secretAccessKey ?? '',

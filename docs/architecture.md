@@ -16,7 +16,7 @@
 
 ## Arquitetura Hexagonal
 
-O Motor de Engajamento utiliza uma arquitetura baseada na **Arquitetura Hexagonal** (também conhecida como Ports and Adapters). 
+O legado.dev utiliza uma arquitetura baseada na **Arquitetura Hexagonal** (também conhecida como Ports and Adapters). 
 
 ## Motivação
 

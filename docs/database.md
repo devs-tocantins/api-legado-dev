@@ -17,7 +17,7 @@
 
 ## Sobre o Banco de Dados
 
-O Devs Tocantins (Motor de Engajamento) é voltado a usar um Banco de Dados Relacional sólido, ou seja, estruturamos os dados na API através do **PostgreSQL**. A ferramenta que faz a ponte do código no NodeJS para comandos SQL transparentes e padronizados para o banco é o **TypeORM**.
+O legado.dev é voltado a usar um Banco de Dados Relacional sólido, ou seja, estruturamos os dados na API através do **PostgreSQL**. A ferramenta que faz a ponte do código no NodeJS para comandos SQL transparentes e padronizados para o banco é o **TypeORM**.
 
 ## Trabalhando com TypeORM (PostgreSQL)
 

@@ -5,11 +5,13 @@ import { MissionsService } from './missions.service';
 import { MissionEntity } from './infrastructure/persistence/relational/entities/mission.entity';
 import { MissionSubmissionEntity } from './infrastructure/persistence/relational/entities/mission-submission.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([MissionEntity, MissionSubmissionEntity]),
     NotificationsModule,
+    MailModule,
   ],
   controllers: [MissionsController],
   providers: [MissionsService],

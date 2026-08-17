@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
+  Logger,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -15,6 +16,7 @@ import { SubmissionRepository } from './infrastructure/persistence/submission.re
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { Submission } from './domain/submission';
 import { SubmissionStatus } from './domain/submission-status.enum';
+import { SubmissionContributionKind } from './domain/submission-contribution-kind.enum';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 import { ActivitiesService } from '../activities/activities.service';
 import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
@@ -24,17 +26,37 @@ import { TransactionEntity } from '../transactions/infrastructure/persistence/re
 import { TransactionCategoryEnum } from '../transactions/domain/transaction-category.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/domain/notification-type.enum';
-import { FilesService } from '../files/files.service';
+import { TrackItemsService } from '../track-items/track-items.service';
+import { TrackItemType } from '../track-items/domain/track-item-type.enum';
+import { TrackItemCompletionEntity } from '../track-item-completions/infrastructure/persistence/relational/entities/track-item-completion.entity';
+import { TrackItemCompletionsService } from '../track-item-completions/track-item-completions.service';
+import { TrackItemCompletionStatus } from '../track-item-completions/domain/track-item-completion-status.enum';
+import { LearningTracksService } from '../learning-tracks/learning-tracks.service';
+import { Activity } from '../activities/domain/activity';
+import { PublicSubmissionDetail } from './domain/public-submission-detail';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
+import { MailService } from '../mail/mail.service';
+import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
+import { NotificationPreferenceEntity } from '../notifications/infrastructure/persistence/relational/entities/notification-preference.entity';
+
+const MODERATOR_REWARD_XP = 3;
 
 @Injectable()
 export class SubmissionsService {
+  private readonly logger = new Logger(SubmissionsService.name);
+
   constructor(
     private readonly submissionRepository: SubmissionRepository,
     private readonly gamificationProfilesService: GamificationProfilesService,
     private readonly activitiesService: ActivitiesService,
     private readonly badgeEvaluatorService: BadgeEvaluatorService,
     private readonly notificationsService: NotificationsService,
-    private readonly filesService: FilesService,
+    private readonly trackItemsService: TrackItemsService,
+    private readonly trackItemCompletionsService: TrackItemCompletionsService,
+    private readonly learningTracksService: LearningTracksService,
+    private readonly mailService: MailService,
+    private readonly auditLogsService: AuditLogsService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -52,23 +74,125 @@ export class SubmissionsService {
       );
     }
 
-    const activity = await this.activitiesService.findById(
-      createSubmissionDto.activityId,
-    );
+    let activityId = createSubmissionDto.activityId;
+    const isTestOut = createSubmissionDto.isTestOut ?? false;
+    let trackItem: Awaited<ReturnType<TrackItemsService['findById']>> = null;
+    let existingCompletion: Awaited<
+      ReturnType<TrackItemCompletionsService['findByItemAndProfile']>
+    > = null;
+
+    if (createSubmissionDto.trackItemId) {
+      const item = await this.trackItemsService.findById(
+        createSubmissionDto.trackItemId,
+      );
+      if (!item) {
+        throw new NotFoundException('Marco de trilha não encontrado.');
+      }
+      if (!item.activityId) {
+        throw new UnprocessableEntityException(
+          'Este marco não possui atividade vinculada para comprovação.',
+        );
+      }
+
+      if (isTestOut) {
+        if (!item.allowsTestOut) {
+          throw new BadRequestException('Este marco não permite test-out.');
+        }
+        const reachable = await this.learningTracksService.isSectionReachable(
+          item.trackId,
+          item.sectionId,
+          userId,
+        );
+        if (!reachable) {
+          throw new BadRequestException(
+            'Você ainda não chegou a esta etapa da trilha.',
+          );
+        }
+      } else if (item.type !== TrackItemType.PROOF) {
+        throw new BadRequestException(
+          'Este marco não é do tipo prova e não aceita comprovação.',
+        );
+      }
+
+      existingCompletion =
+        await this.trackItemCompletionsService.findByItemAndProfile(
+          item.id,
+          profile.id,
+        );
+      if (existingCompletion) {
+        if (
+          existingCompletion.status !== TrackItemCompletionStatus.IN_REVIEW &&
+          existingCompletion.status !==
+            TrackItemCompletionStatus.SKIPPED_TESTOUT
+        ) {
+          throw new BadRequestException('Este marco já foi concluído.');
+        }
+
+        if (existingCompletion.status === TrackItemCompletionStatus.IN_REVIEW) {
+          const priorSubmission = existingCompletion.submissionId
+            ? await this.submissionRepository.findById(
+                existingCompletion.submissionId,
+              )
+            : null;
+          if (
+            !priorSubmission ||
+            priorSubmission.status === SubmissionStatus.PENDING
+          ) {
+            throw new BadRequestException(
+              'Sua submissão para este marco ainda está em análise.',
+            );
+          }
+        }
+      }
+
+      trackItem = item;
+      activityId = item.activityId;
+    } else if (!activityId) {
+      throw new BadRequestException('Informe activityId ou trackItemId.');
+    }
+
+    const activity = await this.activitiesService.findById(activityId);
     if (!activity) {
       throw new NotFoundException('Atividade não encontrada.');
     }
 
-    if (activity.requiresProof && !createSubmissionDto.proofUrl) {
+    // Test-out é uma autodeclaração de domínio do assunto — não faz sentido
+    // exigir comprovante ou descrição, o moderador decide com base no
+    // contexto da trilha, não numa prova anexada.
+    if (!isTestOut) {
+      if (activity.requiresProof && !createSubmissionDto.proofUrl) {
+        throw new BadRequestException(
+          'Esta atividade exige um comprovante (proofUrl).',
+        );
+      }
+
+      if (activity.requiresDescription && !createSubmissionDto.description) {
+        throw new BadRequestException(
+          'Esta atividade exige uma descrição (description).',
+        );
+      }
+    }
+
+    if (activity.isFreeform && !createSubmissionDto.customTitle) {
       throw new BadRequestException(
-        'Esta atividade exige um comprovante (proofUrl).',
+        'Esta atividade exige um título (customTitle) descrevendo a contribuição.',
       );
     }
 
-    if (activity.requiresDescription && !createSubmissionDto.description) {
-      throw new BadRequestException(
-        'Esta atividade exige uma descrição (description).',
+    if (activity.effortTiers && activity.effortTiers.length > 0) {
+      if (!createSubmissionDto.effortLevel) {
+        throw new BadRequestException(
+          'Esta atividade exige a faixa de esforço declarada (effortLevel).',
+        );
+      }
+      const validTier = activity.effortTiers.some(
+        (tier) => tier.level === createSubmissionDto.effortLevel,
       );
+      if (!validTier) {
+        throw new BadRequestException(
+          'effortLevel informado não corresponde a nenhuma faixa desta atividade.',
+        );
+      }
     }
 
     if (activity.cooldownHours > 0) {
@@ -89,17 +213,70 @@ export class SubmissionsService {
       }
     }
 
-    return this.submissionRepository.create({
+    // Test-out é uma autodeclaração — resolve na hora, sem passar por
+    // moderação. A prova/comprovação normal continua PENDING e só desbloqueia
+    // XP quando aprovada, mas já libera o avanço na trilha imediatamente
+    // (ver TrackItemCompletionStatus.IN_REVIEW abaixo).
+    const now = new Date();
+    const submission = await this.submissionRepository.create({
       profileId: profile.id,
       activityId: activity.id,
+      trackItemId: createSubmissionDto.trackItemId ?? null,
+      isTestOut,
+      contributionKind: trackItem
+        ? SubmissionContributionKind.TRACK_PROGRESS
+        : SubmissionContributionKind.COMMUNITY_ACTIVITY,
       proofUrl: createSubmissionDto.proofUrl ?? null,
       description: createSubmissionDto.description ?? null,
-      status: SubmissionStatus.PENDING,
+      customTitle: createSubmissionDto.customTitle ?? null,
+      declaredEffort: createSubmissionDto.effortLevel ?? null,
+      status: isTestOut ? SubmissionStatus.APPROVED : SubmissionStatus.PENDING,
       feedback: null,
       awardedXp: 0,
       reviewerId: null,
-      reviewedAt: null,
+      reviewedAt: isTestOut ? now : null,
     });
+
+    if (trackItem) {
+      if (existingCompletion) {
+        await this.trackItemCompletionsService.remove(existingCompletion.id);
+      }
+      await this.trackItemCompletionsService.create({
+        itemId: trackItem.id,
+        profileId: profile.id,
+        status: isTestOut
+          ? TrackItemCompletionStatus.SKIPPED_TESTOUT
+          : TrackItemCompletionStatus.IN_REVIEW,
+        submissionId: submission.id,
+        awardedJourneyXp: 0,
+      });
+
+      if (isTestOut) {
+        void this.badgeEvaluatorService.evaluate(profile.id);
+        void this.trackItemsService.evaluateSectionCompletion(
+          trackItem.sectionId,
+          profile.id,
+        );
+      }
+    }
+
+    return submission;
+  }
+
+  // Resolve o XP efetivo: override do moderador ao aprovar > faixa declarada
+  // pelo usuário > fixedReward. Mantém a atividade "confiança + moderação"
+  // descrita no plano: o usuário se autodeclara, o moderador confirma/ajusta.
+  private resolveAwardedXp(
+    activity: Activity,
+    submission: Submission,
+    reviewDto: ReviewSubmissionDto,
+  ): number {
+    if (activity.effortTiers && activity.effortTiers.length > 0) {
+      const effectiveLevel = reviewDto.effortLevel ?? submission.declaredEffort;
+      const tier = activity.effortTiers.find((t) => t.level === effectiveLevel);
+      if (tier) return tier.xp;
+    }
+    return activity.fixedReward;
   }
 
   findAllWithPagination({
@@ -146,6 +323,36 @@ export class SubmissionsService {
 
   findById(id: Submission['id']) {
     return this.submissionRepository.findById(id);
+  }
+
+  // Detalhe público exibido no perfil /u/:username — só para submissões já
+  // aprovadas (não vaza pendentes/rejeitadas) e nunca expõe a proofUrl real,
+  // só se existe (hasProof).
+  async findPublicDetail(
+    id: Submission['id'],
+  ): Promise<PublicSubmissionDetail> {
+    const submission = await this.submissionRepository.findById(id);
+    if (!submission || submission.status !== SubmissionStatus.APPROVED) {
+      throw new NotFoundException('Submissão não encontrada.');
+    }
+
+    const activity = await this.activitiesService.findById(
+      submission.activityId,
+    );
+    if (!activity) {
+      throw new NotFoundException('Atividade não encontrada.');
+    }
+
+    const detail = new PublicSubmissionDetail();
+    detail.activityTitle = submission.customTitle ?? activity.title;
+    detail.activityDescription = activity.description;
+    detail.description = submission.description;
+    detail.activityDate = null;
+    detail.awardedXp = submission.awardedXp;
+    detail.hasProof = !!submission.proofUrl;
+    detail.createdAt = submission.createdAt;
+    detail.reviewedAt = submission.reviewedAt;
+    return detail;
   }
 
   findByIds(ids: Submission['id'][]) {
@@ -198,6 +405,11 @@ export class SubmissionsService {
       );
     }
 
+    const trackItem = submission.trackItemId
+      ? await this.trackItemsService.findById(submission.trackItemId)
+      : null;
+    const grantsCommunityXp = !trackItem || trackItem.grantsCommunityXp;
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -205,7 +417,7 @@ export class SubmissionsService {
     try {
       const awardedXp =
         reviewDto.status === SubmissionStatus.APPROVED
-          ? activity.fixedReward
+          ? this.resolveAwardedXp(activity, submission, reviewDto)
           : 0;
 
       await queryRunner.manager.update(SubmissionEntity, id, {
@@ -216,7 +428,11 @@ export class SubmissionsService {
         reviewedAt: new Date(),
       });
 
-      if (reviewDto.status === SubmissionStatus.APPROVED) {
+      if (
+        reviewDto.status === SubmissionStatus.APPROVED &&
+        grantsCommunityXp &&
+        !submission.isTestOut
+      ) {
         await queryRunner.manager.increment(
           GamificationProfileEntity,
           { id: submission.profileId },
@@ -244,34 +460,93 @@ export class SubmissionsService {
         });
       }
 
-      const moderatorProfile =
-        await this.gamificationProfilesService.findByUserId(reviewerUserId);
-      if (moderatorProfile) {
-        await queryRunner.manager.increment(
-          GamificationProfileEntity,
-          { id: moderatorProfile.id },
-          'totalXp',
-          activity.auditorReward,
-        );
-        await queryRunner.manager.increment(
-          GamificationProfileEntity,
-          { id: moderatorProfile.id },
-          'currentMonthlyXp',
-          activity.auditorReward,
-        );
-        await queryRunner.manager.increment(
-          GamificationProfileEntity,
-          { id: moderatorProfile.id },
-          'currentYearlyXp',
-          activity.auditorReward,
-        );
+      if (
+        reviewDto.status === SubmissionStatus.APPROVED &&
+        trackItem &&
+        !submission.isTestOut
+      ) {
+        const existingCompletion =
+          await this.trackItemCompletionsService.findByItemAndProfile(
+            trackItem.id,
+            submission.profileId,
+          );
 
-        await queryRunner.manager.save(TransactionEntity, {
-          profile: { id: moderatorProfile.id },
-          category: TransactionCategoryEnum.AUDITOR_REWARD,
-          amount: activity.auditorReward,
-          description: 'Recompensa por auditoria de submissão',
-        });
+        // A submissão normal já ganha uma completion IN_REVIEW no momento em
+        // que é criada (para não travar o avanço na trilha enquanto aguarda
+        // moderação) — aqui só promovemos ela pra COMPLETED e liberamos o XP
+        // de jornada. Se por algum motivo não existir (dado legado), criamos.
+        if (existingCompletion && existingCompletion.submissionId === id) {
+          await queryRunner.manager.update(
+            TrackItemCompletionEntity,
+            existingCompletion.id,
+            {
+              status: TrackItemCompletionStatus.COMPLETED,
+              awardedJourneyXp: trackItem.journeyXp,
+            },
+          );
+
+          if (trackItem.journeyXp > 0) {
+            await queryRunner.manager.increment(
+              GamificationProfileEntity,
+              { id: submission.profileId },
+              'journeyXp',
+              trackItem.journeyXp,
+            );
+          }
+        } else if (!existingCompletion) {
+          await queryRunner.manager.save(
+            TrackItemCompletionEntity,
+            queryRunner.manager.create(TrackItemCompletionEntity, {
+              itemId: trackItem.id,
+              profileId: submission.profileId,
+              status: TrackItemCompletionStatus.COMPLETED,
+              submissionId: id,
+              awardedJourneyXp: trackItem.journeyXp,
+              completedAt: new Date(),
+            }),
+          );
+
+          if (trackItem.journeyXp > 0) {
+            await queryRunner.manager.increment(
+              GamificationProfileEntity,
+              { id: submission.profileId },
+              'journeyXp',
+              trackItem.journeyXp,
+            );
+          }
+        }
+      }
+
+      if (reviewDto.status === SubmissionStatus.APPROVED) {
+        const moderatorProfile =
+          await this.gamificationProfilesService.findByUserId(reviewerUserId);
+        if (moderatorProfile) {
+          await queryRunner.manager.increment(
+            GamificationProfileEntity,
+            { id: moderatorProfile.id },
+            'totalXp',
+            MODERATOR_REWARD_XP,
+          );
+          await queryRunner.manager.increment(
+            GamificationProfileEntity,
+            { id: moderatorProfile.id },
+            'currentMonthlyXp',
+            MODERATOR_REWARD_XP,
+          );
+          await queryRunner.manager.increment(
+            GamificationProfileEntity,
+            { id: moderatorProfile.id },
+            'currentYearlyXp',
+            MODERATOR_REWARD_XP,
+          );
+
+          await queryRunner.manager.save(TransactionEntity, {
+            profile: { id: moderatorProfile.id },
+            category: TransactionCategoryEnum.AUDITOR_REWARD,
+            amount: MODERATOR_REWARD_XP,
+            description: `Revisão de submissão: ${activity.title}`,
+          });
+        }
       }
 
       await queryRunner.commitTransaction();
@@ -288,15 +563,128 @@ export class SubmissionsService {
       const ownerProfile = await this.dataSource
         .getRepository(GamificationProfileEntity)
         .findOne({ where: { id: submission.profileId } });
-      if (ownerProfile) {
-        void this.notificationsService.create({
-          userId: ownerProfile.userId,
-          type: NotificationType.SUBMISSION_APPROVED,
-          title: 'Submissão aprovada!',
-          body: `Sua submissão foi aprovada e você ganhou ${activity.fixedReward} XP.`,
-          relatedId: id,
-        });
+
+      if (trackItem) {
+        void this.trackItemsService.evaluateSectionCompletion(
+          trackItem.sectionId,
+          submission.profileId,
+        );
       }
+
+      if (ownerProfile) {
+        if (trackItem) {
+          void this.notificationsService
+            .create({
+              userId: ownerProfile.userId,
+              type: NotificationType.TRACK_MILESTONE_APPROVED,
+              title: 'Marco de trilha aprovado!',
+              body: `Sua prova foi aprovada${trackItem.journeyXp > 0 ? ` e você ganhou ${trackItem.journeyXp} XP de Jornada` : ''}.`,
+              relatedId: id,
+              link: `/trilhas/${trackItem.trackId}/marcos/${trackItem.id}`,
+              payload: {
+                trackId: trackItem.trackId,
+                trackItemId: trackItem.id,
+                submissionId: id,
+              },
+            })
+            .catch((err) =>
+              this.logger.error(
+                'Error sending TRACK_MILESTONE_APPROVED notification',
+                err,
+              ),
+            );
+        } else {
+          void this.notificationsService
+            .create({
+              userId: ownerProfile.userId,
+              type: NotificationType.SUBMISSION_APPROVED,
+              title: 'Submissão aprovada!',
+              body: `Sua submissão foi aprovada e você ganhou ${activity.fixedReward} XP.`,
+              relatedId: id,
+              link: `/submissions?open=${id}`,
+              payload: { submissionId: id },
+            })
+            .catch((err) =>
+              this.logger.error(
+                'Error sending SUBMISSION_APPROVED notification',
+                err,
+              ),
+            );
+        }
+
+        try {
+          const user = await this.dataSource
+            .getRepository(UserEntity)
+            .findOne({ where: { id: ownerProfile.userId } });
+          const pref = await this.dataSource
+            .getRepository(NotificationPreferenceEntity)
+            .findOne({ where: { userId: ownerProfile.userId } });
+          if (user && user.email && pref?.emailOnSubmissionApproved !== false) {
+            await this.mailService.submissionApproved({
+              to: user.email,
+              data: {
+                submissionId: id,
+                activityTitle: activity.title,
+              },
+            });
+          }
+        } catch (err) {
+          this.logger.error('Error sending submissionApproved email', err);
+        }
+      }
+    } else if (reviewDto.status === SubmissionStatus.REJECTED) {
+      const ownerProfile = await this.dataSource
+        .getRepository(GamificationProfileEntity)
+        .findOne({ where: { id: submission.profileId } });
+
+      if (ownerProfile) {
+        void this.notificationsService
+          .create({
+            userId: ownerProfile.userId,
+            type: NotificationType.SUBMISSION_REJECTED,
+            title: 'Submissão rejeitada',
+            body: reviewDto.feedback
+              ? `Sua submissão foi rejeitada com o seguinte feedback: ${reviewDto.feedback}`
+              : 'Sua submissão foi rejeitada.',
+            relatedId: id,
+            link: `/submissions?open=${id}`,
+            payload: { submissionId: id },
+          })
+          .catch((err) =>
+            this.logger.error(
+              'Error sending SUBMISSION_REJECTED notification',
+              err,
+            ),
+          );
+      }
+    }
+
+    if (
+      reviewDto.status === SubmissionStatus.APPROVED ||
+      reviewDto.status === SubmissionStatus.REJECTED
+    ) {
+      const isApproved = reviewDto.status === SubmissionStatus.APPROVED;
+      let targetUserId: number | null = null;
+      const fallbackProfile = await this.dataSource
+        .getRepository(GamificationProfileEntity)
+        .findOne({ where: { id: submission.profileId } });
+      if (fallbackProfile) targetUserId = fallbackProfile.userId;
+
+      void this.auditLogsService.record({
+        actorUserId: reviewerUserId,
+        action: isApproved
+          ? AuditActionEnum.SUBMISSION_APPROVED
+          : AuditActionEnum.SUBMISSION_REJECTED,
+        entityType: 'submission',
+        entityId: id,
+        targetUserId: targetUserId,
+        metadata: {
+          awardedXp: isApproved
+            ? this.resolveAwardedXp(activity, submission, reviewDto)
+            : 0,
+          feedback: reviewDto.feedback ?? null,
+        },
+      });
     }
 
     if (reviewDto.status === SubmissionStatus.REJECTED && submission.proofUrl) {
@@ -357,8 +745,13 @@ export class SubmissionsService {
       const submission = await this.submissionRepository.create({
         profileId: profile.id,
         activityId: activity.id,
+        trackItemId: null,
+        isTestOut: false,
+        contributionKind: SubmissionContributionKind.COMMUNITY_ACTIVITY,
         proofUrl: null,
         description: null,
+        customTitle: null,
+        declaredEffort: null,
         status: SubmissionStatus.APPROVED,
         feedback: null,
         awardedXp: activity.fixedReward,

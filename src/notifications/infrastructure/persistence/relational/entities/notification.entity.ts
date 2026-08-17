@@ -26,8 +26,17 @@ export class NotificationEntity {
   @Column({ type: 'boolean', default: false })
   isRead: boolean;
 
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  readAt: Date | null;
+
   @Column({ type: 'varchar', nullable: true, default: null })
   relatedId: string | null;
+
+  @Column({ type: 'jsonb', nullable: true, default: null })
+  payload: Record<string, unknown> | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true, default: null })
+  link: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

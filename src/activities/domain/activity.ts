@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { EffortTier } from './effort-tier';
 
 export class Activity {
   @ApiProperty({
@@ -64,11 +65,20 @@ export class Activity {
   cooldownHours: number;
 
   @ApiProperty({
-    type: Number,
-    description: 'Pontos XP concedidos ao auditor por revisar esta atividade',
-    example: 10,
+    type: [EffortTier],
+    nullable: true,
+    description:
+      'Faixas de esforço (Pequeno/Médio/Grande/Épico). Se null, usa fixedReward.',
   })
-  auditorReward: number;
+  effortTiers: EffortTier[] | null;
+
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Se true, é a atividade-semente de registro livre: aceita customTitle na submissão',
+    example: false,
+  })
+  isFreeform: boolean;
 
   @ApiProperty()
   createdAt: Date;

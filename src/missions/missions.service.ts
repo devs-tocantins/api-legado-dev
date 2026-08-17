@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -20,12 +21,18 @@ import { MissionSubmissionEntity } from './infrastructure/persistence/relational
 import { GamificationProfileEntity } from '../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/domain/notification-type.enum';
+import { MailService } from '../mail/mail.service';
+import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
+import { NotificationPreferenceEntity } from '../notifications/infrastructure/persistence/relational/entities/notification-preference.entity';
 
 @Injectable()
 export class MissionsService {
+  private readonly logger = new Logger(MissionsService.name);
+
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly notificationsService: NotificationsService,
+    private readonly mailService: MailService,
   ) {}
 
   // ── Admin: CRUD ──────────────────────────────────────────────────────────────
@@ -389,19 +396,39 @@ export class MissionsService {
         .getRepository(GamificationProfileEntity)
         .findOne({ where: { id: submission.profileId } });
       if (winnerProfile) {
-        void this.notificationsService.create({
-          userId: winnerProfile.userId,
-          type: isWinner
-            ? NotificationType.MISSION_WON
-            : NotificationType.SUBMISSION_APPROVED,
-          title: isWinner
-            ? 'Você venceu uma missão!'
-            : 'Participação aprovada!',
-          body: isWinner
-            ? `Parabéns! Você ganhou ${mission.xpReward} XP.`
-            : `Sua participação foi validada e você ganhou ${mission.participationReward} XP.`,
-          relatedId: missionId,
-        });
+        void this.notificationsService
+          .create({
+            userId: winnerProfile.userId,
+            type: NotificationType.MISSION_WON,
+            title: 'Você venceu uma missão!',
+            body: `Parabéns! Sua participação na missão foi aprovada e você ganhou ${mission.xpReward} XP.`,
+            relatedId: missionId,
+            link: '/voluntariado',
+            payload: { missionId },
+          })
+          .catch((err) =>
+            this.logger.error('Error sending MISSION_WON notification', err),
+          );
+
+        try {
+          const user = await this.dataSource
+            .getRepository(UserEntity)
+            .findOne({ where: { id: winnerProfile.userId } });
+          const pref = await this.dataSource
+            .getRepository(NotificationPreferenceEntity)
+            .findOne({ where: { userId: winnerProfile.userId } });
+          if (user && user.email && pref?.emailOnMissionWon !== false) {
+            await this.mailService.missionWon({
+              to: user.email,
+              data: {
+                missionTitle: mission.title,
+                xp: mission.xpReward,
+              },
+            });
+          }
+        } catch (err) {
+          this.logger.error('Error sending missionWon email', err);
+        }
       }
     }
 

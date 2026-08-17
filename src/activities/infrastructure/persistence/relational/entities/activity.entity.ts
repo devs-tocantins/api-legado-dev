@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
+import { EffortTier } from '../../../../domain/effort-tier';
 
 @Entity({
   name: 'activity',
@@ -38,8 +39,11 @@ export class ActivityEntity extends EntityRelationalHelper {
   @Column({ type: 'int', default: 0 })
   cooldownHours: number;
 
-  @Column({ type: 'int', default: 10 })
-  auditorReward: number;
+  @Column({ type: 'jsonb', nullable: true, default: null })
+  effortTiers: EffortTier[] | null;
+
+  @Column({ type: 'boolean', default: false })
+  isFreeform: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

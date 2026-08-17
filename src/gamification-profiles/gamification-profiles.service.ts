@@ -36,8 +36,11 @@ export class GamificationProfilesService {
       currentMonthlyXp: 0,
       currentYearlyXp: 0,
       gratitudeTokens: 0,
+      gratitudeTokensReceived: 0,
+      journeyXp: 0,
       isBanned: false,
       bannerPreset: 'default',
+      showFullName: false,
     });
   }
 
@@ -96,6 +99,8 @@ export class GamificationProfilesService {
     newUsername: string,
     githubUsername?: string | null,
     bannerPreset?: string,
+    avatarConfig?: string | null,
+    showFullName?: boolean,
   ): Promise<GamificationProfile> {
     const profile =
       await this.gamificationProfileRepository.findByUserId(userId);
@@ -115,6 +120,8 @@ export class GamificationProfilesService {
       username: newUsername,
       ...(githubUsername !== undefined && { githubUsername }),
       ...(bannerPreset !== undefined && { bannerPreset }),
+      ...(avatarConfig !== undefined && { avatarConfig }),
+      ...(showFullName !== undefined && { showFullName }),
     }) as Promise<GamificationProfile>;
   }
 
@@ -295,6 +302,12 @@ export class GamificationProfilesService {
         GamificationProfileEntity,
         { id: recipientProfile.id },
         'currentYearlyXp',
+        dto.amount,
+      );
+      await queryRunner.manager.increment(
+        GamificationProfileEntity,
+        { id: recipientProfile.id },
+        'gratitudeTokensReceived',
         dto.amount,
       );
 

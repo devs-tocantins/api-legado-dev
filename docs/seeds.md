@@ -8,10 +8,10 @@ Seeds são scripts que populam o banco de dados com dados iniciais necessários 
 
 ```bash
 # No diretório do backend:
-npm run seed:run
+npm run seed:run:relational
 
 # Ou em um ambiente específico:
-NODE_ENV=production npm run seed:run
+NODE_ENV=production npm run seed:run:relational
 ```
 
 Os seeds usam `upsert` ou verificam a existência antes de inserir, então é seguro reexecutar.
@@ -27,8 +27,10 @@ Os seeds devem ser executados na seguinte ordem (dependências entre entidades):
 3. **Users** — usuário admin padrão
 4. **Activities** — catálogo inicial de atividades
 5. **Badges** — catálogo inicial de badges
-
-Missões não têm seed fixo — são criadas manualmente pelo admin no painel.
+6. **Events** — eventos iniciais da comunidade
+7. **Gamification Profiles** — perfis de gamificação dos usuários inicializados
+8. **Learning Tracks** — trilhas de aprendizado iniciais com seções e marcos
+9. **Missions** — missões iniciais
 
 ---
 
@@ -36,15 +38,16 @@ Missões não têm seed fixo — são criadas manualmente pelo admin no painel.
 
 ### `role/role-seed.service.ts`
 Cria os papéis padrão:
-- `1 — user` (membro comum)
-- `2 — admin` (administrador)
+- `1 — admin` (administrador)
+- `2 — user` (membro comum)
 - `3 — moderator` (moderador)
 
 ### `status/status-seed.service.ts`
 Cria os status padrão:
 - `1 — active`
 - `2 — inactive`
-- `3 — banned`
+
+Usuários banidos não usam um terceiro status — são marcados pelo campo booleano `isBanned` em `User`, separado do `StatusEnum`.
 
 ### `user/user-seed.service.ts`
 Cria o usuário admin padrão. Credenciais definidas via variáveis de ambiente:
@@ -78,6 +81,18 @@ Exemplos de badges seeded:
 - **Missão Cumprida** (PARTICIPATION, AUTOMATIC) — primeira missão vencida
 - **Badge de Arte** (SPECIAL, MANUAL) — concedido manualmente pelo admin
 
+### `event/event-seed.service.ts`
+Popula o catálogo com eventos iniciais da comunidade.
+
+### `gamification-profile/gamification-profile-seed.service.ts`
+Cria perfis de gamificação vinculados aos usuários seedados, garantindo que cada user tenha seu perfil com username e carteira inicializados.
+
+### `learning-track/learning-track-seed.service.ts`
+Cria trilhas de aprendizado iniciais com suas etapas e marcos, fornecendo conteúdo de exemplo para desenvolvimento.
+
+### `mission/mission-seed.service.ts`
+Popula missões iniciais para teste e desenvolvimento.
+
 ---
 
 ## Em produção
@@ -88,8 +103,8 @@ Na primeira execução em produção, execute os seeds logo após as migrations:
 # 1. Rodar migrations
 npm run migration:run
 
-# 2. Rodar seeds
-npm run seed:run
+# 2. Rodar seeds (versão compilada, mais rápida em produção)
+npm run seed:run:relational:prod
 ```
 
 Após o seed inicial, crie as missões "de arte" manualmente pelo painel admin (elas exigem imagens e textos personalizados que não devem estar hardcoded nos seeds).

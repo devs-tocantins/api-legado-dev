@@ -21,15 +21,16 @@ import { FileType } from '../files/domain/file';
 import { Role } from '../roles/domain/role';
 import { Status } from '../statuses/domain/status';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
+import { CURRENT_LEGAL_DOCUMENTS_VERSION } from '../legal-documents/legal-documents.constants';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
-    @Inject(forwardRef(() => GamificationProfilesService))
-    private readonly gamificationProfilesService: GamificationProfilesService,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -132,6 +133,7 @@ export class UsersService {
       provider: createUserDto.provider ?? AuthProvidersEnum.email,
       socialId: createUserDto.socialId,
       isBanned: false,
+      lastNotifiedLegalVersion: CURRENT_LEGAL_DOCUMENTS_VERSION,
     });
   }
 
@@ -180,8 +182,9 @@ export class UsersService {
     id: User['id'],
     updateUserDto: UpdateUserDto,
   ): Promise<User | null> {
-    const existingUser = await this.usersRepository.findById(id);
-    if (!existingUser) return null;
+    const oldUserObject = await this.usersRepository.findById(id);
+    const oldRole = oldUserObject?.role?.id;
+    const oldIsBanned = oldUserObject?.isBanned;
 
     // Do not remove comment below.
     // <updating-property />
@@ -290,20 +293,32 @@ export class UsersService {
       socialId: updateUserDto.socialId,
     });
 
-    // Delete old photo from storage when replaced or removed
-    const oldPhoto = existingUser.photo;
-    const photoChanged =
-      photo !== undefined && oldPhoto?.path && oldPhoto.id !== photo?.id;
-    if (photoChanged) {
-      void this.filesService.deleteFile(oldPhoto!.path);
-    }
-
-    if (updateUserDto.isBanned === true && existingUser.isBanned === false) {
-      await this.gamificationProfilesService.zeroOutProfile(
-        Number(id),
-        'Usuário banido',
-        false,
-      );
+    if (updatedUser) {
+      if (
+        updateUserDto.role?.id !== undefined &&
+        oldRole !== updateUserDto.role.id
+      ) {
+        void this.auditLogsService.record({
+          actorUserId: null,
+          action: AuditActionEnum.USER_ROLE_CHANGED,
+          entityType: 'user',
+          entityId: String(id),
+          metadata: { oldRole, newRole: updateUserDto.role.id },
+        });
+      }
+      if (
+        updateUserDto.isBanned !== undefined &&
+        oldIsBanned !== updateUserDto.isBanned
+      ) {
+        void this.auditLogsService.record({
+          actorUserId: null,
+          action: updateUserDto.isBanned
+            ? AuditActionEnum.USER_BANNED
+            : AuditActionEnum.USER_UNBANNED,
+          entityType: 'user',
+          entityId: String(id),
+        });
+      }
     }
 
     return updatedUser;

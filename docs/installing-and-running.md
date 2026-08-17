@@ -1,6 +1,6 @@
 # Instalação
 
-O projeto da API - Motor de Engajamento é alimentada pelo NestJS e utiliza ferramentas pesadas já pré-configuradas para entregar a maior qualidade possível no menor tempo de escrita de roteadores e regras de negócio de base.
+O projeto da API - legado.dev é alimentada pelo NestJS e utiliza ferramentas pesadas já pré-configuradas para entregar a maior qualidade possível no menor tempo de escrita de roteadores e regras de negócio de base.
 
 ---
 

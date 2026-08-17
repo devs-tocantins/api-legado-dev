@@ -9,7 +9,11 @@ import { GamificationProfilesModule } from '../gamification-profiles/gamificatio
 import { ActivitiesModule } from '../activities/activities.module';
 import { BadgesModule } from '../badges/badges.module';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { FilesModule } from '../files/files.module';
+import { TrackItemsModule } from '../track-items/track-items.module';
+import { TrackItemCompletionsModule } from '../track-item-completions/track-item-completions.module';
+import { LearningTracksModule } from '../learning-tracks/learning-tracks.module';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -19,7 +23,11 @@ import { FilesModule } from '../files/files.module';
     ActivitiesModule,
     BadgesModule,
     NotificationsModule,
-    FilesModule,
+    TrackItemsModule,
+    TrackItemCompletionsModule,
+    LearningTracksModule,
+    AuditLogsModule,
+    MailModule,
   ],
   controllers: [SubmissionsController],
   providers: [SubmissionsService],

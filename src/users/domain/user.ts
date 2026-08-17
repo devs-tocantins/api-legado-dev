@@ -66,6 +66,9 @@ export class User {
   @ApiProperty({ type: Boolean, default: false })
   isBanned: boolean;
 
+  @ApiProperty({ type: Number, default: 0 })
+  lastNotifiedLegalVersion: number;
+
   @ApiProperty()
   createdAt: Date;
 

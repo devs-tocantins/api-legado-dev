@@ -171,4 +171,164 @@ export class MailService {
       },
     });
   }
+
+  async eventUpdated(
+    mailData: MailData<{
+      eventId: string;
+      eventTitle: string;
+      changesSummary: string;
+    }>,
+  ): Promise<void> {
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + `/eventos/${mailData.data.eventId}`,
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `Atualização no evento: ${mailData.data.eventTitle}`,
+      text: `${url.toString()} Atualização no evento: ${mailData.data.eventTitle}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'event-updated.hbs',
+      ),
+      context: {
+        title: `Atualização no evento: ${mailData.data.eventTitle}`,
+        url: url.toString(),
+        eventTitle: mailData.data.eventTitle,
+        changesSummary: mailData.data.changesSummary,
+        app_name: this.configService.get('app.name', { infer: true }),
+      },
+    });
+  }
+
+  async eventCancelled(
+    mailData: MailData<{ eventTitle: string }>,
+  ): Promise<void> {
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + '/eventos',
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `Evento cancelado: ${mailData.data.eventTitle}`,
+      text: `${url.toString()} Evento cancelado: ${mailData.data.eventTitle}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'event-cancelled.hbs',
+      ),
+      context: {
+        title: `Evento cancelado: ${mailData.data.eventTitle}`,
+        url: url.toString(),
+        eventTitle: mailData.data.eventTitle,
+        app_name: this.configService.get('app.name', { infer: true }),
+      },
+    });
+  }
+
+  async legalDocumentUpdated(mailData: MailData<object>): Promise<void> {
+    const appName = this.configService.get('app.name', { infer: true });
+    const title = `Atualizamos nossos termos — ${appName}`;
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + '/legal',
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `${url.toString()} ${title}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'legal-document-updated.hbs',
+      ),
+      context: {
+        title,
+        url: url.toString(),
+        app_name: appName,
+      },
+    });
+  }
+
+  async submissionApproved(
+    mailData: MailData<{ submissionId: string; activityTitle: string }>,
+  ): Promise<void> {
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + `/submissions?open=${mailData.data.submissionId}`,
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `Submissão aprovada: ${mailData.data.activityTitle}`,
+      text: `${url.toString()} Submissão aprovada: ${mailData.data.activityTitle}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'submission-approved.hbs',
+      ),
+      context: {
+        title: `Submissão aprovada: ${mailData.data.activityTitle}`,
+        url: url.toString(),
+        activityTitle: mailData.data.activityTitle,
+        app_name: this.configService.get('app.name', { infer: true }),
+      },
+    });
+  }
+
+  async missionWon(
+    mailData: MailData<{ missionTitle: string; xp: number }>,
+  ): Promise<void> {
+    const url = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + '/voluntariado',
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `Missão concluída: ${mailData.data.missionTitle}`,
+      text: `${url.toString()} Missão concluída: ${mailData.data.missionTitle}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'mission-won.hbs',
+      ),
+      context: {
+        title: `Missão concluída: ${mailData.data.missionTitle}`,
+        url: url.toString(),
+        missionTitle: mailData.data.missionTitle,
+        xp: mailData.data.xp,
+        app_name: this.configService.get('app.name', { infer: true }),
+      },
+    });
+  }
 }

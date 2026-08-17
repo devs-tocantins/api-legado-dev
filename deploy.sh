@@ -41,8 +41,8 @@ until ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$REMOTE" \
   sleep 3
 done
 
-echo "==> Limpando arquivo temporário local e remoto..."
-rm -f $TAR_FILE
-ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$REMOTE" "rm -f ~/app/$TAR_FILE"
+echo "==> Limpando imagens antigas..."
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+  "sudo docker image prune -af"
 
 echo "==> Deploy concluído! API no ar."

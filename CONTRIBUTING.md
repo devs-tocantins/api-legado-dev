@@ -1,6 +1,6 @@
-# Guia de Contribuição - Motor de Engajamento 🚀
+# Guia de Contribuição - legado.dev 🚀
 
-Obrigado pelo seu interesse em contribuir para o **Motor de Engajamento e Gamificação - Devs Tocantins**! Siga as diretrizes abaixo para garantir que seu código seja aceito sem atritos e mantenha a qualidade do projeto.
+Obrigado pelo seu interesse em contribuir para o **legado.dev - Devs Tocantins**! Siga as diretrizes abaixo para garantir que seu código seja aceito sem atritos e mantenha a qualidade do projeto.
 
 ---
 

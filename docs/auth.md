@@ -3,7 +3,7 @@
 ## Tabela de Conteúdos <!-- omit in toc -->
 
 - [Fluxo de Autenticação por E-mail](#fluxo-de-autenticação-por-e-mail)
-- [Fluxo de Autenticação com Login Social (Google, Apple, etc)](#fluxo-de-autenticação-com-login-social)
+- [Fluxo de Autenticação com Login Social (Google, GitHub)](#fluxo-de-autenticação-com-login-social)
 - [Configurando a Autenticação](#configurando-a-autenticação)
 - [Sobre a Estratégia JWT](#sobre-a-estratégia-jwt)
 - [Fluxo do Refresh Token (Atualização de Token)](#fluxo-do-refresh-token)
@@ -37,8 +37,11 @@ sequenceDiagram
 
 O projeto já está estruturado para suportar login fácil através do Google e GitHub.
 
-**Autenticação Híbrida (Redundância)**
-O sistema permite que um usuário que se cadastrou via Rede Social (Google/GitHub) possa posteriormente definir uma senha tradicional através do fluxo de "Esqueci minha senha" (`POST /api/v1/auth/forgot/password`). Isso permite que ele tenha duas formas de entrar na mesma conta, garantindo redundância de acesso.
+```mermaid
+sequenceDiagram
+    participant B as Provedor de Login (Google, GitHub)
+    participant A as Frontend (Web/Mobile)
+    participant C as Backend API
 
 ## Segurança e Rate Limiting
 
@@ -48,8 +51,8 @@ A API possui proteção contra ataques de força bruta e spam de e-mails usando 
 - **Login:** Limite de 5 tentativas por minuto e 20 por hora.
 
 Para autenticar com serviços externos:
-1. No Frontend, o usuário se loga usando o SDK do Google/Apple, resultando num Access token.
-2. Você chama uma das rotas (`/api/v1/auth/google/login`, `/api/v1/auth/apple/login`) para gerar uma sessão no nosso Backend.
+1. No Frontend, o usuário se loga usando o SDK do Google ou o fluxo OAuth do GitHub, resultando num Access token.
+2. Você chama uma das rotas (`/api/v1/auth/google/login`, `/api/v1/auth/github/login`) para gerar uma sessão no nosso Backend.
 
 ## Configurando a Autenticação
 
@@ -61,8 +64,8 @@ node -e "console.log('\nAUTH_JWT_SECRET=' + require('crypto').randomBytes(256).t
 
 E coloque o retorno diretamente no seu arquivo `.env`.
 
-> **Logins Sociais (Google/Apple):**
-> Você vai precisar criar apps nesses respectivos portais para extrair os Tokens de Configuração (como `GOOGLE_CLIENT_ID` ou `APPLE_APP_AUDIENCE`) para preencher no `.env`.
+> **Logins Sociais (Google/GitHub):**
+> Você vai precisar criar apps nesses respectivos portais para extrair os Tokens de Configuração (como `GOOGLE_CLIENT_ID` ou `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`) para preencher no `.env`.
 
 ## Sobre a Estratégia JWT
 

@@ -1,3 +1,5 @@
+> **⚠️ Nota (atualizado em 2026-07-25):** este documento descreve a visão original/inicial do produto (então chamado "Motor de Engajamento"). O sistema evoluiu significativamente desde então — hoje inclui Trilhas de Aprendizado, Eventos, Cursos, WhatsApp, Ranking com histórico de snapshots, entre outros módulos não previstos aqui. Trate como registro histórico de intenção, não como especificação do estado atual.
+
   Legado.dev — Documento de User Stories
   Última atualização: 2026-04-18 (Milestone 6 — sistema completo em dev)
 

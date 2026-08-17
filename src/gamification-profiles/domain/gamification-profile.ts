@@ -48,14 +48,38 @@ export class GamificationProfile {
   })
   gratitudeTokens: number;
 
+  @ApiProperty({
+    type: Number,
+    description: 'Tokens de gratidão recebidos no total histórico',
+    example: 0,
+  })
+  gratitudeTokensReceived: number;
+
+  @ApiProperty({
+    type: Number,
+    description:
+      'XP de Jornada (crescimento pessoal via trilhas de aprendizado)',
+    example: 0,
+  })
+  journeyXp: number;
+
   @ApiProperty({ type: Boolean, default: false })
   isBanned: boolean;
+
+  @ApiProperty({ type: Boolean, default: false })
+  showFullName: boolean = false;
 
   @ApiProperty({ type: String, required: false, nullable: true })
   githubUsername?: string | null;
 
   @ApiProperty({ type: String, default: 'default' })
   bannerPreset: string = 'default';
+
+  @ApiProperty({ type: String, required: false, nullable: true })
+  avatarConfig?: string | null;
+
+  @ApiProperty({ type: () => FileType, required: false, nullable: true })
+  photo?: FileType | null;
 
   @ApiProperty({ type: String, required: false })
   firstName?: string;

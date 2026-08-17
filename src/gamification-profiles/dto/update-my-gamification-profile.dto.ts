@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -46,4 +48,25 @@ export class UpdateMyGamificationProfileDto {
   @IsString()
   @MaxLength(50)
   bannerPreset?: string;
+
+  @ApiProperty({
+    description:
+      'Configuração do avatar gerado (JSON serializado com estilo/opções). Envie null para remover.',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @MaxLength(20000)
+  avatarConfig?: string | null;
+
+  @ApiProperty({
+    description: 'Exibir nome completo no perfil público',
+    required: false,
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  showFullName?: boolean;
 }

@@ -44,13 +44,13 @@ describe('Auth Module', () => {
     });
 
     describe('Login', () => {
-      it('should successfully with unconfirmed email: /api/v1/auth/email/login (POST)', () => {
+      it('should fail with unconfirmed email: /api/v1/auth/email/login (POST)', () => {
         return request(app)
           .post('/api/v1/auth/email/login')
           .send({ email: newUserEmail, password: newUserPassword })
-          .expect(200)
+          .expect(422)
           .expect(({ body }) => {
-            expect(body.token).toBeDefined();
+            expect(body.errors.user).toBe('inactive');
           });
       });
     });
@@ -257,6 +257,26 @@ describe('Auth Module', () => {
           password: newUserPassword,
           firstName: newUserFirstName,
           lastName: newUserLastName,
+        })
+        .expect(204);
+
+      const confirmHash = await request(mail)
+        .get('/email')
+        .then(({ body }) =>
+          body
+            .find(
+              (letter) =>
+                letter.to[0].address.toLowerCase() ===
+                  newUserEmail.toLowerCase() &&
+                /.*confirm\-email\?hash\=(\S+).*/g.test(letter.text),
+            )
+            ?.text.replace(/.*confirm\-email\?hash\=(\S+).*/g, '$1'),
+        );
+
+      await request(app)
+        .post('/api/v1/auth/email/confirm')
+        .send({
+          hash: confirmHash,
         })
         .expect(204);
 

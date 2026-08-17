@@ -8,6 +8,7 @@ import databaseConfig from './database/config/database.config';
 import authConfig from './auth/config/auth.config';
 import appConfig from './config/app.config';
 import mailConfig from './mail/config/mail.config';
+import whatsappConfig from './whatsapp/config/whatsapp.config';
 import fileConfig from './files/config/file.config';
 import googleConfig from './auth-google/config/google.config';
 import githubConfig from './auth-github/config/github.config';
@@ -24,6 +25,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { AllConfigType } from './config/config.type';
 import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -45,18 +47,54 @@ import { MissionsModule } from './missions/missions.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ContributionReportsModule } from './contribution-reports/contribution-reports.module';
 
+import { EventsModule } from './events/events.module';
+
+import { LearningTracksModule } from './learning-tracks/learning-tracks.module';
+
+import { TrackSectionsModule } from './track-sections/track-sections.module';
+
+import { TrackItemsModule } from './track-items/track-items.module';
+
+import { CoursesModule } from './courses/courses.module';
+
+import { CourseReviewsModule } from './course-reviews/course-reviews.module';
+
+import { TrackEnrollmentsModule } from './track-enrollments/track-enrollments.module';
+
+import { TrackItemCompletionsModule } from './track-item-completions/track-item-completions.module';
+
+import { ProfilePortfolioModule } from './profile-portfolio/profile-portfolio.module';
+
+import { LegalDocumentsModule } from './legal-documents/legal-documents.module';
+
+import { TrackSuggestionsModule } from './track-suggestions/track-suggestions.module';
+import { RankingSnapshotsModule } from './ranking-snapshots/ranking-snapshots.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
+
 @Module({
   imports: [
+    AuditLogsModule,
+    RankingSnapshotsModule,
+    TrackSuggestionsModule,
+    LegalDocumentsModule,
+    TrackItemCompletionsModule,
+    ProfilePortfolioModule,
+    TrackEnrollmentsModule,
+    CourseReviewsModule,
+    CoursesModule,
+    TrackItemsModule,
+    TrackSectionsModule,
+    LearningTracksModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
         ttl: 1000,
-        limit: 10,
+        limit: Number(process.env.THROTTLE_SHORT_LIMIT) || 10,
       },
       {
         name: 'medium',
         ttl: 60_000,
-        limit: 100,
+        limit: Number(process.env.THROTTLE_MEDIUM_LIMIT) || 100,
       },
     ]),
     AdminModule,
@@ -68,6 +106,7 @@ import { ContributionReportsModule } from './contribution-reports/contribution-r
     SubmissionsModule,
     ActivitiesModule,
     GamificationProfilesModule,
+    EventsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
@@ -78,6 +117,7 @@ import { ContributionReportsModule } from './contribution-reports/contribution-r
         fileConfig,
         googleConfig,
         githubConfig,
+        whatsappConfig,
       ],
       envFilePath: ['.env'],
     }),
@@ -113,6 +153,7 @@ import { ContributionReportsModule } from './contribution-reports/contribution-r
     SessionModule,
     MailModule,
     MailerModule,
+    WhatsappModule,
     HomeModule,
   ],
   providers: [

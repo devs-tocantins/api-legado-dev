@@ -12,8 +12,15 @@ export class GamificationProfileMapper {
     domainEntity.currentMonthlyXp = raw.currentMonthlyXp;
     domainEntity.currentYearlyXp = raw.currentYearlyXp;
     domainEntity.gratitudeTokens = raw.gratitudeTokens;
+    domainEntity.gratitudeTokensReceived = raw.gratitudeTokensReceived ?? 0;
+    domainEntity.journeyXp = raw.journeyXp;
+    domainEntity.showFullName = raw.showFullName ?? false;
     domainEntity.githubUsername = raw.githubUsername ?? null;
     domainEntity.bannerPreset = raw.bannerPreset ?? 'default';
+    domainEntity.avatarConfig = raw.avatarConfig ?? null;
+    domainEntity.photo = raw.user?.photo
+      ? FileMapper.toDomain(raw.user.photo)
+      : null;
     domainEntity.isBanned = raw.user?.isBanned ?? false;
     domainEntity.firstName = raw.user?.firstName ?? undefined;
     domainEntity.lastName = raw.user?.lastName ?? undefined;
@@ -38,11 +45,20 @@ export class GamificationProfileMapper {
     persistenceEntity.currentMonthlyXp = domainEntity.currentMonthlyXp;
     persistenceEntity.currentYearlyXp = domainEntity.currentYearlyXp;
     persistenceEntity.gratitudeTokens = domainEntity.gratitudeTokens;
+    persistenceEntity.gratitudeTokensReceived =
+      domainEntity.gratitudeTokensReceived;
+    persistenceEntity.journeyXp = domainEntity.journeyXp;
+    if (domainEntity.showFullName !== undefined) {
+      persistenceEntity.showFullName = domainEntity.showFullName;
+    }
     if (domainEntity.githubUsername !== undefined) {
       persistenceEntity.githubUsername = domainEntity.githubUsername;
     }
     if (domainEntity.bannerPreset !== undefined) {
       persistenceEntity.bannerPreset = domainEntity.bannerPreset;
+    }
+    if (domainEntity.avatarConfig !== undefined) {
+      persistenceEntity.avatarConfig = domainEntity.avatarConfig;
     }
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;

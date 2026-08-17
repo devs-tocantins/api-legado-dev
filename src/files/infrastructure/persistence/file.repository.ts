@@ -8,5 +8,5 @@ export abstract class FileRepository {
 
   abstract findByIds(ids: FileType['id'][]): Promise<FileType[]>;
 
-  abstract deleteByPath(path: string): Promise<void>;
+  abstract remove(id: FileType['id']): Promise<void>;
 }

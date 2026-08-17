@@ -33,6 +33,9 @@ export class GamificationProfileEntity extends EntityRelationalHelper {
   @Column({ type: 'varchar', length: 50, default: 'default' })
   bannerPreset: string;
 
+  @Column({ type: 'text', nullable: true, default: null })
+  avatarConfig: string | null;
+
   @Column({ type: 'int', default: 0 })
   totalXp: number;
 
@@ -44,6 +47,15 @@ export class GamificationProfileEntity extends EntityRelationalHelper {
 
   @Column({ type: 'int', default: 0 })
   gratitudeTokens: number;
+
+  @Column({ type: 'int', default: 0 })
+  gratitudeTokensReceived: number;
+
+  @Column({ type: 'int', default: 0 })
+  journeyXp: number;
+
+  @Column({ type: 'boolean', default: false })
+  showFullName: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -5,6 +5,7 @@ import { FileConfig } from '../files/config/file-config.type';
 import { GoogleConfig } from '../auth-google/config/google-config.type';
 import { GitHubConfig } from '../auth-github/config/github-config.type';
 import { MailConfig } from '../mail/config/mail-config.type';
+import { WhatsappConfig } from '../whatsapp/config/whatsapp-config.type';
 
 export type AllConfigType = {
   app: AppConfig;
@@ -14,4 +15,5 @@ export type AllConfigType = {
   google: GoogleConfig;
   github: GitHubConfig;
   mail: MailConfig;
+  whatsapp: WhatsappConfig;
 };

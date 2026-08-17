@@ -101,6 +101,15 @@ export class AuthService {
       });
     }
 
+    if (user.status?.id !== StatusEnum.active) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'inactive',
+        },
+      });
+    }
+
     if (user.isBanned) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -110,14 +119,7 @@ export class AuthService {
       });
     }
 
-    if (user.status?.id?.toString() === StatusEnum.inactive.toString()) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          user: 'inactive',
-        },
-      });
-    }
+    await this.ensureGamificationProfile(user);
 
     const hash = crypto
       .createHash('sha256')
@@ -558,7 +560,13 @@ export class AuthService {
     delete userDto.email;
     delete userDto.oldPassword;
 
+    const oldPhotoId = currentUser.photo?.id;
+
     await this.usersService.update(userJwtPayload.id, userDto);
+
+    if (userDto.photo && oldPhotoId && oldPhotoId !== userDto.photo.id) {
+      await this.filesService.remove(oldPhotoId);
+    }
 
     return this.usersService.findById(userJwtPayload.id);
   }
