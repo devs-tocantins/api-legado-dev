@@ -21,6 +21,7 @@ const infrastructurePersistenceModule = RelationalUserPersistenceModule;
     infrastructurePersistenceModule,
     FilesModule,
     AuditLogsModule,
+    GamificationProfilesModule,
   ],
   controllers: [UsersController],
   providers: [UsersService, UsersCronService],

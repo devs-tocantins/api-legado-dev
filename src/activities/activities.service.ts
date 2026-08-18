@@ -31,6 +31,7 @@ export class ActivitiesService {
       requiresProof: createActivityDto.requiresProof ?? false,
       requiresDescription: createActivityDto.requiresDescription ?? false,
       cooldownHours: createActivityDto.cooldownHours ?? 0,
+      requiresActivityDate: createActivityDto.requiresActivityDate ?? false,
       effortTiers: createActivityDto.effortTiers ?? null,
       isFreeform: createActivityDto.isFreeform ?? false,
     });
@@ -87,6 +88,9 @@ export class ActivitiesService {
       }),
       ...(updateActivityDto.cooldownHours !== undefined && {
         cooldownHours: updateActivityDto.cooldownHours,
+      }),
+      ...(updateActivityDto.requiresActivityDate !== undefined && {
+        requiresActivityDate: updateActivityDto.requiresActivityDate,
       }),
       ...(updateActivityDto.effortTiers !== undefined && {
         effortTiers: updateActivityDto.effortTiers,

@@ -2,7 +2,9 @@ import {
   // do not remove this comment
   Module,
 } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { SubmissionsService } from './submissions.service';
+import { SubmissionsCronService } from './submissions-cron.service';
 import { SubmissionsController } from './submissions.controller';
 import { RelationalSubmissionPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { GamificationProfilesModule } from '../gamification-profiles/gamification-profiles.module';
@@ -14,6 +16,8 @@ import { TrackItemCompletionsModule } from '../track-item-completions/track-item
 import { LearningTracksModule } from '../learning-tracks/learning-tracks.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { MailModule } from '../mail/mail.module';
+import { FilesModule } from '../files/files.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -28,9 +32,12 @@ import { MailModule } from '../mail/mail.module';
     LearningTracksModule,
     AuditLogsModule,
     MailModule,
+    FilesModule,
+    UsersModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [SubmissionsController],
-  providers: [SubmissionsService],
+  providers: [SubmissionsService, SubmissionsCronService],
   exports: [SubmissionsService, RelationalSubmissionPersistenceModule],
 })
 export class SubmissionsModule {}

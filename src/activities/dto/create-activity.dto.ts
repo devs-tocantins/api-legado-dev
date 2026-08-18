@@ -63,6 +63,11 @@ export class CreateActivityDto {
   @Min(0)
   cooldownHours?: number;
 
+  @ApiProperty({ example: false, required: false })
+  @IsOptional()
+  @IsBoolean()
+  requiresActivityDate?: boolean;
+
   @ApiPropertyOptional({
     type: [EffortTier],
     description:

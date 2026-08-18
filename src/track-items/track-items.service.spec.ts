@@ -249,6 +249,7 @@ describe('TrackItemsService — evaluateSectionCompletion', () => {
         description:
           'Comprovação exclusiva do marco de trilha "Suba uma API REST em produção".',
         fixedReward: 50,
+        auditorReward: 10,
         isHidden: true,
         requiresProof: true,
         requiresDescription: false,

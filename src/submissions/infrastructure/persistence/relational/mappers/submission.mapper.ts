@@ -19,6 +19,7 @@ export class SubmissionMapper {
     domainEntity.awardedXp = raw.awardedXp;
     domainEntity.reviewerId = raw.reviewerId;
     domainEntity.reviewedAt = raw.reviewedAt;
+    domainEntity.activityDate = raw.activityDate;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -44,6 +45,7 @@ export class SubmissionMapper {
     persistenceEntity.awardedXp = domainEntity.awardedXp;
     persistenceEntity.reviewerId = domainEntity.reviewerId;
     persistenceEntity.reviewedAt = domainEntity.reviewedAt;
+    persistenceEntity.activityDate = domainEntity.activityDate;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

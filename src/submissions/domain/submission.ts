@@ -107,6 +107,12 @@ export class Submission {
   })
   reviewedAt: Date | null;
 
+  @ApiProperty({
+    nullable: true,
+    description: 'Data em que a atividade foi realizada',
+  })
+  activityDate: Date | null;
+
   @ApiProperty()
   createdAt: Date;
 

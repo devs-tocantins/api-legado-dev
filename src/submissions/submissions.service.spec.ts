@@ -4,6 +4,8 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SubmissionsService } from './submissions.service';
 import { SubmissionRepository } from './infrastructure/persistence/submission.repository';
 import { MailService } from '../mail/mail.service';
+import { FilesService } from '../files/files.service';
+import { UsersService } from '../users/users.service';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 import { ActivitiesService } from '../activities/activities.service';
 import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
@@ -52,6 +54,8 @@ const mockActivity: Activity = {
   requiresProof: false,
   requiresDescription: false,
   cooldownHours: 0,
+  auditorReward: 10,
+  requiresActivityDate: false,
   effortTiers: null,
   isFreeform: false,
   createdAt: new Date('2026-01-01'),
@@ -112,6 +116,7 @@ function makeSubmission(overrides: Partial<Submission> = {}): Submission {
     awardedXp: 0,
     reviewerId: null,
     reviewedAt: null,
+    activityDate: null,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,
@@ -198,6 +203,12 @@ describe('SubmissionsService', () => {
     const mockMailService = {
       submissionApproved: jest.fn(),
     };
+    const mockFilesService = {
+      removeByUrl: jest.fn().mockResolvedValue(undefined),
+    };
+    const mockUsersService = {
+      findManyWithPagination: jest.fn().mockResolvedValue([]),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -227,6 +238,8 @@ describe('SubmissionsService', () => {
         },
         { provide: LearningTracksService, useValue: mockLearningTracksService },
         { provide: MailService, useValue: mockMailService },
+        { provide: FilesService, useValue: mockFilesService },
+        { provide: UsersService, useValue: mockUsersService },
         { provide: getDataSourceToken(), useValue: mockDataSource },
       ],
     }).compile();
@@ -634,7 +647,7 @@ describe('SubmissionsService', () => {
       );
     });
 
-    it('should award 3 XP to the moderator on approval', async () => {
+    it('should award the activity auditorReward to the moderator on approval', async () => {
       mockSubmissionRepository.findById!.mockResolvedValue(
         makeSubmission({ trackItemId: 'item-1' }),
       );
@@ -649,26 +662,26 @@ describe('SubmissionsService', () => {
         expect.anything(),
         { id: 'moderator-profile' },
         'totalXp',
-        3,
+        mockActivity.auditorReward,
       );
       expect(mockQueryRunner.manager.increment).toHaveBeenCalledWith(
         expect.anything(),
         { id: 'moderator-profile' },
         'currentMonthlyXp',
-        3,
+        mockActivity.auditorReward,
       );
       expect(mockQueryRunner.manager.increment).toHaveBeenCalledWith(
         expect.anything(),
         { id: 'moderator-profile' },
         'currentYearlyXp',
-        3,
+        mockActivity.auditorReward,
       );
       expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           profile: { id: 'moderator-profile' },
           category: 'AUDITOR_REWARD',
-          amount: 3,
+          amount: mockActivity.auditorReward,
           description: `Revisão de submissão: ${mockActivity.title}`,
         }),
       );

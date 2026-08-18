@@ -17,6 +17,7 @@ const mockActivity: Activity = {
   requiresProof: true,
   requiresDescription: false,
   cooldownHours: 24,
+  requiresActivityDate: false,
   effortTiers: null,
   isFreeform: false,
   createdAt: new Date('2026-01-01'),

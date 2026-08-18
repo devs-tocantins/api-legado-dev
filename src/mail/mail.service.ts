@@ -269,6 +269,35 @@ export class MailService {
     });
   }
 
+  async sendPendingSubmissionsDigest(
+    mailData: MailData<{ count: number }>,
+  ): Promise<void> {
+    const adminUrl =
+      this.configService.getOrThrow('app.frontendDomain', { infer: true }) +
+      '/moderation';
+    const appName = this.configService.get('app.name', { infer: true });
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `[${appName || 'App'}] ${mailData.data.count} submissão(ões) aguardando revisão`,
+      text: `Há ${mailData.data.count} submissão(ões) pendente(s). Acesse: ${adminUrl}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'pending-submissions-digest.hbs',
+      ),
+      context: {
+        count: mailData.data.count,
+        adminUrl,
+        app_name: appName || 'App',
+      },
+    });
+  }
+
   async submissionApproved(
     mailData: MailData<{ submissionId: string; activityTitle: string }>,
   ): Promise<void> {

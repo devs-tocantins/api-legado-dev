@@ -39,8 +39,9 @@ import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
 import { MailService } from '../mail/mail.service';
 import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
 import { NotificationPreferenceEntity } from '../notifications/infrastructure/persistence/relational/entities/notification-preference.entity';
-
-const MODERATOR_REWARD_XP = 3;
+import { FilesService } from '../files/files.service';
+import { UsersService } from '../users/users.service';
+import { RoleEnum } from '../roles/roles.enum';
 
 @Injectable()
 export class SubmissionsService {
@@ -57,6 +58,8 @@ export class SubmissionsService {
     private readonly learningTracksService: LearningTracksService,
     private readonly mailService: MailService,
     private readonly auditLogsService: AuditLogsService,
+    private readonly filesService: FilesService,
+    private readonly usersService: UsersService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -179,6 +182,12 @@ export class SubmissionsService {
       );
     }
 
+    if (activity.requiresActivityDate && !createSubmissionDto.activityDate) {
+      throw new BadRequestException(
+        'Esta atividade exige a data em que foi realizada (activityDate).',
+      );
+    }
+
     if (activity.effortTiers && activity.effortTiers.length > 0) {
       if (!createSubmissionDto.effortLevel) {
         throw new BadRequestException(
@@ -230,12 +239,17 @@ export class SubmissionsService {
       description: createSubmissionDto.description ?? null,
       customTitle: createSubmissionDto.customTitle ?? null,
       declaredEffort: createSubmissionDto.effortLevel ?? null,
+      activityDate: createSubmissionDto.activityDate
+        ? new Date(createSubmissionDto.activityDate)
+        : null,
       status: isTestOut ? SubmissionStatus.APPROVED : SubmissionStatus.PENDING,
       feedback: null,
       awardedXp: 0,
       reviewerId: null,
       reviewedAt: isTestOut ? now : null,
     });
+
+    void this.notifyModeratorsNewSubmission(submission.id);
 
     if (trackItem) {
       if (existingCompletion) {
@@ -261,6 +275,38 @@ export class SubmissionsService {
     }
 
     return submission;
+  }
+
+  private async notifyModeratorsNewSubmission(submissionId: string) {
+    try {
+      const moderators = await this.usersService.findManyWithPagination({
+        filterOptions: {
+          roles: [{ id: RoleEnum.moderator }, { id: RoleEnum.admin }],
+        },
+        sortOptions: null,
+        paginationOptions: { page: 1, limit: 500 },
+      });
+
+      for (const mod of moderators) {
+        void this.notificationsService
+          .create({
+            userId: Number(mod.id),
+            type: NotificationType.NEW_SUBMISSION_PENDING,
+            title: 'Nova submissão aguardando revisão',
+            body: 'Uma nova submissão de atividade está aguardando sua revisão.',
+            relatedId: submissionId,
+            link: `/moderation?open=${submissionId}`,
+          })
+          .catch((err) =>
+            this.logger.error(
+              'Error sending NEW_SUBMISSION_PENDING notification',
+              err,
+            ),
+          );
+      }
+    } catch (err) {
+      this.logger.error('Error notifying moderators of new submission', err);
+    }
   }
 
   // Resolve o XP efetivo: override do moderador ao aprovar > faixa declarada
@@ -347,7 +393,9 @@ export class SubmissionsService {
     detail.activityTitle = submission.customTitle ?? activity.title;
     detail.activityDescription = activity.description;
     detail.description = submission.description;
-    detail.activityDate = null;
+    detail.activityDate = submission.activityDate
+      ? submission.activityDate.toISOString()
+      : null;
     detail.awardedXp = submission.awardedXp;
     detail.hasProof = !!submission.proofUrl;
     detail.createdAt = submission.createdAt;
@@ -525,25 +573,25 @@ export class SubmissionsService {
             GamificationProfileEntity,
             { id: moderatorProfile.id },
             'totalXp',
-            MODERATOR_REWARD_XP,
+            activity.auditorReward,
           );
           await queryRunner.manager.increment(
             GamificationProfileEntity,
             { id: moderatorProfile.id },
             'currentMonthlyXp',
-            MODERATOR_REWARD_XP,
+            activity.auditorReward,
           );
           await queryRunner.manager.increment(
             GamificationProfileEntity,
             { id: moderatorProfile.id },
             'currentYearlyXp',
-            MODERATOR_REWARD_XP,
+            activity.auditorReward,
           );
 
           await queryRunner.manager.save(TransactionEntity, {
             profile: { id: moderatorProfile.id },
             category: TransactionCategoryEnum.AUDITOR_REWARD,
-            amount: MODERATOR_REWARD_XP,
+            amount: activity.auditorReward,
             description: `Revisão de submissão: ${activity.title}`,
           });
         }
@@ -688,9 +736,7 @@ export class SubmissionsService {
     }
 
     if (reviewDto.status === SubmissionStatus.REJECTED && submission.proofUrl) {
-      void this.filesService.deleteFile(
-        this.filesService.extractStoragePath(submission.proofUrl),
-      );
+      void this.filesService.removeByUrl(submission.proofUrl);
     }
 
     return this.submissionRepository.findById(id);
@@ -752,6 +798,7 @@ export class SubmissionsService {
         description: null,
         customTitle: null,
         declaredEffort: null,
+        activityDate: null,
         status: SubmissionStatus.APPROVED,
         feedback: null,
         awardedXp: activity.fixedReward,
@@ -821,9 +868,7 @@ export class SubmissionsService {
     await this.submissionRepository.remove(id);
 
     if (submission.proofUrl) {
-      void this.filesService.deleteFile(
-        this.filesService.extractStoragePath(submission.proofUrl),
-      );
+      void this.filesService.removeByUrl(submission.proofUrl);
     }
   }
 

@@ -87,9 +87,6 @@ export class GamificationProfile {
   @ApiProperty({ type: String, required: false })
   lastName?: string;
 
-  @ApiProperty({ type: () => FileType, required: false, nullable: true })
-  photo?: FileType | null;
-
   @ApiProperty()
   createdAt: Date;
 

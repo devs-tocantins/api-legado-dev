@@ -97,6 +97,9 @@ export class SubmissionEntity extends EntityRelationalHelper {
   @Column({ type: 'timestamp', nullable: true, default: null })
   reviewedAt: Date | null;
 
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  activityDate: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

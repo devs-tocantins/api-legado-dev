@@ -114,7 +114,7 @@ describe('EventsService', () => {
         description: 'desc',
         category: EventCategory.MEETUP,
         modality: EventModality.PRESENCIAL,
-        startAt: '2026-08-15T19:00:00.000Z',
+        startAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         location: 'Rua Exemplo, 123',
       };
       repository.create!.mockResolvedValue(buildEvent());

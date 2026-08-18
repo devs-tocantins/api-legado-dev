@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsOptional,
   IsString,
@@ -78,4 +79,13 @@ export class CreateSubmissionDto {
   @IsOptional()
   @IsEnum(EffortLevel)
   effortLevel?: EffortLevel;
+
+  @ApiPropertyOptional({
+    example: '2026-08-15',
+    description:
+      'Data em que a atividade foi realizada (ISO 8601). Obrigatório se a atividade exigir data.',
+  })
+  @IsOptional()
+  @IsDateString()
+  activityDate?: string | null;
 }
