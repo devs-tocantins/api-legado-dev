@@ -20,6 +20,9 @@ export class SubmissionMapper {
     domainEntity.reviewerId = raw.reviewerId;
     domainEntity.reviewedAt = raw.reviewedAt;
     domainEntity.activityDate = raw.activityDate;
+    domainEntity.githubRepo = raw.githubRepo;
+    domainEntity.issueCategory = raw.issueCategory;
+    domainEntity.githubIssueUrl = raw.githubIssueUrl;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -46,6 +49,9 @@ export class SubmissionMapper {
     persistenceEntity.reviewerId = domainEntity.reviewerId;
     persistenceEntity.reviewedAt = domainEntity.reviewedAt;
     persistenceEntity.activityDate = domainEntity.activityDate;
+    persistenceEntity.githubRepo = domainEntity.githubRepo;
+    persistenceEntity.issueCategory = domainEntity.issueCategory;
+    persistenceEntity.githubIssueUrl = domainEntity.githubIssueUrl;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

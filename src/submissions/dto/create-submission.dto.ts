@@ -10,6 +10,8 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { EffortLevel } from '../../activities/domain/effort-level.enum';
+import { GithubRepoTarget } from '../../github-issues/domain/github-repo-target.enum';
+import { GithubIssueCategory } from '../../github-issues/domain/github-issue-category.enum';
 
 export class CreateSubmissionDto {
   @ApiPropertyOptional({
@@ -88,4 +90,22 @@ export class CreateSubmissionDto {
   @IsOptional()
   @IsDateString()
   activityDate?: string | null;
+
+  @ApiPropertyOptional({
+    enum: GithubRepoTarget,
+    description:
+      'Repositório onde a issue deve ser criada. Obrigatório quando a atividade tem createsGithubIssue.',
+  })
+  @IsOptional()
+  @IsEnum(GithubRepoTarget)
+  githubRepo?: GithubRepoTarget;
+
+  @ApiPropertyOptional({
+    enum: GithubIssueCategory,
+    description:
+      'Classificação da issue. Obrigatória quando a atividade tem createsGithubIssue.',
+  })
+  @IsOptional()
+  @IsEnum(GithubIssueCategory)
+  issueCategory?: GithubIssueCategory;
 }

@@ -18,6 +18,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { MailModule } from '../mail/mail.module';
 import { FilesModule } from '../files/files.module';
 import { UsersModule } from '../users/users.module';
+import { GithubIssuesModule } from '../github-issues/github-issues.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { UsersModule } from '../users/users.module';
     MailModule,
     FilesModule,
     UsersModule,
+    GithubIssuesModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [SubmissionsController],

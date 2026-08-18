@@ -17,6 +17,7 @@ export class ActivityMapper {
     domainEntity.requiresActivityDate = raw.requiresActivityDate;
     domainEntity.effortTiers = raw.effortTiers;
     domainEntity.isFreeform = raw.isFreeform;
+    domainEntity.createsGithubIssue = raw.createsGithubIssue;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -40,6 +41,7 @@ export class ActivityMapper {
     persistenceEntity.requiresActivityDate = domainEntity.requiresActivityDate;
     persistenceEntity.effortTiers = domainEntity.effortTiers;
     persistenceEntity.isFreeform = domainEntity.isFreeform;
+    persistenceEntity.createsGithubIssue = domainEntity.createsGithubIssue;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

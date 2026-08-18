@@ -34,6 +34,7 @@ export class ActivitiesService {
       requiresActivityDate: createActivityDto.requiresActivityDate ?? false,
       effortTiers: createActivityDto.effortTiers ?? null,
       isFreeform: createActivityDto.isFreeform ?? false,
+      createsGithubIssue: createActivityDto.createsGithubIssue ?? false,
     });
   }
 
@@ -97,6 +98,9 @@ export class ActivitiesService {
       }),
       ...(updateActivityDto.isFreeform !== undefined && {
         isFreeform: updateActivityDto.isFreeform,
+      }),
+      ...(updateActivityDto.createsGithubIssue !== undefined && {
+        createsGithubIssue: updateActivityDto.createsGithubIssue,
       }),
     });
   }

@@ -51,6 +51,9 @@ export class ActivityEntity extends EntityRelationalHelper {
   @Column({ type: 'boolean', default: false })
   isFreeform: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  createsGithubIssue: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

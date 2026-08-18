@@ -87,4 +87,13 @@ export class CreateActivityDto {
   @IsOptional()
   @IsBoolean()
   isFreeform?: boolean;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'Se true, ao aprovar a submissão o sistema cria a issue de verdade no GitHub',
+  })
+  @IsOptional()
+  @IsBoolean()
+  createsGithubIssue?: boolean;
 }

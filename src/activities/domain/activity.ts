@@ -94,6 +94,14 @@ export class Activity {
   })
   isFreeform: boolean;
 
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Se true, ao aprovar a submissão o sistema cria a issue de verdade no GitHub',
+    example: false,
+  })
+  createsGithubIssue: boolean;
+
   @ApiProperty()
   createdAt: Date;
 

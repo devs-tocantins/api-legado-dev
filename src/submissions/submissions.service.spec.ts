@@ -6,6 +6,7 @@ import { SubmissionRepository } from './infrastructure/persistence/submission.re
 import { MailService } from '../mail/mail.service';
 import { FilesService } from '../files/files.service';
 import { UsersService } from '../users/users.service';
+import { GithubIssuesService } from '../github-issues/github-issues.service';
 import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 import { ActivitiesService } from '../activities/activities.service';
 import { BadgeEvaluatorService } from '../badges/badge-evaluator.service';
@@ -26,6 +27,8 @@ import { TrackItem } from '../track-items/domain/track-item';
 import { TrackItemType } from '../track-items/domain/track-item-type.enum';
 import { TrackItemStatus } from '../track-items/domain/track-item-status.enum';
 import { TrackItemProofFormat } from '../track-items/domain/track-item-proof-format.enum';
+import { GithubRepoTarget } from '../github-issues/domain/github-repo-target.enum';
+import { GithubIssueCategory } from '../github-issues/domain/github-issue-category.enum';
 
 const mockProfile: GamificationProfile = {
   id: 'profile-1',
@@ -58,6 +61,7 @@ const mockActivity: Activity = {
   requiresActivityDate: false,
   effortTiers: null,
   isFreeform: false,
+  createsGithubIssue: false,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
 };
@@ -117,6 +121,9 @@ function makeSubmission(overrides: Partial<Submission> = {}): Submission {
     reviewerId: null,
     reviewedAt: null,
     activityDate: null,
+    githubRepo: null,
+    issueCategory: null,
+    githubIssueUrl: null,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,
@@ -144,6 +151,9 @@ describe('SubmissionsService', () => {
   let mockLearningTracksService: Partial<
     Record<keyof LearningTracksService, jest.Mock>
   >;
+  let mockGithubIssuesService: Partial<
+    Record<keyof GithubIssuesService, jest.Mock>
+  >;
 
   const mockQueryRunner = {
     connect: jest.fn(),
@@ -159,11 +169,14 @@ describe('SubmissionsService', () => {
     },
   };
 
+  const mockGenericRepository = {
+    findOne: jest.fn().mockResolvedValue(mockProfile),
+    update: jest.fn().mockResolvedValue(undefined),
+  };
+
   const mockDataSource = {
     createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
-    getRepository: jest.fn().mockReturnValue({
-      findOne: jest.fn().mockResolvedValue(mockProfile),
-    }),
+    getRepository: jest.fn().mockReturnValue(mockGenericRepository),
   };
 
   beforeEach(async () => {
@@ -209,6 +222,9 @@ describe('SubmissionsService', () => {
     const mockUsersService = {
       findManyWithPagination: jest.fn().mockResolvedValue([]),
     };
+    mockGithubIssuesService = {
+      createIssue: jest.fn().mockResolvedValue({ url: '', number: 0 }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -240,6 +256,7 @@ describe('SubmissionsService', () => {
         { provide: MailService, useValue: mockMailService },
         { provide: FilesService, useValue: mockFilesService },
         { provide: UsersService, useValue: mockUsersService },
+        { provide: GithubIssuesService, useValue: mockGithubIssuesService },
         { provide: getDataSourceToken(), useValue: mockDataSource },
       ],
     }).compile();
@@ -521,6 +538,88 @@ describe('SubmissionsService', () => {
     });
   });
 
+  describe('create — issue do GitHub', () => {
+    const mockGithubIssueActivity: Activity = {
+      ...mockActivity,
+      createsGithubIssue: true,
+    };
+
+    it('should throw BadRequestException when createsGithubIssue and customTitle is missing', async () => {
+      mockActivitiesService.findById!.mockResolvedValue(
+        mockGithubIssueActivity,
+      );
+
+      await expect(
+        service.create(
+          {
+            activityId: 'activity-1',
+            githubRepo: GithubRepoTarget.API,
+            issueCategory: GithubIssueCategory.BUG,
+          },
+          1,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when createsGithubIssue and githubRepo is missing', async () => {
+      mockActivitiesService.findById!.mockResolvedValue(
+        mockGithubIssueActivity,
+      );
+
+      await expect(
+        service.create(
+          {
+            activityId: 'activity-1',
+            customTitle: 'Botão de login não funciona no mobile',
+            issueCategory: GithubIssueCategory.BUG,
+          },
+          1,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when createsGithubIssue and issueCategory is missing', async () => {
+      mockActivitiesService.findById!.mockResolvedValue(
+        mockGithubIssueActivity,
+      );
+
+      await expect(
+        service.create(
+          {
+            activityId: 'activity-1',
+            customTitle: 'Botão de login não funciona no mobile',
+            githubRepo: GithubRepoTarget.API,
+          },
+          1,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should create the submission with githubRepo and issueCategory when valid', async () => {
+      mockActivitiesService.findById!.mockResolvedValue(
+        mockGithubIssueActivity,
+      );
+
+      await service.create(
+        {
+          activityId: 'activity-1',
+          customTitle: 'Botão de login não funciona no mobile',
+          description: 'Ao clicar em login pelo celular, nada acontece.',
+          githubRepo: GithubRepoTarget.FRONT,
+          issueCategory: GithubIssueCategory.BUG,
+        },
+        1,
+      );
+
+      expect(mockSubmissionRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          githubRepo: GithubRepoTarget.FRONT,
+          issueCategory: GithubIssueCategory.BUG,
+        }),
+      );
+    });
+  });
+
   describe('review — aprovação de marco de trilha', () => {
     it('should create a track_item_completion and credit journeyXp on approval', async () => {
       mockSubmissionRepository.findById!.mockResolvedValue(
@@ -683,6 +782,46 @@ describe('SubmissionsService', () => {
           category: 'AUDITOR_REWARD',
           amount: mockActivity.auditorReward,
           description: `Revisão de submissão: ${mockActivity.title}`,
+        }),
+      );
+    });
+
+    it('should create the GitHub issue and persist the URL on approval', async () => {
+      mockActivitiesService.findById!.mockResolvedValue({
+        ...mockActivity,
+        createsGithubIssue: true,
+      });
+      mockSubmissionRepository.findById!.mockResolvedValue(
+        makeSubmission({
+          customTitle: 'Botão de login não funciona no mobile',
+          description: 'Ao clicar em login pelo celular, nada acontece.',
+          githubRepo: GithubRepoTarget.FRONT,
+          issueCategory: GithubIssueCategory.BUG,
+        }),
+      );
+      mockGithubIssuesService.createIssue!.mockResolvedValue({
+        url: 'https://github.com/devs-tocantins/front-engajamento/issues/42',
+        number: 42,
+      });
+
+      await service.review(
+        'submission-1',
+        { status: SubmissionStatus.APPROVED },
+        2,
+      );
+
+      expect(mockGithubIssuesService.createIssue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          repoTarget: GithubRepoTarget.FRONT,
+          category: GithubIssueCategory.BUG,
+          title: 'Botão de login não funciona no mobile',
+        }),
+      );
+      expect(mockGenericRepository.update).toHaveBeenCalledWith(
+        'submission-1',
+        expect.objectContaining({
+          githubIssueUrl:
+            'https://github.com/devs-tocantins/front-engajamento/issues/42',
         }),
       );
     });

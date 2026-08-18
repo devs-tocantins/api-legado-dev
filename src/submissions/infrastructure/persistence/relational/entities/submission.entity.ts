@@ -15,6 +15,8 @@ import { ActivityEntity } from '../../../../../activities/infrastructure/persist
 import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
 import { TrackItemEntity } from '../../../../../track-items/infrastructure/persistence/relational/entities/track-item.entity';
 import { EffortLevel } from '../../../../../activities/domain/effort-level.enum';
+import { GithubRepoTarget } from '../../../../../github-issues/domain/github-repo-target.enum';
+import { GithubIssueCategory } from '../../../../../github-issues/domain/github-issue-category.enum';
 
 @Entity({
   name: 'submission',
@@ -99,6 +101,25 @@ export class SubmissionEntity extends EntityRelationalHelper {
 
   @Column({ type: 'timestamp', nullable: true, default: null })
   activityDate: Date | null;
+
+  @Column({
+    type: 'enum',
+    enum: GithubRepoTarget,
+    nullable: true,
+    default: null,
+  })
+  githubRepo: GithubRepoTarget | null;
+
+  @Column({
+    type: 'enum',
+    enum: GithubIssueCategory,
+    nullable: true,
+    default: null,
+  })
+  issueCategory: GithubIssueCategory | null;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  githubIssueUrl: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

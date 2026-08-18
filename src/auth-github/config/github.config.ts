@@ -11,6 +11,10 @@ class EnvironmentVariablesValidator {
   @IsString()
   @IsOptional()
   GITHUB_CLIENT_SECRET: string;
+
+  @IsString()
+  @IsOptional()
+  GITHUB_BOT_TOKEN: string;
 }
 
 export default registerAs<GitHubConfig>('github', () => {
@@ -18,5 +22,6 @@ export default registerAs<GitHubConfig>('github', () => {
   return {
     clientId: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    botToken: process.env.GITHUB_BOT_TOKEN,
   };
 });

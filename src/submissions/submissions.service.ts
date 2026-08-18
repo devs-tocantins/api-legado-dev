@@ -42,6 +42,7 @@ import { NotificationPreferenceEntity } from '../notifications/infrastructure/pe
 import { FilesService } from '../files/files.service';
 import { UsersService } from '../users/users.service';
 import { RoleEnum } from '../roles/roles.enum';
+import { GithubIssuesService } from '../github-issues/github-issues.service';
 
 @Injectable()
 export class SubmissionsService {
@@ -60,6 +61,7 @@ export class SubmissionsService {
     private readonly auditLogsService: AuditLogsService,
     private readonly filesService: FilesService,
     private readonly usersService: UsersService,
+    private readonly githubIssuesService: GithubIssuesService,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -188,6 +190,24 @@ export class SubmissionsService {
       );
     }
 
+    if (activity.createsGithubIssue) {
+      if (!createSubmissionDto.customTitle) {
+        throw new BadRequestException(
+          'Esta atividade exige um título (customTitle) para a issue.',
+        );
+      }
+      if (!createSubmissionDto.githubRepo) {
+        throw new BadRequestException(
+          'Esta atividade exige o repositório de destino (githubRepo).',
+        );
+      }
+      if (!createSubmissionDto.issueCategory) {
+        throw new BadRequestException(
+          'Esta atividade exige a classificação da issue (issueCategory).',
+        );
+      }
+    }
+
     if (activity.effortTiers && activity.effortTiers.length > 0) {
       if (!createSubmissionDto.effortLevel) {
         throw new BadRequestException(
@@ -242,6 +262,9 @@ export class SubmissionsService {
       activityDate: createSubmissionDto.activityDate
         ? new Date(createSubmissionDto.activityDate)
         : null,
+      githubRepo: createSubmissionDto.githubRepo ?? null,
+      issueCategory: createSubmissionDto.issueCategory ?? null,
+      githubIssueUrl: null,
       status: isTestOut ? SubmissionStatus.APPROVED : SubmissionStatus.PENDING,
       feedback: null,
       awardedXp: 0,
@@ -679,6 +702,32 @@ export class SubmissionsService {
         } catch (err) {
           this.logger.error('Error sending submissionApproved email', err);
         }
+
+        if (
+          activity.createsGithubIssue &&
+          submission.githubRepo &&
+          submission.issueCategory
+        ) {
+          try {
+            const authorLabel = ownerProfile.githubUsername
+              ? `@${ownerProfile.githubUsername}`
+              : `usuário #${ownerProfile.userId}`;
+            const issue = await this.githubIssuesService.createIssue({
+              repoTarget: submission.githubRepo,
+              category: submission.issueCategory,
+              title: submission.customTitle ?? activity.title,
+              body: `${submission.description ?? ''}\n\n---\nAberto via legado.dev por ${authorLabel}.`,
+            });
+            await this.dataSource.getRepository(SubmissionEntity).update(id, {
+              githubIssueUrl: issue.url,
+            });
+          } catch (err) {
+            this.logger.error(
+              'Error creating GitHub issue for submission',
+              err,
+            );
+          }
+        }
       }
     } else if (reviewDto.status === SubmissionStatus.REJECTED) {
       const ownerProfile = await this.dataSource
@@ -799,6 +848,9 @@ export class SubmissionsService {
         customTitle: null,
         declaredEffort: null,
         activityDate: null,
+        githubRepo: null,
+        issueCategory: null,
+        githubIssueUrl: null,
         status: SubmissionStatus.APPROVED,
         feedback: null,
         awardedXp: activity.fixedReward,
