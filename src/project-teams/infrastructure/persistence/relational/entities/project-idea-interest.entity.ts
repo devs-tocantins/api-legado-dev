@@ -9,11 +9,10 @@ import {
 } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
 import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
-import { ProjectRole } from '../../../../domain/project-role.enum';
 import { ProjectIdeaEntity } from './project-idea.entity';
 
 @Entity({ name: 'project_idea_interest' })
-@Index(['ideaId', 'userId'], { unique: true })
+@Index(['ideaId', 'userId', 'role'], { unique: true })
 export class ProjectIdeaInterestEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -32,8 +31,8 @@ export class ProjectIdeaInterestEntity extends EntityRelationalHelper {
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
-  @Column({ type: 'enum', enum: ProjectRole, enumName: 'project_role_enum' })
-  role: ProjectRole;
+  @Column({ type: 'varchar', length: 40 })
+  role: string;
 
   @Column({ type: 'text', nullable: true, default: null })
   message: string | null;

@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -36,6 +37,7 @@ import {
   SuggestedVacancy,
 } from './domain/project-idea';
 import { CreateProjectIdeaDto } from './dto/create-project-idea.dto';
+import { CreateProjectIdeaRoleDto } from './dto/create-project-idea-role.dto';
 import { FindProjectsDto } from './dto/find-projects.dto';
 import { ReviewProjectIdeaDto } from './dto/review-project-idea.dto';
 import { SetProjectInterestDto } from './dto/set-project-interest.dto';
@@ -188,8 +190,80 @@ export class ProjectIdeasController {
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiParam({ name: 'id', type: String, required: true })
-  removeInterest(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    return this.ideasService.removeInterest(id, req.user.id);
+  removeInterest(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('role') role: string | undefined,
+    @Request() req,
+  ) {
+    return this.ideasService.removeInterest(id, req.user.id, role || undefined);
+  }
+
+  @Get(':id/roles')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiParam({ name: 'id', type: String, required: true })
+  listRoles(@Param('id', ParseUUIDPipe) id: string) {
+    return this.ideasService.listRoles(id);
+  }
+
+  @Post(':id/roles')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiParam({ name: 'id', type: String, required: true })
+  addRole(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateProjectIdeaRoleDto,
+    @Request() req,
+  ) {
+    return this.ideasService.addRole(id, dto, req.user.id, canManageAny(req));
+  }
+
+  @Delete(':id/roles/:roleId')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({ name: 'id', type: String, required: true })
+  @ApiParam({ name: 'roleId', type: String, required: true })
+  removeRole(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('roleId', ParseUUIDPipe) roleId: string,
+    @Request() req,
+  ) {
+    return this.ideasService.removeRole(
+      id,
+      roleId,
+      req.user.id,
+      canManageAny(req),
+    );
+  }
+
+  @Get(':id/participants')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiParam({ name: 'id', type: String, required: true })
+  listParticipants(@Param('id', ParseUUIDPipe) id: string) {
+    return this.ideasService.listParticipants(id);
+  }
+
+  @Delete(':id/participants/:userId')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({ name: 'id', type: String, required: true })
+  @ApiParam({ name: 'userId', type: Number, required: true })
+  removeParticipant(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseIntPipe) targetUserId: number,
+    @Query('role') role: string | undefined,
+    @Request() req,
+  ) {
+    return this.ideasService.removeParticipant(
+      id,
+      targetUserId,
+      role || undefined,
+      req.user.id,
+      canManageAny(req),
+    );
   }
 
   @Get(':id/interest')

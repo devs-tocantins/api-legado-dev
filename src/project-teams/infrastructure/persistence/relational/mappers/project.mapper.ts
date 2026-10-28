@@ -3,6 +3,7 @@ import { UserEntity } from '../../../../../users/infrastructure/persistence/rela
 import {
   ProjectIdea,
   ProjectIdeaInterest,
+  ProjectIdeaRole,
 } from '../../../../domain/project-idea';
 import {
   ProjectTeam,
@@ -11,6 +12,7 @@ import {
 } from '../../../../domain/project-team';
 import { ProjectUserSummary } from '../../../../domain/project-user-summary';
 import { ProjectIdeaEntity } from '../entities/project-idea.entity';
+import { ProjectIdeaRoleEntity } from '../entities/project-idea-role.entity';
 import { ProjectIdeaInterestEntity } from '../entities/project-idea-interest.entity';
 import { ProjectTeamEntity } from '../entities/project-team.entity';
 
@@ -47,6 +49,15 @@ export class ProjectMapper {
     idea.createdAt = raw.createdAt;
     idea.updatedAt = raw.updatedAt;
     return idea;
+  }
+
+  static ideaRoleToDomain(raw: ProjectIdeaRoleEntity): ProjectIdeaRole {
+    const role = new ProjectIdeaRole();
+    role.id = raw.id;
+    role.ideaId = raw.ideaId;
+    role.name = raw.name;
+    role.position = raw.position;
+    return role;
   }
 
   static interestToDomain(raw: ProjectIdeaInterestEntity): ProjectIdeaInterest {
