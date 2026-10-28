@@ -24,9 +24,11 @@ export class GamificationProfileMapper {
     domainEntity.isBanned = raw.user?.isBanned ?? false;
     domainEntity.firstName = raw.user?.firstName ?? undefined;
     domainEntity.lastName = raw.user?.lastName ?? undefined;
+    domainEntity.photo = raw.user?.photo
+      ? FileMapper.toDomain(raw.user.photo)
+      : null;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
-
     return domainEntity;
   }
 

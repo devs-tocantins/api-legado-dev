@@ -65,6 +65,20 @@ export class Activity {
   cooldownHours: number;
 
   @ApiProperty({
+    type: Number,
+    description: 'XP concedido ao moderador que revisar esta atividade',
+    example: 10,
+  })
+  auditorReward: number;
+
+  @ApiProperty({
+    type: Boolean,
+    description: 'Exige preenchimento da data em que a atividade foi realizada',
+    example: false,
+  })
+  requiresActivityDate: boolean = false;
+
+  @ApiProperty({
     type: [EffortTier],
     nullable: true,
     description:
@@ -79,6 +93,14 @@ export class Activity {
     example: false,
   })
   isFreeform: boolean;
+
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Se true, ao aprovar a submissão o sistema cria a issue de verdade no GitHub',
+    example: false,
+  })
+  createsGithubIssue: boolean;
 
   @ApiProperty()
   createdAt: Date;

@@ -63,6 +63,7 @@ export class TrackItemsService {
         title: `Prova: ${createTrackItemDto.title}`,
         description: `Comprovação exclusiva do marco de trilha "${createTrackItemDto.title}".`,
         fixedReward: grantsCommunityXp ? communityXpReward : 0,
+        auditorReward: 10,
         isHidden: true,
         requiresProof: true,
         requiresDescription: false,

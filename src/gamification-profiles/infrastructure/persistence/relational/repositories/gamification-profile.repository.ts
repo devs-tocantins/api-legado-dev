@@ -97,7 +97,7 @@ export class GamificationProfileRelationalRepository
     const entityMap = new Map<string, GamificationProfileEntity>();
     const entities = await this.gamificationProfileRepository.find({
       where: { id: In(ids) },
-      relations: { user: true },
+      relations: { user: { photo: true } },
     });
     entities.forEach((e) => entityMap.set(e.id, e));
 
@@ -113,10 +113,12 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { id },
-      relations: { user: true },
+      relations: { user: { photo: true, role: true } },
     });
 
-    return entity ? GamificationProfileMapper.toDomain(entity) : null;
+    if (!entity) return null;
+    if (entity.user?.role?.id === 1) return null;
+    return GamificationProfileMapper.toDomain(entity);
   }
 
   async findByIds(
@@ -124,7 +126,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<GamificationProfile[]> {
     const entities = await this.gamificationProfileRepository.find({
       where: { id: In(ids) },
-      relations: { user: true },
+      relations: { user: { photo: true } },
     });
 
     return entities.map((entity) => GamificationProfileMapper.toDomain(entity));
@@ -163,7 +165,7 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { userId },
-      relations: { user: true },
+      relations: { user: { photo: true } },
     });
 
     return entity ? GamificationProfileMapper.toDomain(entity) : null;
@@ -174,20 +176,35 @@ export class GamificationProfileRelationalRepository
   ): Promise<NullableType<GamificationProfile>> {
     const entity = await this.gamificationProfileRepository.findOne({
       where: { username },
-      relations: { user: true },
+      relations: { user: { photo: true, role: true } },
     });
 
-    return entity ? GamificationProfileMapper.toDomain(entity) : null;
+    if (!entity) return null;
+    if (entity.user?.role?.id === 1) return null;
+    return GamificationProfileMapper.toDomain(entity);
   }
 
   async resetMonthlyXpAndTokens(defaultTokens: number): Promise<void> {
-    await this.gamificationProfileRepository.update(
-      {},
-      { currentMonthlyXp: 0, gratitudeTokens: defaultTokens },
-    );
+    await this.gamificationProfileRepository
+      .createQueryBuilder()
+      .update(GamificationProfileEntity)
+      .set({ currentMonthlyXp: 0, gratitudeTokens: defaultTokens })
+      .execute();
+  }
+
+  async replenishDailyTokens(defaultTokens: number): Promise<void> {
+    await this.gamificationProfileRepository
+      .createQueryBuilder()
+      .update(GamificationProfileEntity)
+      .set({ gratitudeTokens: defaultTokens })
+      .execute();
   }
 
   async resetYearlyXp(): Promise<void> {
-    await this.gamificationProfileRepository.update({}, { currentYearlyXp: 0 });
+    await this.gamificationProfileRepository
+      .createQueryBuilder()
+      .update(GamificationProfileEntity)
+      .set({ currentYearlyXp: 0 })
+      .execute();
   }
 }

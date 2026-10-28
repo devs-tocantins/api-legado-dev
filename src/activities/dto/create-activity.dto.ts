@@ -30,6 +30,11 @@ export class CreateActivityDto {
   @Min(1)
   fixedReward: number;
 
+  @ApiProperty({ example: 10 })
+  @IsInt()
+  @Min(0)
+  auditorReward: number;
+
   @ApiProperty({ example: false, required: false })
   @IsOptional()
   @IsBoolean()
@@ -58,6 +63,11 @@ export class CreateActivityDto {
   @Min(0)
   cooldownHours?: number;
 
+  @ApiProperty({ example: false, required: false })
+  @IsOptional()
+  @IsBoolean()
+  requiresActivityDate?: boolean;
+
   @ApiPropertyOptional({
     type: [EffortTier],
     description:
@@ -77,4 +87,13 @@ export class CreateActivityDto {
   @IsOptional()
   @IsBoolean()
   isFreeform?: boolean;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'Se true, ao aprovar a submissão o sistema cria a issue de verdade no GitHub',
+  })
+  @IsOptional()
+  @IsBoolean()
+  createsGithubIssue?: boolean;
 }

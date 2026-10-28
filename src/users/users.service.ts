@@ -3,6 +3,7 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import crypto from 'crypto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { NullableType } from '../utils/types/nullable.type';
 import { FilterUserDto, SortUserDto } from './dto/query-user.dto';
@@ -21,6 +22,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { CURRENT_LEGAL_DOCUMENTS_VERSION } from '../legal-documents/legal-documents.constants';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditActionEnum } from '../audit-logs/domain/audit-action.enum';
+import { GamificationProfilesService } from '../gamification-profiles/gamification-profiles.service';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +30,7 @@ export class UsersService {
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
     private readonly auditLogsService: AuditLogsService,
+    private readonly gamificationProfilesService: GamificationProfilesService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -189,9 +192,7 @@ export class UsersService {
     let password: string | undefined = undefined;
 
     if (updateUserDto.password) {
-      const userObject = await this.usersRepository.findById(id);
-
-      if (userObject && userObject?.password !== updateUserDto.password) {
+      if (oldUserObject?.password !== updateUserDto.password) {
         const salt = await bcrypt.genSalt();
         password = await bcrypt.hash(updateUserDto.password, salt);
       }
@@ -293,6 +294,13 @@ export class UsersService {
     });
 
     if (updatedUser) {
+      const oldPhoto = oldUserObject?.photo;
+      const photoChanged =
+        photo !== undefined && oldPhoto?.id && oldPhoto.id !== photo?.id;
+      if (photoChanged) {
+        void this.filesService.remove(oldPhoto!.id);
+      }
+
       if (
         updateUserDto.role?.id !== undefined &&
         oldRole !== updateUserDto.role.id
@@ -324,6 +332,26 @@ export class UsersService {
   }
 
   async remove(id: User['id']): Promise<void> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) return;
+
+    const randomHash = crypto.randomBytes(4).toString('hex');
+    const anonymizedEmail = `deleted-${id}-${randomHash}@legado.dev`;
+
+    await this.usersRepository.update(id, {
+      firstName: 'Usuário',
+      lastName: 'Deletado',
+      email: anonymizedEmail,
+      socialId: null,
+      photo: null,
+    });
+
+    await this.gamificationProfilesService.zeroOutProfile(
+      Number(id),
+      'Conta excluída',
+      true,
+    );
+
     await this.usersRepository.remove(id);
   }
 }

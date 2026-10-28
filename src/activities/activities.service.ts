@@ -25,13 +25,16 @@ export class ActivitiesService {
       title: createActivityDto.title,
       description: createActivityDto.description,
       fixedReward: createActivityDto.fixedReward,
+      auditorReward: createActivityDto.auditorReward,
       isHidden: createActivityDto.isHidden ?? false,
       secretCode: createActivityDto.secretCode ?? null,
       requiresProof: createActivityDto.requiresProof ?? false,
       requiresDescription: createActivityDto.requiresDescription ?? false,
       cooldownHours: createActivityDto.cooldownHours ?? 0,
+      requiresActivityDate: createActivityDto.requiresActivityDate ?? false,
       effortTiers: createActivityDto.effortTiers ?? null,
       isFreeform: createActivityDto.isFreeform ?? false,
+      createsGithubIssue: createActivityDto.createsGithubIssue ?? false,
     });
   }
 
@@ -72,6 +75,9 @@ export class ActivitiesService {
       ...(updateActivityDto.fixedReward !== undefined && {
         fixedReward: updateActivityDto.fixedReward,
       }),
+      ...(updateActivityDto.auditorReward !== undefined && {
+        auditorReward: updateActivityDto.auditorReward,
+      }),
       ...(updateActivityDto.isHidden !== undefined && {
         isHidden: updateActivityDto.isHidden,
       }),
@@ -84,11 +90,17 @@ export class ActivitiesService {
       ...(updateActivityDto.cooldownHours !== undefined && {
         cooldownHours: updateActivityDto.cooldownHours,
       }),
+      ...(updateActivityDto.requiresActivityDate !== undefined && {
+        requiresActivityDate: updateActivityDto.requiresActivityDate,
+      }),
       ...(updateActivityDto.effortTiers !== undefined && {
         effortTiers: updateActivityDto.effortTiers,
       }),
       ...(updateActivityDto.isFreeform !== undefined && {
         isFreeform: updateActivityDto.isFreeform,
+      }),
+      ...(updateActivityDto.createsGithubIssue !== undefined && {
+        createsGithubIssue: updateActivityDto.createsGithubIssue,
       }),
     });
   }
@@ -99,14 +111,20 @@ export class ActivitiesService {
 
   findPublicWithPagination({
     paginationOptions,
+    search,
+    view,
   }: {
     paginationOptions: IPaginationOptions;
+    search?: string;
+    view?: 'card' | 'list';
   }) {
     return this.activityRepository.findPublicWithPagination({
       paginationOptions: {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
       },
+      search,
+      view,
     });
   }
 

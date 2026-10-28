@@ -39,12 +39,14 @@ export class AuthGoogleService {
         email: string;
         given_name?: string;
         family_name?: string;
+        picture?: string;
       };
       return {
         id: data.sub,
         email: data.email,
         firstName: data.given_name,
         lastName: data.family_name,
+        picture: data.picture,
       };
     }
 

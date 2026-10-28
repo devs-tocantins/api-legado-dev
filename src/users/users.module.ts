@@ -11,6 +11,8 @@ import { RelationalUserPersistenceModule } from './infrastructure/persistence/re
 import { FilesModule } from '../files/files.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
+import { GamificationProfilesModule } from '../gamification-profiles/gamification-profiles.module';
+
 const infrastructurePersistenceModule = RelationalUserPersistenceModule;
 
 @Module({
@@ -19,6 +21,7 @@ const infrastructurePersistenceModule = RelationalUserPersistenceModule;
     infrastructurePersistenceModule,
     FilesModule,
     AuditLogsModule,
+    GamificationProfilesModule,
   ],
   controllers: [UsersController],
   providers: [UsersService, UsersCronService],

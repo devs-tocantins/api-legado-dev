@@ -36,6 +36,16 @@ export class CreateMissionDto {
   @Min(1)
   xpReward: number;
 
+  @ApiProperty({ example: 50 })
+  @IsInt()
+  @Min(0)
+  participationReward: number;
+
+  @ApiProperty({ example: 20 })
+  @IsInt()
+  @Min(0)
+  auditorReward: number;
+
   @ApiPropertyOptional({
     default: false,
     description: 'Se true, não aparece na listagem pública',
@@ -43,4 +53,14 @@ export class CreateMissionDto {
   @IsOptional()
   @IsBoolean()
   isSecret?: boolean;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  requiresProof?: boolean;
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  requiresDescription?: boolean;
 }

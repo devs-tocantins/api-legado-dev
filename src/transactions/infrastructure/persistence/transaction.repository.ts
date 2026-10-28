@@ -29,4 +29,9 @@ export abstract class TransactionRepository {
     profileId: string,
     paginationOptions: IPaginationOptions,
   ): Promise<Transaction[]>;
+
+  abstract findTokenTransactionsByProfileId(
+    profileId: string,
+    paginationOptions: IPaginationOptions,
+  ): Promise<Transaction[]>;
 }

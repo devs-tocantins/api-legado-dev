@@ -39,11 +39,20 @@ export class ActivityEntity extends EntityRelationalHelper {
   @Column({ type: 'int', default: 0 })
   cooldownHours: number;
 
+  @Column({ type: 'int', default: 10 })
+  auditorReward: number;
+
+  @Column({ type: 'boolean', default: false })
+  requiresActivityDate: boolean;
+
   @Column({ type: 'jsonb', nullable: true, default: null })
   effortTiers: EffortTier[] | null;
 
   @Column({ type: 'boolean', default: false })
   isFreeform: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  createsGithubIssue: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

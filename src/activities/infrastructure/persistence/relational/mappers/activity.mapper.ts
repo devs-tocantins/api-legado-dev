@@ -13,8 +13,11 @@ export class ActivityMapper {
     domainEntity.requiresProof = raw.requiresProof;
     domainEntity.requiresDescription = raw.requiresDescription;
     domainEntity.cooldownHours = raw.cooldownHours;
+    domainEntity.auditorReward = raw.auditorReward;
+    domainEntity.requiresActivityDate = raw.requiresActivityDate;
     domainEntity.effortTiers = raw.effortTiers;
     domainEntity.isFreeform = raw.isFreeform;
+    domainEntity.createsGithubIssue = raw.createsGithubIssue;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -34,8 +37,11 @@ export class ActivityMapper {
     persistenceEntity.requiresProof = domainEntity.requiresProof;
     persistenceEntity.requiresDescription = domainEntity.requiresDescription;
     persistenceEntity.cooldownHours = domainEntity.cooldownHours;
+    persistenceEntity.auditorReward = domainEntity.auditorReward;
+    persistenceEntity.requiresActivityDate = domainEntity.requiresActivityDate;
     persistenceEntity.effortTiers = domainEntity.effortTiers;
     persistenceEntity.isFreeform = domainEntity.isFreeform;
+    persistenceEntity.createsGithubIssue = domainEntity.createsGithubIssue;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

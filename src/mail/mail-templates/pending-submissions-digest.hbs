@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submissões pendentes</title>
+</head>
+<body style="margin:0;font-family:arial;background:#f5f5f5">
+  <table style="border:0;width:100%;max-width:600px;margin:0 auto;background:#ffffff">
+    <tr style="background:#1a1a2e">
+      <td style="padding:20px;color:#ffffff;text-align:center;font-size:24px;font-weight:700">
+        {{app_name}}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:32px 24px 16px">
+        <h2 style="margin:0 0 8px;font-size:18px;color:#111827">
+          📋 Submissões aguardando revisão
+        </h2>
+        <p style="margin:0;color:#6b7280;font-size:15px;line-height:1.6">
+          Há <strong style="color:#111827">{{count}} submissão(ões)</strong> pendente(s)
+          aguardando sua análise no painel de moderação.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 24px 32px;text-align:center">
+        <a href="{{adminUrl}}"
+           style="display:inline-block;padding:14px 32px;background:#4f46e5;text-decoration:none;color:#ffffff;border-radius:8px;font-weight:600;font-size:15px">
+          Revisar submissões
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 24px;border-top:1px solid #e5e7eb">
+        <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center">
+          Este e-mail foi enviado automaticamente às 6h pelo {{app_name}}.<br>
+          Somente moderadores e administradores recebem este resumo.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

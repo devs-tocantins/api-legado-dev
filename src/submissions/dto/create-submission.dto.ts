@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsOptional,
   IsString,
@@ -9,6 +10,8 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { EffortLevel } from '../../activities/domain/effort-level.enum';
+import { GithubRepoTarget } from '../../github-issues/domain/github-repo-target.enum';
+import { GithubIssueCategory } from '../../github-issues/domain/github-issue-category.enum';
 
 export class CreateSubmissionDto {
   @ApiPropertyOptional({
@@ -44,7 +47,7 @@ export class CreateSubmissionDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(2048)
   @Transform(({ value }) => value?.trim() ?? null)
   proofUrl?: string | null;
 
@@ -78,4 +81,31 @@ export class CreateSubmissionDto {
   @IsOptional()
   @IsEnum(EffortLevel)
   effortLevel?: EffortLevel;
+
+  @ApiPropertyOptional({
+    example: '2026-08-15',
+    description:
+      'Data em que a atividade foi realizada (ISO 8601). Obrigatório se a atividade exigir data.',
+  })
+  @IsOptional()
+  @IsDateString()
+  activityDate?: string | null;
+
+  @ApiPropertyOptional({
+    enum: GithubRepoTarget,
+    description:
+      'Repositório onde a issue deve ser criada. Obrigatório quando a atividade tem createsGithubIssue.',
+  })
+  @IsOptional()
+  @IsEnum(GithubRepoTarget)
+  githubRepo?: GithubRepoTarget;
+
+  @ApiPropertyOptional({
+    enum: GithubIssueCategory,
+    description:
+      'Classificação da issue. Obrigatória quando a atividade tem createsGithubIssue.',
+  })
+  @IsOptional()
+  @IsEnum(GithubIssueCategory)
+  issueCategory?: GithubIssueCategory;
 }

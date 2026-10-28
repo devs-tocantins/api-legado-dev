@@ -48,6 +48,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ContributionReportsModule } from './contribution-reports/contribution-reports.module';
 
 import { EventsModule } from './events/events.module';
+import { ProjectTeamsModule } from './project-teams/project-teams.module';
 
 import { LearningTracksModule } from './learning-tracks/learning-tracks.module';
 
@@ -107,6 +108,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
     ActivitiesModule,
     GamificationProfilesModule,
     EventsModule,
+    ProjectTeamsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [

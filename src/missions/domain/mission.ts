@@ -21,6 +21,12 @@ export class Mission {
   @ApiProperty({ type: Number })
   xpReward: number;
 
+  @ApiProperty({ type: Number })
+  participationReward: number;
+
+  @ApiProperty({ type: Number })
+  auditorReward: number;
+
   @ApiProperty({ enum: MissionStatus })
   status: MissionStatus;
 
@@ -37,6 +43,12 @@ export class Mission {
     description: 'Se true, não aparece na lista pública',
   })
   isSecret: boolean;
+
+  @ApiProperty({ type: Boolean, default: false })
+  requiresProof: boolean;
+
+  @ApiProperty({ type: Boolean, default: false })
+  requiresDescription: boolean;
 
   @ApiProperty()
   createdAt: Date;

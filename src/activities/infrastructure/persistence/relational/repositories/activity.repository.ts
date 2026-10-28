@@ -82,16 +82,43 @@ export class ActivityRelationalRepository implements ActivityRepository {
 
   async findPublicWithPagination({
     paginationOptions,
+    search,
+    view,
   }: {
     paginationOptions: IPaginationOptions;
+    search?: string;
+    view?: 'card' | 'list';
   }): Promise<Activity[]> {
-    const entities = await this.activityRepository.find({
-      where: { isHidden: false },
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-    });
+    const query = this.activityRepository.createQueryBuilder('activity');
 
-    return entities.map((entity) => ActivityMapper.toDomain(entity));
+    query.andWhere('activity.isHidden = :isHidden', { isHidden: false });
+
+    if (search) {
+      query.andWhere(
+        '(activity.title ILIKE :search OR activity.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    query.skip((paginationOptions.page - 1) * paginationOptions.limit);
+    query.take(paginationOptions.limit);
+    query.orderBy('activity.createdAt', 'DESC');
+
+    const entities = await query.getMany();
+    const mapped = entities.map((entity) => ActivityMapper.toDomain(entity));
+
+    if (view === 'card') {
+      return mapped.map(
+        (a) =>
+          ({
+            id: a.id,
+            title: a.title,
+            fixedReward: a.fixedReward,
+            createdAt: a.createdAt,
+          }) as Activity,
+      );
+    }
+    return mapped;
   }
 
   async findBySecretCode(

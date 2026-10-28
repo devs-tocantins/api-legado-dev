@@ -12,7 +12,6 @@ import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
-import { AuthProvidersEnum } from './auth-providers.enum';
 import { SocialInterface } from '../social/interfaces/social.interface';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { NullableType } from '../utils/types/nullable.type';
@@ -75,15 +74,6 @@ export class AuthService {
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
           email: 'notFound',
-        },
-      });
-    }
-
-    if (user.provider !== AuthProvidersEnum.email) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: `needLoginViaProvider:${user.provider}`,
         },
       });
     }
@@ -191,6 +181,13 @@ export class AuthService {
         id: StatusEnum.active,
       };
 
+      let photo;
+      if (socialData.picture) {
+        photo = await this.filesService.create({
+          path: socialData.picture,
+        } as any);
+      }
+
       user = await this.usersService.create({
         email: socialEmail ?? null,
         firstName: socialData.firstName ?? null,
@@ -199,6 +196,7 @@ export class AuthService {
         provider: authProvider,
         role,
         status,
+        ...(photo && { photo: { id: photo.id } }),
       });
 
       user = await this.usersService.findById(user.id);
@@ -222,6 +220,15 @@ export class AuthService {
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
           user: 'banned',
+        },
+      });
+    }
+
+    if (user.status?.id?.toString() === StatusEnum.inactive.toString()) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'inactive',
         },
       });
     }

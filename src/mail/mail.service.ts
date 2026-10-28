@@ -57,10 +57,10 @@ export class MailService {
         title: emailConfirmTitle,
         url: url.toString(),
         actionTitle: emailConfirmTitle,
-        app_name: this.configService.get('app.name', { infer: true }),
-        text1,
-        text2,
-        text3,
+        app_name: this.configService.get('app.name', { infer: true }) || 'App',
+        text1: text1 || 'Bem-vindo!',
+        text2: text2 || 'Confirme seu e-mail para usar o',
+        text3: text3 || 'Clique no botão abaixo para confirmar.',
       },
     });
   }
@@ -112,13 +112,14 @@ export class MailService {
         title: resetPasswordTitle,
         url: url.toString(),
         actionTitle: resetPasswordTitle,
-        app_name: this.configService.get('app.name', {
-          infer: true,
-        }),
-        text1,
-        text2,
-        text3,
-        text4,
+        app_name:
+          this.configService.get('app.name', {
+            infer: true,
+          }) || 'App',
+        text1: text1 || 'Esqueceu sua senha?',
+        text2: text2 || 'Recebemos um pedido para redefinir a senha do',
+        text3: text3 || 'Clique no botão abaixo para criar uma nova senha.',
+        text4: text4 || 'Se não foi você, ignore este e-mail.',
       },
     });
   }
@@ -163,10 +164,10 @@ export class MailService {
         title: emailConfirmTitle,
         url: url.toString(),
         actionTitle: emailConfirmTitle,
-        app_name: this.configService.get('app.name', { infer: true }),
-        text1,
-        text2,
-        text3,
+        app_name: this.configService.get('app.name', { infer: true }) || 'App',
+        text1: text1 || 'Bem-vindo!',
+        text2: text2 || 'Confirme seu e-mail para usar o',
+        text3: text3 || 'Clique no botão abaixo para confirmar.',
       },
     });
   }
@@ -264,6 +265,35 @@ export class MailService {
         title,
         url: url.toString(),
         app_name: appName,
+      },
+    });
+  }
+
+  async sendPendingSubmissionsDigest(
+    mailData: MailData<{ count: number }>,
+  ): Promise<void> {
+    const adminUrl =
+      this.configService.getOrThrow('app.frontendDomain', { infer: true }) +
+      '/moderation';
+    const appName = this.configService.get('app.name', { infer: true });
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: `[${appName || 'App'}] ${mailData.data.count} submissão(ões) aguardando revisão`,
+      text: `Há ${mailData.data.count} submissão(ões) pendente(s). Acesse: ${adminUrl}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'pending-submissions-digest.hbs',
+      ),
+      context: {
+        count: mailData.data.count,
+        adminUrl,
+        app_name: appName || 'App',
       },
     });
   }

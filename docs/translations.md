@@ -11,16 +11,20 @@
 
 O dev-starter já vem pronto para garantir respostas API Poliglotas caso seu Front-end exija ou mude de língua no Painel do Usuário! Assim, o Backend não reenvia os retornos hardcoded (chumbados e sempre iguais), e sim lê um dicionário local a depender da chave.
 
+## Configuração de Idioma
+
+O sistema está configurado para usar **`pt-BR` (Português Brasileiro)** como idioma padrão e de fallback. Se a tradução de uma chave não for encontrada ou o cabeçalho de idioma for omitido, o sistema responderá em português.
+
 ## Como adicionar novas traduções
 
 1. Vá à raiz em `src/i18n`.
-2. O Boilerplate sempre checa os JSONs em pastas atreladas. Existe o `en` atualmente. 
-3. Você cria a pasta `pt-BR` e espelha os arquivos copiando e modificando (exemplo, copie os valores do JSON dict de validações e converta as regras "Missing Field" do class-validator para português!)
+2. O Boilerplate sempre checa os JSONs em pastas atreladas (`en` e `pt-BR`). 
+3. Caso adicione uma nova chave, lembre-se de atualizar ambos os arquivos para manter a consistência.
 
 ## Como usar arquivos traduzidos para o Front
 1. Adicione/configure o Fetch das APIs com o novo cabeçalho (`Header`) contendo a requisição:
-   **`x-custom-lang`**: `pt-BR`
-2. Ao receber esta flag de custom-lang no contexto do request (ou via Cookie local), o `i18n-module` se vira e transforma todas as Exceptions globais!
+   **`x-custom-lang`**: `en` (para inglês) ou `pt-BR`.
+2. Se o cabeçalho for omitido, o backend assumirá `pt-BR` automaticamente.
 
 ## Como verificar um I18N direto num serviço
 

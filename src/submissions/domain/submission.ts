@@ -2,6 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { SubmissionStatus } from './submission-status.enum';
 import { SubmissionContributionKind } from './submission-contribution-kind.enum';
 import { EffortLevel } from '../../activities/domain/effort-level.enum';
+import { GithubRepoTarget } from '../../github-issues/domain/github-repo-target.enum';
+import { GithubIssueCategory } from '../../github-issues/domain/github-issue-category.enum';
 
 export class Submission {
   @ApiProperty({
@@ -106,6 +108,33 @@ export class Submission {
     description: 'Data e hora da revisão',
   })
   reviewedAt: Date | null;
+
+  @ApiProperty({
+    nullable: true,
+    description: 'Data em que a atividade foi realizada',
+  })
+  activityDate: Date | null;
+
+  @ApiProperty({
+    enum: GithubRepoTarget,
+    nullable: true,
+    description: 'Repositório onde a issue deve ser criada, se aplicável',
+  })
+  githubRepo: GithubRepoTarget | null;
+
+  @ApiProperty({
+    enum: GithubIssueCategory,
+    nullable: true,
+    description: 'Classificação da issue (bug, melhoria, dúvida, outro)',
+  })
+  issueCategory: GithubIssueCategory | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'URL da issue criada no GitHub após aprovação',
+  })
+  githubIssueUrl: string | null;
 
   @ApiProperty()
   createdAt: Date;

@@ -43,5 +43,7 @@ export abstract class GamificationProfileRepository {
 
   abstract resetMonthlyXpAndTokens(defaultTokens: number): Promise<void>;
 
+  abstract replenishDailyTokens(defaultTokens: number): Promise<void>;
+
   abstract resetYearlyXp(): Promise<void>;
 }
