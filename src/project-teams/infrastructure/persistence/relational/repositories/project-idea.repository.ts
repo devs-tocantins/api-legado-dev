@@ -57,12 +57,27 @@ export class ProjectIdeaRelationalRepository implements ProjectIdeaRepository {
     });
     const teamByIdea = new Map(teams.map((t) => [t.ideaId, t.id]));
 
-    return entities.map((entity) =>
-      ProjectMapper.ideaToDomain(entity, {
+    const authorIds = [...new Set(entities.map((entity) => entity.authorId))];
+    const profiles = await this.interestRepository.manager
+      .getRepository(GamificationProfileEntity)
+      .find({
+        where: { userId: In(authorIds) },
+        select: { userId: true, username: true },
+      });
+    const usernameByUser = new Map(
+      profiles.map((profile) => [profile.userId, profile.username]),
+    );
+
+    return entities.map((entity) => {
+      const idea = ProjectMapper.ideaToDomain(entity, {
         interestCount: countByIdea.get(entity.id) ?? 0,
         teamId: teamByIdea.get(entity.id) ?? null,
-      }),
-    );
+      });
+      if (idea.author) {
+        idea.author.username = usernameByUser.get(entity.authorId) ?? null;
+      }
+      return idea;
+    });
   }
 
   private async findList(

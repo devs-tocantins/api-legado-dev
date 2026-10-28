@@ -1,15 +1,17 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class SetProjectInterestDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Front-end',
-    description: 'Cargo da ideia em que a pessoa quer atuar',
+    description:
+      'Cargo da ideia em que a pessoa quer atuar. Sem cargo, vale como interesse geral no projeto.',
   })
+  @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(40)
-  role: string;
+  role?: string;
 
   @ApiPropertyOptional({
     example: 'Tenho 2 anos de React e tempo nos fins de semana.',

@@ -29,6 +29,9 @@ const PUBLIC_STATUSES = [
   ProjectIdeaStatus.TEAM_FORMED,
 ];
 
+/** Interesse geral no projeto, sem escolher um cargo. */
+const DEFAULT_INTEREST_ROLE = 'Interessado';
+
 @Injectable()
 export class ProjectIdeasService {
   constructor(
@@ -218,21 +221,24 @@ export class ProjectIdeasService {
     dto: SetProjectInterestDto,
   ) {
     const idea = await this.findPublicDetail(id);
-    const roles = await this.ensureRoles(idea);
-    if (!roles.some((item) => item.name === dto.role)) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: { role: 'Este cargo não existe neste projeto.' },
-      });
+    const role = dto.role?.trim() || DEFAULT_INTEREST_ROLE;
+    if (dto.role) {
+      const roles = await this.ensureRoles(idea);
+      if (!roles.some((item) => item.name === role)) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: { role: 'Este cargo não existe neste projeto.' },
+        });
+      }
     }
 
     const existing = (
       await this.ideaRepository.findUserInterests(id, userId)
-    ).find((item) => item.role === dto.role);
+    ).find((item) => item.role === role);
     const interest = await this.ideaRepository.upsertInterest(
       id,
       userId,
-      dto.role,
+      role,
       dto.message?.trim() || null,
     );
 
@@ -241,8 +247,8 @@ export class ProjectIdeasService {
         .create({
           userId: idea.authorId,
           type: NotificationType.PROJECT_IDEA_INTEREST,
-          title: `Nova participação em: ${idea.title}`,
-          body: 'Alguém entrou em um cargo do seu projeto. Veja o time na página dele.',
+          title: `Novo interessado em: ${idea.title}`,
+          body: 'Alguém quer participar do seu projeto. Veja quem tem interesse na página dele.',
           relatedId: idea.id,
           link: `/projetos/${idea.id}`,
           payload: { ideaId: idea.id, userId },
