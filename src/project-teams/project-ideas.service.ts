@@ -9,9 +9,14 @@ import {
 import { NotificationType } from '../notifications/domain/notification-type.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { IPaginationOptions } from '../utils/types/pagination-options';
-import { ProjectIdea, SuggestedVacancy } from './domain/project-idea';
+import {
+  ProjectIdea,
+  SuggestedVacancy,
+  ProjectIdeaRole,
+} from './domain/project-idea';
 import { ProjectIdeaStatus } from './domain/project-idea-status.enum';
-import { ProjectRole } from './domain/project-role.enum';
+import { PROJECT_ROLE_LABELS, ProjectRole } from './domain/project-role.enum';
+import { CreateProjectIdeaRoleDto } from './dto/create-project-idea-role.dto';
 import { CreateProjectIdeaDto } from './dto/create-project-idea.dto';
 import { ReviewProjectIdeaDto } from './dto/review-project-idea.dto';
 import { SetProjectInterestDto } from './dto/set-project-interest.dto';
@@ -213,13 +218,17 @@ export class ProjectIdeasService {
     dto: SetProjectInterestDto,
   ) {
     const idea = await this.findPublicDetail(id);
-    if (idea.authorId === userId) {
-      throw new BadRequestException(
-        'Você é o autor da ideia — monte o time pela página dela.',
-      );
+    const roles = await this.ensureRoles(idea);
+    if (!roles.some((item) => item.name === dto.role)) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { role: 'Este cargo não existe neste projeto.' },
+      });
     }
 
-    const existing = await this.ideaRepository.findInterest(id, userId);
+    const existing = (
+      await this.ideaRepository.findUserInterests(id, userId)
+    ).find((item) => item.role === dto.role);
     const interest = await this.ideaRepository.upsertInterest(
       id,
       userId,
@@ -227,13 +236,13 @@ export class ProjectIdeasService {
       dto.message?.trim() || null,
     );
 
-    if (!existing) {
+    if (!existing && idea.authorId !== userId) {
       await this.notificationsService
         .create({
           userId: idea.authorId,
           type: NotificationType.PROJECT_IDEA_INTEREST,
-          title: `Novo interessado em: ${idea.title}`,
-          body: 'Alguém quer participar do seu projeto. Veja a lista de interessados.',
+          title: `Nova participação em: ${idea.title}`,
+          body: 'Alguém entrou em um cargo do seu projeto. Veja o time na página dele.',
           relatedId: idea.id,
           link: `/projetos/${idea.id}`,
           payload: { ideaId: idea.id, userId },
@@ -244,18 +253,124 @@ export class ProjectIdeasService {
     return interest;
   }
 
-  async removeInterest(id: ProjectIdea['id'], userId: number) {
+  /** Cargos da ideia; na primeira leitura nasce com as sugestões padrão. */
+  private async ensureRoles(idea: ProjectIdea): Promise<ProjectIdeaRole[]> {
+    const roles = await this.ideaRepository.findRoles(idea.id);
+    if (roles.length > 0) {
+      return roles;
+    }
+    const suggestions = suggestVacancies({
+      text: [idea.title, idea.description, ...idea.tags].join(' '),
+      interestByRole: {},
+    });
+    return this.ideaRepository.addRoles(
+      idea.id,
+      suggestions.map((suggestion) => PROJECT_ROLE_LABELS[suggestion.role]),
+    );
+  }
+
+  async listRoles(id: ProjectIdea['id']) {
+    const idea = await this.findPublicDetail(id);
+    return this.ensureRoles(idea);
+  }
+
+  async addRole(
+    id: ProjectIdea['id'],
+    dto: CreateProjectIdeaRoleDto,
+    userId: number,
+    canManageAny: boolean,
+  ) {
+    const idea = await this.findPublicDetail(id);
+    this.assertAuthorOrAdmin(
+      idea,
+      userId,
+      canManageAny,
+      'Apenas quem propôs o projeto ou a moderação pode gerenciar os cargos.',
+    );
+    const roles = await this.ensureRoles(idea);
+    const name = dto.name.trim().replace(/\s+/g, ' ');
+    if (name.length < 2) {
+      throw new BadRequestException('Informe o nome do cargo.');
+    }
+    if (roles.some((role) => role.name.toLowerCase() === name.toLowerCase())) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { name: 'Já existe um cargo com este nome.' },
+      });
+    }
+    if (roles.length >= 20) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { name: 'O projeto já tem o máximo de 20 cargos.' },
+      });
+    }
+    const [created] = await this.ideaRepository.addRoles(id, [name]);
+    return created;
+  }
+
+  async removeRole(
+    id: ProjectIdea['id'],
+    roleId: string,
+    userId: number,
+    canManageAny: boolean,
+  ) {
+    const idea = await this.findPublicDetail(id);
+    this.assertAuthorOrAdmin(
+      idea,
+      userId,
+      canManageAny,
+      'Apenas quem propôs o projeto ou a moderação pode gerenciar os cargos.',
+    );
+    const removed = await this.ideaRepository.removeRole(id, roleId);
+    if (!removed) {
+      throw new NotFoundException('Cargo não encontrado.');
+    }
+  }
+
+  async removeInterest(id: ProjectIdea['id'], userId: number, role?: string) {
     await this.findPublicDetail(id);
-    await this.ideaRepository.removeInterest(id, userId);
+    await this.ideaRepository.removeInterest(id, userId, role);
   }
 
   async getMyInterest(id: ProjectIdea['id'], userId: number) {
-    const interest = await this.ideaRepository.findInterest(id, userId);
+    const interests = await this.ideaRepository.findUserInterests(id, userId);
     return {
-      interested: !!interest,
-      role: interest?.role ?? null,
-      message: interest?.message ?? null,
+      interested: interests.length > 0,
+      roles: interests.map((interest) => interest.role),
     };
+  }
+
+  /** Time visível a qualquer membro: quem está em cada cargo (sem a mensagem). */
+  async listParticipants(id: ProjectIdea['id']) {
+    await this.findPublicDetail(id);
+    const interests = await this.ideaRepository.findInterests(id);
+    return interests.map((interest) => ({
+      id: interest.id,
+      ideaId: interest.ideaId,
+      userId: interest.userId,
+      user: interest.user,
+      role: interest.role,
+      createdAt: interest.createdAt,
+    }));
+  }
+
+  async removeParticipant(
+    id: ProjectIdea['id'],
+    targetUserId: number,
+    role: string | undefined,
+    userId: number,
+    canManageAny: boolean,
+  ) {
+    const idea = await this.findPublicDetail(id);
+    if (targetUserId !== userId) {
+      this.assertAuthorOrAdmin(
+        idea,
+        userId,
+        canManageAny,
+        'Apenas quem propôs o projeto ou a moderação pode remover alguém.',
+      );
+    }
+    await this.ideaRepository.removeInterest(id, targetUserId, role);
   }
 
   async listInterests(
@@ -289,7 +404,12 @@ export class ProjectIdeasService {
     const interests = await this.ideaRepository.findInterests(id);
     const interestByRole: Partial<Record<ProjectRole, number>> = {};
     for (const interest of interests) {
-      interestByRole[interest.role] = (interestByRole[interest.role] ?? 0) + 1;
+      const role = (Object.keys(PROJECT_ROLE_LABELS) as ProjectRole[]).find(
+        (key) => PROJECT_ROLE_LABELS[key] === interest.role,
+      );
+      if (role) {
+        interestByRole[role] = (interestByRole[role] ?? 0) + 1;
+      }
     }
 
     return suggestVacancies({

@@ -11,6 +11,9 @@ export class ProjectUserSummary {
   @ApiProperty({ type: String, nullable: true })
   lastName: string | null;
 
+  @ApiProperty({ type: String, nullable: true })
+  username?: string | null;
+
   @ApiProperty({ type: () => FileType, nullable: true })
   photo?: FileType | null;
 }

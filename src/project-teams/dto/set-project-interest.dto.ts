@@ -1,15 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-import { ProjectRole } from '../domain/project-role.enum';
+import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class SetProjectInterestDto {
   @ApiProperty({
-    enum: ProjectRole,
-    example: ProjectRole.FRONTEND,
-    description: 'Cargo em que a pessoa gostaria de atuar',
+    example: 'Front-end',
+    description: 'Cargo da ideia em que a pessoa quer atuar',
   })
-  @IsEnum(ProjectRole)
-  role: ProjectRole;
+  @IsString()
+  @MinLength(2)
+  @MaxLength(40)
+  role: string;
 
   @ApiPropertyOptional({
     example: 'Tenho 2 anos de React e tempo nos fins de semana.',

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProjectIdeaRepository } from '../project-idea.repository';
 import { ProjectTeamRepository } from '../project-team.repository';
 import { ProjectIdeaEntity } from './entities/project-idea.entity';
+import { ProjectIdeaRoleEntity } from './entities/project-idea-role.entity';
 import { ProjectIdeaInterestEntity } from './entities/project-idea-interest.entity';
 import { ProjectTeamEntity } from './entities/project-team.entity';
 import { ProjectTeamMemberEntity } from './entities/project-team-member.entity';
@@ -15,6 +16,7 @@ import { ProjectTeamRelationalRepository } from './repositories/project-team.rep
     TypeOrmModule.forFeature([
       ProjectIdeaEntity,
       ProjectIdeaInterestEntity,
+      ProjectIdeaRoleEntity,
       ProjectTeamEntity,
       ProjectTeamVacancyEntity,
       ProjectTeamMemberEntity,

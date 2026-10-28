@@ -1,8 +1,11 @@
 import { NullableType } from '../../../utils/types/nullable.type';
 import { IPaginationOptions } from '../../../utils/types/pagination-options';
-import { ProjectIdea, ProjectIdeaInterest } from '../../domain/project-idea';
+import {
+  ProjectIdea,
+  ProjectIdeaInterest,
+  ProjectIdeaRole,
+} from '../../domain/project-idea';
 import { ProjectIdeaStatus } from '../../domain/project-idea-status.enum';
-import { ProjectRole } from '../../domain/project-role.enum';
 
 export type ProjectIdeaUpdate = Partial<
   Pick<
@@ -52,13 +55,15 @@ export abstract class ProjectIdeaRepository {
   abstract upsertInterest(
     ideaId: ProjectIdea['id'],
     userId: number,
-    role: ProjectRole,
+    role: string,
     message: string | null,
   ): Promise<ProjectIdeaInterest>;
 
+  /** Sem `role`, remove a participação da pessoa em todos os cargos. */
   abstract removeInterest(
     ideaId: ProjectIdea['id'],
     userId: number,
+    role?: string,
   ): Promise<void>;
 
   abstract findInterest(
@@ -66,7 +71,25 @@ export abstract class ProjectIdeaRepository {
     userId: number,
   ): Promise<NullableType<ProjectIdeaInterest>>;
 
+  abstract findUserInterests(
+    ideaId: ProjectIdea['id'],
+    userId: number,
+  ): Promise<ProjectIdeaInterest[]>;
+
   abstract findInterests(
     ideaId: ProjectIdea['id'],
   ): Promise<ProjectIdeaInterest[]>;
+
+  abstract findRoles(ideaId: ProjectIdea['id']): Promise<ProjectIdeaRole[]>;
+
+  abstract addRoles(
+    ideaId: ProjectIdea['id'],
+    names: string[],
+  ): Promise<ProjectIdeaRole[]>;
+
+  /** Remove o cargo e as participações nele. Retorna false se não existir. */
+  abstract removeRole(
+    ideaId: ProjectIdea['id'],
+    roleId: ProjectIdeaRole['id'],
+  ): Promise<boolean>;
 }

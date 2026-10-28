@@ -6,14 +6,16 @@ import { IPaginationOptions } from '../../../../../utils/types/pagination-option
 import {
   ProjectIdea,
   ProjectIdeaInterest,
+  ProjectIdeaRole,
 } from '../../../../domain/project-idea';
 import { ProjectIdeaStatus } from '../../../../domain/project-idea-status.enum';
-import { ProjectRole } from '../../../../domain/project-role.enum';
 import {
   ProjectIdeaRepository,
   ProjectIdeaUpdate,
 } from '../../project-idea.repository';
+import { GamificationProfileEntity } from '../../../../../gamification-profiles/infrastructure/persistence/relational/entities/gamification-profile.entity';
 import { ProjectIdeaEntity } from '../entities/project-idea.entity';
+import { ProjectIdeaRoleEntity } from '../entities/project-idea-role.entity';
 import { ProjectIdeaInterestEntity } from '../entities/project-idea-interest.entity';
 import { ProjectTeamEntity } from '../entities/project-team.entity';
 import { ProjectMapper } from '../mappers/project.mapper';
@@ -27,6 +29,8 @@ export class ProjectIdeaRelationalRepository implements ProjectIdeaRepository {
     private readonly ideaRepository: Repository<ProjectIdeaEntity>,
     @InjectRepository(ProjectIdeaInterestEntity)
     private readonly interestRepository: Repository<ProjectIdeaInterestEntity>,
+    @InjectRepository(ProjectIdeaRoleEntity)
+    private readonly roleRepository: Repository<ProjectIdeaRoleEntity>,
     @InjectRepository(ProjectTeamEntity)
     private readonly teamRepository: Repository<ProjectTeamEntity>,
   ) {}
@@ -41,7 +45,7 @@ export class ProjectIdeaRelationalRepository implements ProjectIdeaRepository {
     const counts = await this.interestRepository
       .createQueryBuilder('interest')
       .select('interest.ideaId', 'ideaId')
-      .addSelect('COUNT(*)', 'count')
+      .addSelect('COUNT(DISTINCT interest.userId)', 'count')
       .where('interest.ideaId IN (:...ids)', { ids })
       .groupBy('interest.ideaId')
       .getRawMany<{ ideaId: string; count: string }>();
@@ -146,11 +150,11 @@ export class ProjectIdeaRelationalRepository implements ProjectIdeaRepository {
   async upsertInterest(
     ideaId: ProjectIdea['id'],
     userId: number,
-    role: ProjectRole,
+    role: string,
     message: string | null,
   ): Promise<ProjectIdeaInterest> {
     const existing = await this.interestRepository.findOne({
-      where: { ideaId, userId },
+      where: { ideaId, userId, role },
     });
     const saved = await this.interestRepository.save(
       existing
@@ -160,8 +164,25 @@ export class ProjectIdeaRelationalRepository implements ProjectIdeaRepository {
     return ProjectMapper.interestToDomain(saved);
   }
 
-  async removeInterest(ideaId: ProjectIdea['id'], userId: number) {
-    await this.interestRepository.delete({ ideaId, userId });
+  async removeInterest(
+    ideaId: ProjectIdea['id'],
+    userId: number,
+    role?: string,
+  ) {
+    await this.interestRepository.delete(
+      role ? { ideaId, userId, role } : { ideaId, userId },
+    );
+  }
+
+  async findUserInterests(
+    ideaId: ProjectIdea['id'],
+    userId: number,
+  ): Promise<ProjectIdeaInterest[]> {
+    const entities = await this.interestRepository.find({
+      where: { ideaId, userId },
+      order: { createdAt: 'ASC' },
+    });
+    return entities.map((entity) => ProjectMapper.interestToDomain(entity));
   }
 
   async findInterest(
@@ -182,6 +203,68 @@ export class ProjectIdeaRelationalRepository implements ProjectIdeaRepository {
       relations: { user: { photo: true } },
       order: { createdAt: 'ASC' },
     });
-    return entities.map((entity) => ProjectMapper.interestToDomain(entity));
+    const interests = entities.map((entity) =>
+      ProjectMapper.interestToDomain(entity),
+    );
+
+    const userIds = [...new Set(interests.map((interest) => interest.userId))];
+    if (userIds.length > 0) {
+      const profiles = await this.interestRepository.manager
+        .getRepository(GamificationProfileEntity)
+        .find({
+          where: { userId: In(userIds) },
+          select: { userId: true, username: true },
+        });
+      const usernameByUser = new Map(
+        profiles.map((profile) => [profile.userId, profile.username]),
+      );
+      for (const interest of interests) {
+        if (interest.user) {
+          interest.user.username = usernameByUser.get(interest.userId) ?? null;
+        }
+      }
+    }
+    return interests;
+  }
+
+  async findRoles(ideaId: ProjectIdea['id']): Promise<ProjectIdeaRole[]> {
+    const entities = await this.roleRepository.find({
+      where: { ideaId },
+      order: { position: 'ASC', createdAt: 'ASC' },
+    });
+    return entities.map((entity) => ProjectMapper.ideaRoleToDomain(entity));
+  }
+
+  async addRoles(
+    ideaId: ProjectIdea['id'],
+    names: string[],
+  ): Promise<ProjectIdeaRole[]> {
+    const last = await this.roleRepository.find({
+      where: { ideaId },
+      order: { position: 'DESC' },
+      take: 1,
+    });
+    let position = (last[0]?.position ?? -1) + 1;
+    const saved = await this.roleRepository.save(
+      names.map((name) =>
+        this.roleRepository.create({ ideaId, name, position: position++ }),
+      ),
+    );
+    return saved.map((entity) => ProjectMapper.ideaRoleToDomain(entity));
+  }
+
+  async removeRole(
+    ideaId: ProjectIdea['id'],
+    roleId: ProjectIdeaRole['id'],
+  ): Promise<boolean> {
+    const role = await this.roleRepository.findOne({
+      where: { id: roleId, ideaId },
+    });
+    if (!role) {
+      return false;
+    }
+    await this.interestRepository.delete({ ideaId, role: role.name });
+    await this.roleRepository.delete({ id: role.id });
+    return true;
   }
 }

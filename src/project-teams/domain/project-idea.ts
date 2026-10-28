@@ -67,8 +67,8 @@ export class ProjectIdeaInterest {
   @ApiProperty({ type: () => ProjectUserSummary, nullable: true })
   user?: ProjectUserSummary | null;
 
-  @ApiProperty({ enum: ProjectRole })
-  role: ProjectRole;
+  @ApiProperty({ type: String, description: 'Nome do cargo na ideia' })
+  role: string;
 
   @ApiProperty({ type: String, nullable: true })
   message: string | null;
@@ -89,4 +89,18 @@ export class SuggestedVacancy {
 
   @ApiProperty({ type: String })
   reason: string;
+}
+
+export class ProjectIdeaRole {
+  @ApiProperty({ type: String })
+  id: string;
+
+  @ApiProperty({ type: String })
+  ideaId: string;
+
+  @ApiProperty({ type: String })
+  name: string;
+
+  @ApiProperty({ type: Number })
+  position: number;
 }
