@@ -7,14 +7,16 @@ export class AddRequiresFieldsToMission1776637614206
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "mission_submission" DROP CONSTRAINT "FK_mission_submission_mission"`,
-    );
-    await queryRunner.query(`DROP INDEX "public"."IDX_notification_userId"`);
-    await queryRunner.query(
-      `ALTER TABLE "mission_submission" DROP CONSTRAINT "UQ_mission_submission_profile"`,
+      `ALTER TABLE "mission_submission" DROP CONSTRAINT IF EXISTS "FK_mission_submission_mission"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "contribution_report" DROP CONSTRAINT "UQ_report_submission_reporter"`,
+      `DROP INDEX IF EXISTS "public"."IDX_notification_userId"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "mission_submission" DROP CONSTRAINT IF EXISTS "UQ_mission_submission_profile"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE IF EXISTS "contribution_report" DROP CONSTRAINT IF EXISTS "UQ_report_submission_reporter"`,
     );
     await queryRunner.query(
       `ALTER TABLE "mission" ADD "requiresProof" boolean NOT NULL DEFAULT false`,
