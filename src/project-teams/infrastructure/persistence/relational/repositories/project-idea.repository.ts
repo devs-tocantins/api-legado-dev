@@ -122,13 +122,38 @@ export class ProjectIdeaRelationalRepository implements ProjectIdeaRepository {
     return idea;
   }
 
-  findPublic(paginationOptions: IPaginationOptions): Promise<ProjectIdea[]> {
-    return this.findList(
-      {
-        status: In([ProjectIdeaStatus.APPROVED, ProjectIdeaStatus.TEAM_FORMED]),
-      },
-      { createdAt: 'DESC' },
-      paginationOptions,
+  /** Projeto da vez primeiro, depois os mais pedidos e, por fim, os mais novos. */
+  async findPublic(
+    paginationOptions: IPaginationOptions,
+  ): Promise<ProjectIdea[]> {
+    const rows = await this.ideaRepository
+      .createQueryBuilder('idea')
+      .select('idea.id', 'id')
+      .addSelect(
+        `(SELECT COUNT(DISTINCT interest."userId") FROM "project_idea_interest" interest WHERE interest."ideaId" = idea.id)`,
+        'interestCount',
+      )
+      .where('idea.status IN (:...statuses)', {
+        statuses: [ProjectIdeaStatus.APPROVED, ProjectIdeaStatus.TEAM_FORMED],
+      })
+      .orderBy('(idea."featuredAt" IS NULL)', 'ASC')
+      .addOrderBy('"interestCount"', 'DESC')
+      .addOrderBy('idea."createdAt"', 'DESC')
+      .offset((paginationOptions.page - 1) * paginationOptions.limit)
+      .limit(paginationOptions.limit)
+      .getRawMany<{ id: string }>();
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const ids = rows.map((row) => row.id);
+    const entities = await this.ideaRepository.find({
+      where: { id: In(ids) },
+      relations: IDEA_RELATIONS,
+    });
+    const byId = new Map(entities.map((entity) => [entity.id, entity]));
+    return this.enrich(
+      ids.map((id) => byId.get(id)).filter((entity) => !!entity),
     );
   }
 
@@ -160,6 +185,23 @@ export class ProjectIdeaRelationalRepository implements ProjectIdeaRepository {
 
   async remove(id: ProjectIdea['id']): Promise<void> {
     await this.ideaRepository.delete(id);
+  }
+
+  async clearFeatured(): Promise<void> {
+    await this.ideaRepository
+      .createQueryBuilder()
+      .update(ProjectIdeaEntity)
+      .set({ featuredAt: null })
+      .where('"featuredAt" IS NOT NULL')
+      .execute();
+  }
+
+  async findGroupLink(id: ProjectIdea['id']): Promise<string | null> {
+    const entity = await this.ideaRepository.findOne({
+      where: { id },
+      select: { id: true, groupLink: true },
+    });
+    return entity?.groupLink ?? null;
   }
 
   async upsertInterest(

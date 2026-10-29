@@ -44,6 +44,8 @@ export class ProjectMapper {
     idea.author = ProjectMapper.userSummary(raw.author);
     idea.reviewerId = raw.reviewerId;
     idea.reviewedAt = raw.reviewedAt;
+    idea.featuredAt = raw.featuredAt ?? null;
+    idea.calledAt = raw.calledAt ?? null;
     idea.interestCount = extras.interestCount;
     idea.teamId = extras.teamId;
     idea.createdAt = raw.createdAt;

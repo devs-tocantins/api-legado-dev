@@ -17,8 +17,10 @@ export type ProjectIdeaUpdate = Partial<
     | 'rejectionReason'
     | 'reviewerId'
     | 'reviewedAt'
+    | 'featuredAt'
+    | 'calledAt'
   >
->;
+> & { groupLink?: string | null };
 
 export abstract class ProjectIdeaRepository {
   abstract create(data: {
@@ -51,6 +53,11 @@ export abstract class ProjectIdeaRepository {
   ): Promise<ProjectIdea | null>;
 
   abstract remove(id: ProjectIdea['id']): Promise<void>;
+
+  /** Tira o destaque de "projeto da vez" de todas as ideias. */
+  abstract clearFeatured(): Promise<void>;
+
+  abstract findGroupLink(id: ProjectIdea['id']): Promise<string | null>;
 
   abstract upsertInterest(
     ideaId: ProjectIdea['id'],
