@@ -35,6 +35,18 @@ export class ProjectIdea {
   reviewedAt: Date | null;
 
   @ApiProperty({
+    nullable: true,
+    description: 'Preenchido quando o projeto é o "projeto da vez"',
+  })
+  featuredAt: Date | null;
+
+  @ApiProperty({
+    nullable: true,
+    description: 'Quando os interessados foram chamados para o grupo',
+  })
+  calledAt: Date | null;
+
+  @ApiProperty({
     type: Number,
     description: 'Quantidade de pessoas que demonstraram interesse',
   })

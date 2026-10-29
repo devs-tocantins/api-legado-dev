@@ -36,6 +36,8 @@ import {
   ProjectIdeaInterest,
   SuggestedVacancy,
 } from './domain/project-idea';
+import { CallProjectInterestedDto } from './dto/call-project-interested.dto';
+import { FeatureProjectIdeaDto } from './dto/feature-project-idea.dto';
 import { CreateProjectIdeaDto } from './dto/create-project-idea.dto';
 import { CreateProjectIdeaRoleDto } from './dto/create-project-idea-role.dto';
 import { FindProjectsDto } from './dto/find-projects.dto';
@@ -170,6 +172,45 @@ export class ProjectIdeasController {
   @ApiParam({ name: 'id', type: String, required: true })
   remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
     return this.ideasService.remove(id, req.user.id, canManageAny(req));
+  }
+
+  @Patch(':id/feature')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(RoleEnum.admin, RoleEnum.moderator)
+  @ApiParam({ name: 'id', type: String, required: true })
+  @ApiOkResponse({ type: ProjectIdea })
+  feature(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: FeatureProjectIdeaDto,
+  ) {
+    return this.ideasService.feature(id, dto.featured);
+  }
+
+  @Post(':id/call')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiParam({ name: 'id', type: String, required: true })
+  callInterested(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CallProjectInterestedDto,
+    @Request() req,
+  ) {
+    return this.ideasService.callInterested(
+      id,
+      dto,
+      req.user.id,
+      canManageAny(req),
+    );
+  }
+
+  @Get(':id/group')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiParam({ name: 'id', type: String, required: true })
+  getGroup(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    return this.ideasService.getGroup(id, req.user.id, canManageAny(req));
   }
 
   @Put(':id/interest')

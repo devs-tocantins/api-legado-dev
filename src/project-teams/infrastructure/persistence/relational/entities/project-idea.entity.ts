@@ -54,6 +54,17 @@ export class ProjectIdeaEntity extends EntityRelationalHelper {
   @Column({ type: 'timestamp', nullable: true, default: null })
   reviewedAt: Date | null;
 
+  /** Preenchido enquanto este for o "projeto da vez" (só um por vez). */
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  featuredAt: Date | null;
+
+  @Column({ type: 'varchar', length: 300, nullable: true, default: null })
+  groupLink: string | null;
+
+  /** Quando quem propôs chamou os interessados pela primeira vez. */
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  calledAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -16,12 +16,18 @@ import {
 } from './domain/project-idea';
 import { ProjectIdeaStatus } from './domain/project-idea-status.enum';
 import { PROJECT_ROLE_LABELS, ProjectRole } from './domain/project-role.enum';
+import { CallProjectInterestedDto } from './dto/call-project-interested.dto';
 import { CreateProjectIdeaRoleDto } from './dto/create-project-idea-role.dto';
 import { CreateProjectIdeaDto } from './dto/create-project-idea.dto';
 import { ReviewProjectIdeaDto } from './dto/review-project-idea.dto';
 import { SetProjectInterestDto } from './dto/set-project-interest.dto';
 import { UpdateProjectIdeaDto } from './dto/update-project-idea.dto';
 import { ProjectIdeaRepository } from './infrastructure/persistence/project-idea.repository';
+import {
+  PROJECT_AUTHOR_XP,
+  PROJECT_PARTICIPANT_XP,
+  ProjectRewardsService,
+} from './project-rewards.service';
 import { suggestVacancies } from './vacancy-suggestions';
 
 const PUBLIC_STATUSES = [
@@ -37,6 +43,7 @@ export class ProjectIdeasService {
   constructor(
     private readonly ideaRepository: ProjectIdeaRepository,
     private readonly notificationsService: NotificationsService,
+    private readonly rewardsService: ProjectRewardsService,
   ) {}
 
   private async getOrFail(id: ProjectIdea['id']): Promise<ProjectIdea> {
@@ -331,6 +338,143 @@ export class ProjectIdeasService {
     if (!removed) {
       throw new NotFoundException('Cargo não encontrado.');
     }
+  }
+
+  /** Ids únicos de quem tem interesse, sem contar quem propôs. */
+  private async interestedUserIds(idea: ProjectIdea): Promise<number[]> {
+    const interests = await this.ideaRepository.findInterests(idea.id);
+    return [...new Set(interests.map((interest) => interest.userId))].filter(
+      (userId) => userId !== idea.authorId,
+    );
+  }
+
+  private notifyMany(
+    userIds: number[],
+    notification: {
+      type: NotificationType;
+      title: string;
+      body: string;
+      idea: ProjectIdea;
+    },
+  ) {
+    return Promise.all(
+      userIds.map((userId) =>
+        this.notificationsService
+          .create({
+            userId,
+            type: notification.type,
+            title: notification.title,
+            body: notification.body,
+            relatedId: notification.idea.id,
+            link: `/projetos/${notification.idea.id}`,
+            payload: { ideaId: notification.idea.id },
+          })
+          .catch(() => undefined),
+      ),
+    );
+  }
+
+  /** Moderação escolhe o "projeto da vez"; só existe um por vez. */
+  async feature(id: ProjectIdea['id'], featured: boolean) {
+    const idea = await this.findPublicDetail(id);
+    if (!featured) {
+      return this.ideaRepository.update(id, { featuredAt: null });
+    }
+    if (idea.featuredAt) {
+      return idea;
+    }
+
+    await this.ideaRepository.clearFeatured();
+    const updated = await this.ideaRepository.update(id, {
+      featuredAt: new Date(),
+    });
+    await this.notifyMany(await this.interestedUserIds(idea), {
+      type: NotificationType.PROJECT_IDEA_FEATURED,
+      title: `Projeto da vez: ${idea.title}`,
+      body: 'O projeto em que você marcou interesse foi escolhido como projeto da vez.',
+      idea,
+    });
+    return updated;
+  }
+
+  /**
+   * Quem propôs (ou a moderação) chama os interessados para o grupo. O XP
+   * é dado uma única vez por projeto, na primeira chamada.
+   */
+  async callInterested(
+    id: ProjectIdea['id'],
+    dto: CallProjectInterestedDto,
+    userId: number,
+    canManageAny: boolean,
+  ) {
+    const idea = await this.findPublicDetail(id);
+    this.assertAuthorOrAdmin(
+      idea,
+      userId,
+      canManageAny,
+      'Apenas quem propôs o projeto ou a moderação pode chamar os interessados.',
+    );
+
+    const interestedIds = await this.interestedUserIds(idea);
+    if (interestedIds.length === 0) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { interested: 'Ainda não há interessados para chamar.' },
+      });
+    }
+
+    const firstCall = !idea.calledAt;
+    const updated = await this.ideaRepository.update(id, {
+      groupLink: dto.groupLink,
+      calledAt: idea.calledAt ?? new Date(),
+    });
+
+    const message = dto.message?.trim();
+    await this.notifyMany(interestedIds, {
+      type: NotificationType.PROJECT_IDEA_CALLED,
+      title: `Vamos começar: ${idea.title}`,
+      body: message
+        ? `${message} Abra o projeto para entrar no grupo.`
+        : 'Quem propôs o projeto chamou os interessados. Abra o projeto para entrar no grupo.',
+      idea,
+    });
+
+    if (firstCall) {
+      await this.rewardsService.grant([
+        {
+          userId: idea.authorId,
+          amount: PROJECT_AUTHOR_XP,
+          description: `Projeto colocado em ação: ${idea.title}`,
+        },
+        ...interestedIds.map((interestedId) => ({
+          userId: interestedId,
+          amount: PROJECT_PARTICIPANT_XP,
+          description: `Participação no projeto: ${idea.title}`,
+        })),
+      ]);
+    }
+
+    return { notified: interestedIds.length, calledAt: updated?.calledAt };
+  }
+
+  /** Link do grupo, visível só para quem propôs, interessados e moderação. */
+  async getGroup(id: ProjectIdea['id'], userId: number, canManageAny: boolean) {
+    const idea = await this.findPublicDetail(id);
+    const allowed =
+      canManageAny ||
+      idea.authorId === userId ||
+      (await this.ideaRepository.findUserInterests(id, userId)).length > 0;
+    if (!allowed) {
+      throw new ForbiddenException(
+        'Apenas quem tem interesse no projeto pode ver o grupo.',
+      );
+    }
+    return {
+      groupLink: idea.calledAt
+        ? await this.ideaRepository.findGroupLink(id)
+        : null,
+      calledAt: idea.calledAt,
+    };
   }
 
   async removeInterest(id: ProjectIdea['id'], userId: number, role?: string) {
